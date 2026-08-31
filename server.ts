@@ -894,9 +894,9 @@ app.get('/api/finance', (req, res) => {
   });
 });
 
-// POST Create Deposit (Simulated recharge or crypto webhook)
+// POST Create Deposit / Recharge Request (Strictly Pending until Admin Manual Approval)
 app.post('/api/finance/deposit', (req, res) => {
-  const { amount, network, txHash } = req.body;
+  const { amount, network, txHash, walletAddress } = req.body;
   const user = users[PRIMARY_USER_ID];
   if (!user) return res.status(404).json({ error: 'User not found' });
 
@@ -905,48 +905,53 @@ app.post('/api/finance/deposit', (req, res) => {
     return res.status(400).json({ error: 'Minimum deposit amount is $10.00' });
   }
 
+  const cleanNetwork = network === 'BEP20' ? 'BEP20' : 'TRC20';
+  const targetWallet = walletAddress?.trim() || user.walletAddress || (cleanNetwork === 'BEP20' ? OFFICIAL_PAYMENT_ADDRESSES.BEP20 : OFFICIAL_PAYMENT_ADDRESSES.TRC20);
+  const cleanTxHash = txHash?.trim() || `0x${crypto.randomBytes(16).toString('hex')}...`;
+
   const newDeposit: DepositRequest = {
-    id: `DEP-${Date.now().toString().slice(-5)}`,
+    id: `DEP-${Date.now().toString().slice(-6)}`,
     userId: user.id,
     username: user.username,
     amount: depAmount,
-    network: network || 'TRC20',
-    walletAddress: user.walletAddress || (network === 'BEP20' ? OFFICIAL_PAYMENT_ADDRESSES.BEP20 : OFFICIAL_PAYMENT_ADDRESSES.TRC20),
-    txHash: txHash || `0x${Math.random().toString(16).slice(2, 18)}...`,
-    status: 'Completed',
+    network: cleanNetwork,
+    walletAddress: targetWallet,
+    txHash: cleanTxHash,
+    status: 'Pending', // STRICTLY PENDING: Must be manually approved by Admin in Admin Panel
     createdAt: new Date().toISOString()
   };
 
   deposits.unshift(newDeposit);
 
-  // Credit balance immediately
-  user.balance = Number((user.balance + depAmount).toFixed(2));
-
+  // Record pending transaction in member ledger (Balance is NOT credited until Admin manual approval)
   transactions.unshift({
     id: `TXN-DEP-${Date.now()}`,
     userId: user.id,
     type: 'deposit',
+    category: 'deposit',
     amount: depAmount,
-    status: 'completed',
-    title: `USDT Deposit (${network || 'TRC20'})`,
-    description: `Deposit credited to available balance`,
+    previousBalance: user.balance,
+    newBalance: user.balance,
+    status: 'pending', // STRICTLY PENDING
+    title: `USDT Recharge Request (${cleanNetwork})`,
+    description: `Recharge request of $${depAmount.toFixed(2)} USDT submitted. Pending manual Admin review and approval.`,
     txHash: newDeposit.txHash,
     createdAt: new Date().toISOString()
   });
 
   recalculateUserState(user.id);
-  persistDb(`Deposit Created: $${depAmount}`);
+  persistDb(`Recharge Request Submitted (Pending Admin Approval): $${depAmount} by ${user.username}`);
 
   res.json({
     success: true,
-    message: `Deposit of $${depAmount.toFixed(2)} credited successfully!`,
+    message: `Recharge request of $${depAmount.toFixed(2)} USDT submitted successfully! Status is Pending manual Admin review and approval.`,
     deposit: newDeposit,
     user
   });
 });
 
 // POST Create Withdrawal Request
-// Checks available balance, reserves/freezes requested amount while pending
+// Checks available balance, reserves/freezes requested amount while strictly Pending Admin approval
 app.post('/api/finance/withdraw', (req, res) => {
   const { amount, walletAddress, network } = req.body;
   const user = users[PRIMARY_USER_ID];
@@ -966,10 +971,13 @@ app.post('/api/finance/withdraw', (req, res) => {
   // 8% platform service fee calculation
   const fee = Number((wdAmount * 0.08).toFixed(2));
   const netAmount = Number((wdAmount - fee).toFixed(2));
+  const cleanNetwork = network === 'BEP20' ? 'BEP20' : 'TRC20';
+  const targetWallet = walletAddress?.trim() || user.walletAddress || (cleanNetwork === 'BEP20' ? OFFICIAL_PAYMENT_ADDRESSES.BEP20 : OFFICIAL_PAYMENT_ADDRESSES.TRC20);
 
-  // Reserve/Freeze funds
+  // Reserve/Freeze funds safely from available balance
+  const previousBalance = user.balance;
   user.balance = Number((user.balance - wdAmount).toFixed(2));
-  user.frozenBalance = Number((user.frozenBalance + wdAmount).toFixed(2));
+  user.frozenBalance = Number(((user.frozenBalance || 0) + wdAmount).toFixed(2));
 
   const txId = `WD-${Math.floor(1000 + Math.random() * 9000)}`;
 
@@ -980,9 +988,9 @@ app.post('/api/finance/withdraw', (req, res) => {
     amount: wdAmount,
     fee,
     netAmount,
-    walletAddress: walletAddress || user.walletAddress || 'TQn9Y2khEsLJW1ChV8L5H09ZNmC9aJbmSe',
-    network: network || 'TRC20',
-    status: 'Pending',
+    walletAddress: targetWallet,
+    network: cleanNetwork,
+    status: 'Pending', // STRICTLY PENDING: Must be manually approved or rejected by Admin
     createdAt: new Date().toISOString(),
     txId: `${txId}-USDT`
   };
@@ -993,20 +1001,23 @@ app.post('/api/finance/withdraw', (req, res) => {
     id: `TXN-WD-${Date.now()}`,
     userId: user.id,
     type: 'withdrawal',
+    category: 'withdrawal',
     amount: wdAmount,
     fee,
-    status: 'pending',
-    title: `Withdrawal Request (${network || 'TRC20'})`,
-    description: `Net payout: $${netAmount.toFixed(2)} (Fee: $${fee.toFixed(2)} [8%])`,
+    previousBalance,
+    newBalance: user.balance,
+    status: 'pending', // STRICTLY PENDING
+    title: `Withdrawal Request (${cleanNetwork})`,
+    description: `Net payout: $${netAmount.toFixed(2)} USDT (Fee: $${fee.toFixed(2)} [8%]). Reserved in frozen balance pending Admin review.`,
     createdAt: new Date().toISOString()
   });
 
   recalculateUserState(user.id);
-  persistDb(`Withdrawal Requested: $${wdAmount}`);
+  persistDb(`Withdrawal Requested (Pending Admin Approval): $${wdAmount} by ${user.username}`);
 
   res.json({
     success: true,
-    message: `Withdrawal request for $${wdAmount.toFixed(2)} submitted. Funds frozen pending verification.`,
+    message: `Withdrawal request for $${wdAmount.toFixed(2)} USDT submitted successfully. Funds held in frozen balance pending Admin review.`,
     withdrawal: newWd,
     user
   });
@@ -1419,6 +1430,14 @@ app.get('/api/admin/overview', requireAdminAuth, (req, res) => {
   const allUsersList = Object.values(users);
   const activeMembers = allUsersList.filter(u => u.status !== 'suspended' && (u.balance > 0 || (u.totalDeposit && u.totalDeposit > 0) || !u.isIncomePaused));
 
+  const pendingWithdrawalsCount = withdrawals.filter(w => w.status === 'Pending').length;
+  const approvedWithdrawalsCount = withdrawals.filter(w => w.status === 'Approved' || w.status === 'Completed').length;
+  const rejectedWithdrawalsCount = withdrawals.filter(w => w.status === 'Rejected').length;
+
+  const pendingDepositsCount = deposits.filter(d => d.status === 'Pending').length;
+  const approvedDepositsCount = deposits.filter(d => d.status === 'Approved' || d.status === 'Completed').length;
+  const rejectedDepositsCount = deposits.filter(d => d.status === 'Rejected').length;
+
   res.json({
     totalUsers: allUsersList.length,
     totalRegisteredMembers: allUsersList.length,
@@ -1426,15 +1445,58 @@ app.get('/api/admin/overview', requireAdminAuth, (req, res) => {
     totalTickets: tickets.length,
     activeTickets: tickets.filter(t => t.isActive).length,
     totalWithdrawals: withdrawals.length,
-    pendingWithdrawals: withdrawals.filter(w => w.status === 'Pending').length,
+    pendingWithdrawals: pendingWithdrawalsCount,
+    approvedWithdrawals: approvedWithdrawalsCount,
+    rejectedWithdrawals: rejectedWithdrawalsCount,
+    totalDeposits: deposits.length,
+    pendingDeposits: pendingDepositsCount,
+    approvedDeposits: approvedDepositsCount,
+    rejectedDeposits: rejectedDepositsCount,
     totalReferrals: referrals.length,
     validReferrals: referrals.filter(r => r.isValid).length,
-    totalPlatformBalance: allUsersList.reduce((sum, u) => sum + (u.balance || 0), 0),
-    totalPlatformAssets: allUsersList.reduce((sum, u) => sum + (u.totalAssets || (u.balance + u.frozenBalance) || 0), 0),
+    totalPlatformBalance: Number(allUsersList.reduce((sum, u) => sum + (u.balance || 0), 0).toFixed(2)),
+    totalPlatformAssets: Number(allUsersList.reduce((sum, u) => sum + (u.totalAssets || (u.balance + (u.frozenBalance || 0)) || 0), 0).toFixed(2)),
     withdrawalsList: withdrawals,
+    depositsList: deposits,
     referralsList: referrals,
     ticketsList: tickets,
     membersList: allUsersList
+  });
+});
+
+// GET All Recharge / Deposit Requests (Admin View with Summaries)
+app.get('/api/admin/deposits', requireAdminAuth, (req, res) => {
+  const pending = deposits.filter(d => d.status === 'Pending').length;
+  const approved = deposits.filter(d => d.status === 'Approved' || d.status === 'Completed').length;
+  const rejected = deposits.filter(d => d.status === 'Rejected').length;
+
+  res.json({
+    success: true,
+    deposits,
+    summary: {
+      total: deposits.length,
+      pending,
+      approved,
+      rejected
+    }
+  });
+});
+
+// GET All Withdrawal Requests (Admin View with Summaries)
+app.get('/api/admin/withdrawals', requireAdminAuth, (req, res) => {
+  const pending = withdrawals.filter(w => w.status === 'Pending').length;
+  const approved = withdrawals.filter(w => w.status === 'Approved' || w.status === 'Completed').length;
+  const rejected = withdrawals.filter(w => w.status === 'Rejected').length;
+
+  res.json({
+    success: true,
+    withdrawals,
+    summary: {
+      total: withdrawals.length,
+      pending,
+      approved,
+      rejected
+    }
   });
 });
 
@@ -1806,53 +1868,238 @@ app.post('/api/admin/members/create', requireAdminAuth, (req, res) => {
   });
 });
 
-// Admin: Process Withdrawal (Approve, Reject, Complete)
-app.post('/api/admin/withdrawals/:id/action', requireAdminAuth, (req, res) => {
+// ==========================================
+// RECHARGE & WITHDRAWAL MANUAL APPROVAL APIs
+// ==========================================
+
+// Admin: Process Recharge / Deposit Request (Approve or Reject)
+// Under NO circumstances are deposits auto-approved. Admin manual approval is mandatory.
+app.post('/api/admin/deposits/:id/action', requireAdminAuth, (req, res) => {
   const { id } = req.params;
-  const { action, rejectReason } = req.body; // 'Approve' | 'Reject' | 'Complete'
-  const wd = withdrawals.find(w => w.id === id);
+  const { action, rejectReason, adminNotes, adminOperator } = req.body; // 'Approve' | 'Reject'
+  const operatorName = adminOperator || 'SuperAdmin';
 
-  if (!wd) return res.status(404).json({ error: 'Withdrawal not found' });
+  const dep = deposits.find(d => d.id === id);
+  if (!dep) {
+    return res.status(404).json({ error: `Recharge request "${id}" not found in the platform database.` });
+  }
 
-  const user = users[wd.userId];
-  if (!user) return res.status(404).json({ error: 'Associated user not found' });
+  // Strict Idempotency Check: Prevent duplicate approvals, duplicate balance credits, or double processing
+  if (dep.status !== 'Pending') {
+    return res.status(400).json({
+      error: `Duplicate action rejected: Recharge request #${dep.id} has already been ${dep.status.toLowerCase()} on ${dep.processedAt ? new Date(dep.processedAt).toLocaleString() : 'a previous action'}.`
+    });
+  }
+
+  const user = users[dep.userId] || Object.values(users).find(u => u.username === dep.username);
+  if (!user) {
+    return res.status(404).json({ error: `Associated member account for recharge #${dep.id} was not found.` });
+  }
 
   if (action === 'Approve') {
+    dep.status = 'Approved';
+    dep.processedAt = new Date().toISOString();
+    dep.approvedBy = operatorName;
+    dep.adminNotes = adminNotes || `Approved by ${operatorName}`;
+
+    // Credit available balance NOW upon authorized Admin manual approval
+    const prevBalance = user.balance;
+    user.balance = Number((user.balance + dep.amount).toFixed(2));
+    user.totalDeposit = Number(((user.totalDeposit || 0) + dep.amount).toFixed(2));
+
+    // If account income was paused due to low balance (< $30) and now reaches $30+, restore active income status
+    if (user.isIncomePaused && (user.balance + (user.frozenBalance || 0)) >= 30) {
+      user.isIncomePaused = false;
+      user.incomePauseReason = undefined;
+    }
+
+    // Update matching pending transaction or create a completed transaction record
+    const tx = transactions.find(t => (t.id.includes(dep.id) || (t.type === 'deposit' && t.status === 'pending' && t.amount === dep.amount && t.userId === user.id)));
+    if (tx) {
+      tx.status = 'completed';
+      tx.previousBalance = prevBalance;
+      tx.newBalance = user.balance;
+      tx.adminAction = 'credit';
+      tx.adminReason = `Recharge Approved by Admin (${operatorName})`;
+      tx.adminOperator = operatorName;
+    } else {
+      transactions.unshift({
+        id: `TXN-DEP-APP-${Date.now()}`,
+        userId: user.id,
+        type: 'deposit',
+        category: 'deposit',
+        amount: dep.amount,
+        previousBalance: prevBalance,
+        newBalance: user.balance,
+        status: 'completed',
+        title: `USDT Recharge Approved (${dep.network})`,
+        description: `Recharge #${dep.id} of +$${dep.amount.toFixed(2)} USDT verified and credited by Admin.`,
+        adminAction: 'credit',
+        adminOperator: operatorName,
+        adminReason: `Manual Approval by ${operatorName}`,
+        createdAt: new Date().toISOString()
+      });
+    }
+
+    recalculateUserState(user.id);
+    persistDb(`Admin Approved Recharge: #${dep.id} (+$${dep.amount} USDT) for ${user.username}`);
+
+    return res.json({
+      success: true,
+      message: `Recharge request #${dep.id} for $${dep.amount.toFixed(2)} USDT has been successfully APPROVED and credited to ${user.username}'s available balance.`,
+      deposit: dep,
+      user
+    });
+
+  } else if (action === 'Reject') {
+    dep.status = 'Rejected';
+    dep.processedAt = new Date().toISOString();
+    dep.rejectedBy = operatorName;
+    dep.rejectReason = rejectReason || 'Administrative rejection (Payment verification unconfirmed)';
+    dep.adminNotes = adminNotes || `Rejected by ${operatorName}`;
+
+    // Available balance is NOT credited.
+    const tx = transactions.find(t => (t.id.includes(dep.id) || (t.type === 'deposit' && t.status === 'pending' && t.amount === dep.amount && t.userId === user.id)));
+    if (tx) {
+      tx.status = 'rejected';
+      tx.adminAction = 'status_change';
+      tx.adminReason = dep.rejectReason;
+      tx.adminOperator = operatorName;
+    }
+
+    recalculateUserState(user.id);
+    persistDb(`Admin Rejected Recharge: #${dep.id} ($${dep.amount} USDT) for ${user.username}`);
+
+    return res.json({
+      success: true,
+      message: `Recharge request #${dep.id} for $${dep.amount.toFixed(2)} USDT has been REJECTED.`,
+      deposit: dep,
+      user
+    });
+
+  } else {
+    return res.status(400).json({ error: 'Invalid action. Must be "Approve" or "Reject".' });
+  }
+});
+
+// Admin: Process Withdrawal (Approve, Complete, or Reject)
+// Under NO circumstances are withdrawals auto-approved. Admin manual approval is mandatory.
+app.post('/api/admin/withdrawals/:id/action', requireAdminAuth, (req, res) => {
+  const { id } = req.params;
+  const { action, rejectReason, adminNotes, adminOperator } = req.body; // 'Approve' | 'Reject' | 'Complete'
+  const operatorName = adminOperator || 'SuperAdmin';
+
+  const wd = withdrawals.find(w => w.id === id);
+  if (!wd) {
+    return res.status(404).json({ error: `Withdrawal request "${id}" not found in the platform database.` });
+  }
+
+  // Strict Idempotency Check: Prevent duplicate approval / double deduction / multiple refunds
+  if (wd.status === 'Completed' || wd.status === 'Rejected' || (action === 'Approve' && wd.status === 'Approved')) {
+    return res.status(400).json({
+      error: `Duplicate action rejected: Withdrawal request #${wd.id} has already been ${wd.status.toLowerCase()} on ${wd.processedAt ? new Date(wd.processedAt).toLocaleString() : 'a previous action'}.`
+    });
+  }
+
+  const user = users[wd.userId] || Object.values(users).find(u => u.username === wd.username);
+  if (!user) {
+    return res.status(404).json({ error: `Associated member account for withdrawal #${wd.id} was not found.` });
+  }
+
+  if (action === 'Approve' || action === 'Complete') {
     wd.status = 'Approved';
     wd.processedAt = new Date().toISOString();
-  } else if (action === 'Complete') {
-    wd.status = 'Completed';
-    wd.processedAt = new Date().toISOString();
+    wd.approvedBy = operatorName;
+    wd.adminNotes = adminNotes || `Approved by ${operatorName}`;
 
-    // Deduct permanently from frozenBalance
-    user.frozenBalance = Number(Math.max(0, user.frozenBalance - wd.amount).toFixed(2));
+    // Finalize withdrawal deduction from frozen balance permanently
+    user.frozenBalance = Number(Math.max(0, (user.frozenBalance || 0) - wd.amount).toFixed(2));
+    user.totalWithdrawal = Number(((user.totalWithdrawal || 0) + wd.amount).toFixed(2));
 
-    // Update related transaction
-    const tx = transactions.find(t => t.id.includes(wd.id) || (t.type === 'withdrawal' && t.status === 'pending'));
-    if (tx) tx.status = 'completed';
+    // Update related pending transaction to completed
+    const tx = transactions.find(t => t.id.includes(wd.id) || (t.type === 'withdrawal' && t.status === 'pending' && t.userId === user.id));
+    if (tx) {
+      tx.status = 'completed';
+      tx.adminAction = 'debit';
+      tx.adminOperator = operatorName;
+      tx.adminReason = `Withdrawal Approved and Payout Dispatched by ${operatorName}`;
+    }
 
     // If remaining total assets fall below $30, automatically pause income
+    const totalAssets = Number((user.balance + user.frozenBalance).toFixed(2));
+    if (totalAssets < 30) {
+      user.isIncomePaused = true;
+      user.incomePauseReason = 'Minimum $30.00 Account Balance Required to Work and Earn VIP Yield';
+    }
+
     recalculateUserState(user.id);
+    persistDb(`Admin Approved Withdrawal: #${wd.id} ($${wd.amount} USDT) for ${user.username}`);
+
+    return res.json({
+      success: true,
+      message: `Withdrawal request #${wd.id} for $${wd.amount.toFixed(2)} USDT has been APPROVED and finalized.`,
+      withdrawal: wd,
+      user
+    });
+
   } else if (action === 'Reject') {
     wd.status = 'Rejected';
     wd.processedAt = new Date().toISOString();
-    wd.rejectReason = rejectReason || 'Administrative rejection';
+    wd.rejectedBy = operatorName;
+    wd.rejectReason = rejectReason || 'Administrative rejection (Invalid destination address or security hold)';
+    wd.adminNotes = adminNotes || `Rejected by ${operatorName}`;
 
-    // Return frozen funds back to available balance
-    user.frozenBalance = Number(Math.max(0, user.frozenBalance - wd.amount).toFixed(2));
+    // Restore held/reserved frozen funds back to member's available balance safely
+    const prevBalance = user.balance;
+    user.frozenBalance = Number(Math.max(0, (user.frozenBalance || 0) - wd.amount).toFixed(2));
     user.balance = Number((user.balance + wd.amount).toFixed(2));
 
-    const tx = transactions.find(t => t.id.includes(wd.id) || (t.type === 'withdrawal' && t.status === 'pending'));
-    if (tx) tx.status = 'rejected';
+    // If total assets now satisfy minimum $30, unpause income if it was paused
+    if (user.isIncomePaused && (user.balance + (user.frozenBalance || 0)) >= 30) {
+      user.isIncomePaused = false;
+      user.incomePauseReason = undefined;
+    }
+
+    // Update matching pending transaction to rejected
+    const tx = transactions.find(t => t.id.includes(wd.id) || (t.type === 'withdrawal' && t.status === 'pending' && t.userId === user.id));
+    if (tx) {
+      tx.status = 'rejected';
+      tx.adminAction = 'status_change';
+      tx.adminReason = wd.rejectReason;
+      tx.adminOperator = operatorName;
+    }
+
+    // Create explicit Refund Transaction Record in member ledger
+    transactions.unshift({
+      id: `TXN-WD-REFUND-${Date.now()}`,
+      userId: user.id,
+      type: 'deposit',
+      category: 'admin_credit',
+      amount: wd.amount,
+      previousBalance: prevBalance,
+      newBalance: user.balance,
+      status: 'completed',
+      title: `Withdrawal Refund: #${wd.id}`,
+      description: `+$${wd.amount.toFixed(2)} USDT restored to available balance. Reason: ${wd.rejectReason}`,
+      adminAction: 'credit',
+      adminOperator: operatorName,
+      adminReason: `Withdrawal Rejected & Refunded: ${wd.rejectReason}`,
+      createdAt: new Date().toISOString()
+    });
 
     recalculateUserState(user.id);
+    persistDb(`Admin Rejected Withdrawal & Refunded Funds: #${wd.id} ($${wd.amount} USDT) for ${user.username}`);
+
+    return res.json({
+      success: true,
+      message: `Withdrawal request #${wd.id} for $${wd.amount.toFixed(2)} USDT has been REJECTED. Reserved funds of $${wd.amount.toFixed(2)} USDT have been safely restored to ${user.username}'s available balance.`,
+      withdrawal: wd,
+      user
+    });
+
   } else {
-    return res.status(400).json({ error: 'Invalid action' });
+    return res.status(400).json({ error: 'Invalid action. Must be "Approve" or "Reject".' });
   }
-
-  persistDb(`Admin Processed Withdrawal: ${action} #${wd.id}`);
-
-  res.json({ success: true, withdrawal: wd, user });
 });
 
 // Admin: Toggle / Review Referral Validity

@@ -63,13 +63,24 @@ export interface TeamResponse {
 
 export interface AdminOverviewResponse {
   totalUsers: number;
+  totalRegisteredMembers?: number;
+  totalActiveMembers?: number;
   totalTickets: number;
   activeTickets: number;
   totalWithdrawals: number;
   pendingWithdrawals: number;
+  approvedWithdrawals?: number;
+  rejectedWithdrawals?: number;
+  totalDeposits: number;
+  pendingDeposits: number;
+  approvedDeposits?: number;
+  rejectedDeposits?: number;
   totalReferrals: number;
   validReferrals: number;
+  totalPlatformBalance?: number;
+  totalPlatformAssets?: number;
   withdrawalsList: WithdrawalRequest[];
+  depositsList: DepositRequest[];
   referralsList: ReferralMember[];
   ticketsList: Ticket[];
 }
@@ -301,14 +312,43 @@ export const api = {
     return res.json();
   },
 
-  async processWithdrawal(id: string, action: 'Approve' | 'Reject' | 'Complete', rejectReason?: string) {
+  async processWithdrawal(id: string, action: 'Approve' | 'Reject' | 'Complete', rejectReason?: string, adminNotes?: string) {
     const res = await fetch(`/api/admin/withdrawals/${id}/action`, {
       method: 'POST',
       headers: getAdminHeaders(),
-      body: JSON.stringify({ action, rejectReason })
+      body: JSON.stringify({ action, rejectReason, adminNotes })
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to process withdrawal');
+    return data;
+  },
+
+  async processDeposit(id: string, action: 'Approve' | 'Reject', rejectReason?: string, adminNotes?: string) {
+    const res = await fetch(`/api/admin/deposits/${id}/action`, {
+      method: 'POST',
+      headers: getAdminHeaders(),
+      body: JSON.stringify({ action, rejectReason, adminNotes })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to process recharge request');
+    return data;
+  },
+
+  async getAdminDeposits(): Promise<{ success: boolean; deposits: DepositRequest[]; summary: { total: number; pending: number; approved: number; rejected: number } }> {
+    const res = await fetch('/api/admin/deposits', {
+      headers: getAdminHeaders()
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to fetch deposit requests');
+    return data;
+  },
+
+  async getAdminWithdrawals(): Promise<{ success: boolean; withdrawals: WithdrawalRequest[]; summary: { total: number; pending: number; approved: number; rejected: number } }> {
+    const res = await fetch('/api/admin/withdrawals', {
+      headers: getAdminHeaders()
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to fetch withdrawal requests');
     return data;
   },
 

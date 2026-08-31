@@ -210,14 +210,17 @@ export interface WithdrawalRequest {
   userId: string;
   username: string;
   amount: number;
-  fee: number; // 15% service fee or fixed
+  fee: number; // 8% service fee
   netAmount: number;
   walletAddress: string;
-  network: string; // 'TRC20' | 'ERC20' | 'BEP20'
-  status: 'Pending' | 'Approved' | 'Rejected' | 'Completed';
+  network: string; // 'TRC20' | 'BEP20'
+  status: 'Pending' | 'Approved' | 'Completed' | 'Rejected' | 'Cancelled';
   createdAt: string;
   processedAt?: string;
+  approvedBy?: string;
+  rejectedBy?: string;
   rejectReason?: string;
+  adminNotes?: string;
   txId: string;
 }
 
@@ -226,11 +229,16 @@ export interface DepositRequest {
   userId: string;
   username: string;
   amount: number;
-  network: string;
+  network: string; // 'TRC20' | 'BEP20'
   walletAddress: string;
   txHash?: string;
-  status: 'Pending' | 'Completed' | 'Rejected';
+  status: 'Pending' | 'Approved' | 'Completed' | 'Rejected' | 'Cancelled';
   createdAt: string;
+  processedAt?: string;
+  approvedBy?: string;
+  rejectedBy?: string;
+  rejectReason?: string;
+  adminNotes?: string;
 }
 
 export interface TaskItem {
