@@ -36,6 +36,7 @@ import {
 } from 'lucide-react';
 import { api, AdminOverviewResponse } from '../../services/api';
 import { Ticket, ReferralMember, WithdrawalRequest, BackupSnapshot, DatabaseIntegrityReport } from '../../types';
+import { MemberManagementView } from './MemberManagementView';
 
 interface AdminPortalProps {
   onBackToWebsite: () => void;
@@ -53,7 +54,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
   const [loginError, setLoginError] = useState<string | null>(null);
 
   // Admin Dashboard state
-  const [activeTab, setActiveTab] = useState<'withdrawals' | 'referrals' | 'tickets' | 'notices' | 'telegram' | 'metrics' | 'backups'>('withdrawals');
+  const [activeTab, setActiveTab] = useState<'members' | 'withdrawals' | 'referrals' | 'tickets' | 'notices' | 'telegram' | 'metrics' | 'backups'>('members');
   const [overview, setOverview] = useState<AdminOverviewResponse | null>(null);
   const [dataLoading, setDataLoading] = useState(false);
   const [actionMsg, setActionMsg] = useState<{ text: string; isError?: boolean } | null>(null);
@@ -585,13 +586,14 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
         {/* Tab Navigation */}
         <div className="flex flex-wrap items-center gap-2 border-b border-neutral-800 pb-3">
           {[
+            { id: 'members', label: 'Member Management', count: overview?.totalRegisteredMembers || overview?.totalUsers, highlight: true },
             { id: 'withdrawals', label: 'Withdrawal Approvals', count: overview?.pendingWithdrawals },
             { id: 'referrals', label: 'Referral Compliance', count: overview?.totalReferrals },
             { id: 'tickets', label: 'Concert & Ticket Hub', count: overview?.totalTickets },
             { id: 'notices', label: '24h Announcements' },
             { id: 'telegram', label: 'Telegram CS Settings' },
             { id: 'metrics', label: 'VIP Engine Metrics' },
-            { id: 'backups', label: 'Data Protection & Backups', count: backups.length || undefined, highlight: true }
+            { id: 'backups', label: 'Data Protection & Backups', count: backups.length || undefined, highlight: false }
           ].map((tab) => (
             <button
               key={tab.id}
@@ -604,13 +606,14 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
               className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                 activeTab === tab.id
                   ? tab.highlight 
-                    ? 'bg-emerald-400 text-black shadow-md shadow-emerald-500/20'
+                    ? 'bg-amber-400 text-slate-950 shadow-md shadow-amber-500/20'
                     : 'bg-[#00D26A] text-black shadow-md shadow-[#00D26A]/20'
                   : tab.highlight
-                    ? 'bg-emerald-950/40 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-900/60'
+                    ? 'bg-amber-950/40 text-amber-300 border border-amber-500/40 hover:bg-amber-900/60'
                     : 'bg-neutral-900 text-neutral-400 hover:text-white border border-neutral-800'
               }`}
             >
+              {tab.id === 'members' && <Users size={13} />}
               {tab.id === 'backups' && <Database size={13} />}
               <span>{tab.label}</span>
               {tab.count !== undefined && (
@@ -625,6 +628,11 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
             </button>
           ))}
         </div>
+
+        {/* TAB 0: MEMBER MANAGEMENT */}
+        {activeTab === 'members' && (
+          <MemberManagementView onRefreshOverview={loadDashboardData} />
+        )}
 
         {/* TAB 1: WITHDRAWALS */}
         {activeTab === 'withdrawals' && (

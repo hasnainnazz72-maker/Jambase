@@ -13,7 +13,9 @@ import {
   ReferralMember,
   PlatformNotice,
   BackupSnapshot,
-  DatabaseIntegrityReport
+  DatabaseIntegrityReport,
+  AdminMemberSummary,
+  AdminMemberDetail
 } from '../types';
 
 export interface IncomeResponse {
@@ -198,7 +200,7 @@ export const api = {
   },
 
   async calculateDailyIncome(): Promise<{ success: boolean; message: string; record: IncomeRecord; user: User }> {
-    const res = await fetch('/api/tickets/claim-profit', {
+    const res = await fetch('/api/income/claim-daily-vip', {
       method: 'POST'
     });
     const data = await res.json();
@@ -206,12 +208,21 @@ export const api = {
     return data;
   },
 
-  async claimDailyTicketProfit(): Promise<{ success: boolean; message: string; totalCredited: number; totalProfit: number; totalPrincipal: number; user: User }> {
-    const res = await fetch('/api/tickets/claim-profit', {
+  async claimDailyVipIncome(): Promise<{ success: boolean; message: string; totalCredited: number; totalProfit: number; baseBalance: number; appliedRate: number; vipLevel: number; newBalance: number; user: User }> {
+    const res = await fetch('/api/income/claim-daily-vip', {
       method: 'POST'
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to claim daily ticket profit');
+    if (!res.ok) throw new Error(data.error || 'Failed to claim daily VIP income');
+    return data;
+  },
+
+  async claimDailyTicketProfit(): Promise<{ success: boolean; message: string; totalCredited: number; totalProfit: number; baseBalance?: number; totalPrincipal?: number; user: User }> {
+    const res = await fetch('/api/income/claim-daily-vip', {
+      method: 'POST'
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to claim daily profit');
     return data;
   },
 
@@ -488,6 +499,100 @@ export const api = {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to import database backup');
+    return data;
+  },
+
+  // ==========================================
+  // MEMBER MANAGEMENT ADMIN APIs
+  // ==========================================
+
+  async getAdminMembers(): Promise<{ success: boolean; summary: AdminMemberSummary; members: User[] }> {
+    const res = await fetch('/api/admin/members', {
+      headers: getAdminHeaders()
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to fetch members list');
+    return data;
+  },
+
+  async getAdminMemberDetail(userId: string): Promise<AdminMemberDetail> {
+    const res = await fetch(`/api/admin/members/${userId}`, {
+      headers: getAdminHeaders()
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to fetch member details');
+    return data;
+  },
+
+  async adjustMemberBalance(
+    userId: string,
+    params: { action: 'add' | 'deduct'; amount: number; reason?: string; type?: string; adminOperator?: string }
+  ): Promise<{ success: boolean; message: string; user: User; transaction: Transaction }> {
+    const res = await fetch(`/api/admin/members/${userId}/balance`, {
+      method: 'POST',
+      headers: getAdminHeaders(),
+      body: JSON.stringify(params)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to adjust member balance');
+    return data;
+  },
+
+  async resetMemberPassword(
+    userId: string,
+    params: { newPassword: string; adminReason?: string }
+  ): Promise<{ success: boolean; message: string; newPassword: string; user: User }> {
+    const res = await fetch(`/api/admin/members/${userId}/reset-password`, {
+      method: 'POST',
+      headers: getAdminHeaders(),
+      body: JSON.stringify(params)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to reset member password');
+    return data;
+  },
+
+  async updateMemberStatus(
+    userId: string,
+    params: {
+      status?: 'active' | 'suspended' | 'frozen';
+      isIncomePaused?: boolean;
+      incomePauseReason?: string;
+      vipLevel?: number;
+      walletAddress?: string;
+      phone?: string;
+      adminNotes?: string;
+    }
+  ): Promise<{ success: boolean; message: string; user: User }> {
+    const res = await fetch(`/api/admin/members/${userId}/status`, {
+      method: 'POST',
+      headers: getAdminHeaders(),
+      body: JSON.stringify(params)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to update member status');
+    return data;
+  },
+
+  async createAdminMember(memberData: {
+    username: string;
+    email?: string;
+    phone?: string;
+    password?: string;
+    initialBalance?: number;
+    vipLevel?: number;
+    walletAddress?: string;
+    referralCode?: string;
+    referredBy?: string;
+    adminNotes?: string;
+  }): Promise<{ success: boolean; message: string; user: User; generatedPassword?: string }> {
+    const res = await fetch('/api/admin/members/create', {
+      method: 'POST',
+      headers: getAdminHeaders(),
+      body: JSON.stringify(memberData)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to create member');
     return data;
   }
 };

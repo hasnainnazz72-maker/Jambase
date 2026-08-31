@@ -153,16 +153,18 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
         <h1 className="text-base font-extrabold tracking-wide mx-auto">{t('income.title', 'My income')}</h1>
       </div>
 
-      {/* 2. 2-MINUTE FAST RETURN & DAILY SETTLEMENT CARD */}
-      <div className="p-5 rounded-3xl bg-gradient-to-br from-[#0e2118] via-[#10141b] to-[#0d0e12] border-2 border-[#00D26A]/40 shadow-2xl relative overflow-hidden space-y-3.5">
+      {/* 2. DAILY VIP COMPOUND PROFIT & UTC INCOME GENERATOR */}
+      <div className="p-5 rounded-3xl bg-gradient-to-br from-[#0e2118] via-[#10141b] to-[#0d0e12] border-2 border-[#00D26A]/40 shadow-2xl relative overflow-hidden space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <span className="w-9 h-9 rounded-xl bg-[#00D26A] text-black flex items-center justify-center font-extrabold shadow-lg shadow-[#00D26A]/30">
-              <Zap size={20} />
+              <Sparkles size={20} />
             </span>
             <div>
-              <h3 className="text-sm font-extrabold text-white">2-Minute Ticket Return</h3>
-              <p className="text-[11px] text-emerald-400 font-medium">Investment + VIP Profit return in 2 minutes</p>
+              <h3 className="text-sm font-extrabold text-white">Daily VIP Compound Profit</h3>
+              <p className="text-[11px] text-emerald-400 font-medium">
+                Earned once a day on Available Balance • VIP {user?.vipLevel || 1}
+              </p>
             </div>
           </div>
           <div className="text-right">
@@ -173,92 +175,93 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
           </div>
         </div>
 
-        {/* 2-Min Rule Banner */}
-        <div className="p-3 rounded-2xl bg-emerald-950/40 border border-emerald-800/40 text-xs text-emerald-300 space-y-1">
+        {/* Compound Profit Explanation Banner */}
+        <div className="p-3 rounded-2xl bg-emerald-950/40 border border-emerald-800/40 text-xs text-emerald-300 space-y-1.5">
           <div className="flex items-center gap-1.5 font-bold text-[#00D26A]">
-            <Timer size={14} />
-            <span>2-Minute Settlement Guarantee:</span>
+            <Zap size={14} />
+            <span>Daily Compounding Rules:</span>
           </div>
-          <p className="text-[11px] text-neutral-300 leading-relaxed">
-            When you buy tickets, both your <strong>Investment Amount</strong> and <strong>VIP Yield Profit</strong> automatically return directly into your <strong>Available Balance</strong> after 2 minutes!
-          </p>
+          <ul className="text-[11px] text-neutral-300 space-y-1 list-disc list-inside leading-relaxed">
+            <li>Profit is calculated strictly on your <strong>Available Balance (${availableBalance.toFixed(2)})</strong>.</li>
+            <li>Earned once every 24 hours — cycle resets daily at <strong>00:00:00 UTC</strong>.</li>
+            <li>As your balance grows every day, your daily profit compounds automatically!</li>
+          </ul>
         </div>
 
-        {/* Daily Ticket Balance Usage Meter */}
-        <div className="p-3.5 rounded-2xl bg-black/40 border border-neutral-800/90 space-y-2">
-          <div className="flex justify-between items-center text-xs">
-            <span className="text-neutral-300 font-medium">Daily Ticket Balance Quota</span>
-            <span className="text-white font-bold font-mono">
-              ${spentToday.toFixed(2)} / ${startingDailyBalance.toFixed(2)} used
-            </span>
-          </div>
-          {/* Progress Bar */}
-          <div className="w-full h-2.5 rounded-full bg-neutral-800 overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-emerald-500 to-[#00D26A] rounded-full transition-all duration-500"
-              style={{ width: `${dailyUsagePercent}%` }}
-            />
-          </div>
-          <div className="flex justify-between items-center text-[11px] text-neutral-400">
-            <span>Remaining for tickets today: <strong className="text-[#00D26A]">${remainingTicketBalance.toFixed(2)}</strong></span>
-            <span className="text-[10px] text-neutral-500">{dailyUsagePercent}% spent</span>
-          </div>
-          <p className="text-[10px] text-neutral-400 pt-1 border-t border-neutral-800/60 leading-relaxed">
-            💡 You can buy tickets gradually ($10, $20, $50, etc.) throughout this day until your full daily balance is used. Resets at 00:00 UTC.
-          </p>
-        </div>
+        {/* Live Calculation Preview */}
+        {(() => {
+          const rate = user?.vipLevel === 2 ? 0.025 : user?.vipLevel === 3 ? 0.03 : user?.vipLevel === 4 ? 0.04 : user?.vipLevel === 5 ? 0.05 : user?.vipLevel === 6 ? 0.06 : 0.019;
+          const expectedDailyProfit = Number((availableBalance * rate).toFixed(2));
+          const compoundedNewBalance = Number((availableBalance + expectedDailyProfit).toFixed(2));
 
-        {/* Active Purchased Tickets Stats */}
-        <div className="grid grid-cols-2 gap-2 p-3 rounded-2xl bg-neutral-900/90 border border-neutral-800 text-xs">
-          <div>
-            <span className="text-[11px] text-neutral-400 block">Processing Investment</span>
-            <span className="text-base font-extrabold text-white font-mono">${todayPurchasedAmount.toFixed(2)}</span>
-            <span className="text-[10px] text-neutral-500 block">{activePurchases.length} active order(s)</span>
-          </div>
-          <div>
-            <span className="text-[11px] text-neutral-400 block">VIP Yield Profit</span>
-            <span className="text-base font-extrabold text-[#00D26A] font-mono">+${todayTicketProfit.toFixed(2)} USDT</span>
-            <span className="text-[10px] text-[#00D26A]/80 block">VIP {user?.vipLevel || 1} Rate</span>
-          </div>
-        </div>
+          return (
+            <div className="p-3.5 rounded-2xl bg-black/40 border border-neutral-800/90 space-y-2.5 text-xs">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <span className="text-[11px] text-neutral-400 block">Available Balance:</span>
+                  <span className="text-base font-extrabold text-white font-mono">${availableBalance.toFixed(2)} USDT</span>
+                </div>
+                <div>
+                  <span className="text-[11px] text-neutral-400 block">VIP {user?.vipLevel || 1} Daily Yield:</span>
+                  <span className="text-base font-extrabold text-[#00D26A] font-mono">
+                    +${expectedDailyProfit.toFixed(2)} USDT <span className="text-xs text-emerald-400">({(rate * 100).toFixed(1)}%)</span>
+                  </span>
+                </div>
+              </div>
 
-        {/* Action Controls */}
+              <div className="pt-2 border-t border-neutral-800/70 flex justify-between items-center text-[11px] text-neutral-400">
+                <span>Daily claim status:</span>
+                {isClaimedToday ? (
+                  <span className="text-emerald-400 font-bold flex items-center gap-1">
+                    <CheckCircle2 size={13} /> Claimed for UTC {todayUtc}
+                  </span>
+                ) : availableBalance < 30 ? (
+                  <span className="text-amber-400 font-bold">Min $30.00 Balance Required</span>
+                ) : (
+                  <span className="text-[#00D26A] font-bold">Ready to Claim Today</span>
+                )}
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Action Button: Claim Once Per Day */}
         <div>
-          {activePurchases.length > 0 ? (
+          {isClaimedToday ? (
+            <div className="p-3.5 rounded-2xl bg-black/60 border border-emerald-900/60 text-center space-y-1">
+              <div className="text-xs font-bold text-[#00D26A] flex items-center justify-center gap-1.5">
+                <CheckCircle2 size={15} />
+                <span>Today's VIP Profit Already Claimed!</span>
+              </div>
+              <p className="text-[10px] text-neutral-400">
+                Next compound profit claim unlocks at <strong>00:00:00 UTC</strong> (in {utcCountdown}).
+              </p>
+            </div>
+          ) : availableBalance < 30 ? (
             <div className="space-y-2">
+              <div className="p-3 rounded-2xl bg-amber-950/30 border border-amber-800/40 text-xs text-amber-300 text-center">
+                Available balance is below $30.00. Recharge to unlock daily VIP income.
+              </div>
               <button
-                onClick={handleManualSettle}
-                disabled={claiming}
-                id="btn-settle-tickets"
-                className="w-full py-3.5 rounded-2xl bg-[#00D26A] hover:bg-[#00e875] text-black font-extrabold text-sm shadow-lg shadow-[#00D26A]/30 flex items-center justify-center gap-2 transition-all active:scale-[0.99]"
+                onClick={() => onNavigateTab('finance')}
+                className="w-full py-3 rounded-2xl bg-[#00D26A] hover:bg-[#00e875] text-black font-extrabold text-xs shadow-lg shadow-[#00D26A]/30 flex items-center justify-center gap-2"
               >
-                <RefreshCw size={17} className={claiming ? "animate-spin" : ""} />
-                <span>
-                  {claiming ? 'Updating...' : `Check & Settle Active Orders (+$${todayTicketProfit.toFixed(2)} USDT)`}
-                </span>
-              </button>
-              <button
-                onClick={handleClaimProfit}
-                disabled={claiming}
-                className="w-full py-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-semibold text-xs flex items-center justify-center gap-2"
-              >
-                <Gift size={15} />
-                <span>Claim All Accumulated Yield</span>
+                <span>Recharge Account</span>
+                <ArrowUpRight size={14} />
               </button>
             </div>
           ) : (
-            <div className="flex items-center justify-between p-3 rounded-2xl bg-black/50 border border-neutral-800 text-xs">
-              <span className="text-neutral-400">
-                Available: <strong className="text-[#00D26A]">${availableBalance.toFixed(2)}</strong>
+            <button
+              onClick={handleClaimProfit}
+              disabled={claiming}
+              id="btn-claim-daily-profit"
+              className="w-full py-3.5 rounded-2xl bg-[#00D26A] hover:bg-[#00e875] text-black font-extrabold text-sm shadow-lg shadow-[#00D26A]/30 flex items-center justify-center gap-2 transition-all active:scale-[0.99] animate-pulse"
+            >
+              <Sparkles size={17} className={claiming ? "animate-spin" : ""} />
+              <span>
+                {claiming ? 'Processing Compound Profit...' : `Claim Today's VIP Profit (+${((user?.vipLevel === 2 ? 0.025 : user?.vipLevel === 3 ? 0.03 : user?.vipLevel === 4 ? 0.04 : user?.vipLevel === 5 ? 0.05 : user?.vipLevel === 6 ? 0.06 : 0.019) * 100).toFixed(1)}%)`}
               </span>
-              <button
-                onClick={() => onNavigateTab('home')}
-                className="px-3.5 py-1.5 rounded-xl bg-[#00D26A] hover:bg-[#00e875] text-black font-extrabold text-xs flex items-center gap-1"
-              >
-                <span>Buy Concert Ticket</span>
-                <ArrowUpRight size={13} />
-              </button>
-            </div>
+            </button>
           )}
         </div>
 
@@ -275,6 +278,49 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
             <span>{claimMsg.text}</span>
           </div>
         )}
+
+        {/* Compounding Growth Simulator Table */}
+        <div className="pt-2 border-t border-neutral-800/80">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-bold text-neutral-300 flex items-center gap-1">
+              <Sparkles size={12} className="text-[#00D26A]" /> Compounding Balance Projection
+            </span>
+            <span className="text-[10px] text-neutral-500">Based on ${(availableBalance || 100).toFixed(2)} Balance</span>
+          </div>
+          {(() => {
+            const base = availableBalance > 0 ? availableBalance : 100;
+            const rate = user?.vipLevel === 2 ? 0.025 : user?.vipLevel === 3 ? 0.03 : user?.vipLevel === 4 ? 0.04 : user?.vipLevel === 5 ? 0.05 : user?.vipLevel === 6 ? 0.06 : 0.019;
+            const day1 = base * (1 + rate);
+            const day3 = base * Math.pow(1 + rate, 3);
+            const day7 = base * Math.pow(1 + rate, 7);
+            const day30 = base * Math.pow(1 + rate, 30);
+
+            return (
+              <div className="grid grid-cols-4 gap-1.5 text-center text-[10px]">
+                <div className="p-2 rounded-xl bg-black/40 border border-neutral-800/80">
+                  <span className="text-neutral-400 block text-[9px]">Day 1</span>
+                  <span className="font-bold text-white block">${day1.toFixed(2)}</span>
+                  <span className="text-[#00D26A] text-[9px]">+${(day1 - base).toFixed(2)}</span>
+                </div>
+                <div className="p-2 rounded-xl bg-black/40 border border-neutral-800/80">
+                  <span className="text-neutral-400 block text-[9px]">Day 3</span>
+                  <span className="font-bold text-white block">${day3.toFixed(2)}</span>
+                  <span className="text-[#00D26A] text-[9px]">+${(day3 - base).toFixed(2)}</span>
+                </div>
+                <div className="p-2 rounded-xl bg-black/40 border border-neutral-800/80">
+                  <span className="text-neutral-400 block text-[9px]">Day 7</span>
+                  <span className="font-bold text-white block">${day7.toFixed(2)}</span>
+                  <span className="text-[#00D26A] text-[9px]">+${(day7 - base).toFixed(2)}</span>
+                </div>
+                <div className="p-2 rounded-xl bg-black/40 border border-emerald-900/40 bg-emerald-950/20">
+                  <span className="text-emerald-400 font-bold block text-[9px]">Day 30</span>
+                  <span className="font-extrabold text-[#00D26A] block">${day30.toFixed(2)}</span>
+                  <span className="text-emerald-300 text-[9px]">+${(day30 - base).toFixed(2)}</span>
+                </div>
+              </div>
+            );
+          })()}
+        </div>
       </div>
 
       {/* 3. DONUT CHART & ASSET SUMMARY */}

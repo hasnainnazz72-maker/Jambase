@@ -19,12 +19,14 @@ export interface User {
   avatar: string;
   phone?: string;
   walletAddress?: string;
+  network?: string; // 'TRC20' | 'BEP20'
   balance: number; // Available balance
   frozenBalance: number; // In pending withdrawals or active locks
   totalAssets: number; // balance + frozenBalance
   vipLevel: number;
   referralCode: string;
   referredBy?: string;
+  status?: 'active' | 'suspended' | 'frozen';
   validDirectMembersCount: number;
   totalTeamMembersCount: number;
   totalTeamDeposit: number;
@@ -39,12 +41,20 @@ export interface User {
   todayTicketIncome: number;
   todayConcertIncome: number;
   todayFinancialIncome: number;
+  totalDeposit?: number;
+  totalWithdrawal?: number;
+  totalPurchases?: number;
   recordExpenditure: number;
   concertExpenditure: number;
   financialExpenditure: number;
   lastIncomeCalculatedAt?: string;
   lastAttendanceClaimDate?: string;
   lastProfitClaimDate?: string;
+  lastDailyIncomeDate?: string;
+  lastLoginAt?: string;
+  lastActiveAt?: string;
+  passwordHint?: string;
+  adminNotes?: string;
   claimedTaskIds?: string[];
   attendanceStreak?: number;
   dailyTicketDate?: string; // Current UTC date for ticket cycle e.g. "2026-08-31"
@@ -146,7 +156,7 @@ export interface Transaction {
   id: string;
   userId: string;
   type: TransactionType;
-  category?: 'vip_profit' | 'team_commission' | 'deposit' | 'withdrawal' | 'ticket_purchase' | 'task_reward';
+  category?: 'vip_profit' | 'team_commission' | 'deposit' | 'withdrawal' | 'ticket_purchase' | 'task_reward' | 'admin_credit' | 'admin_debit';
   amount: number;
   fee?: number;
   status: 'pending' | 'completed' | 'rejected' | 'failed';
@@ -157,7 +167,42 @@ export interface Transaction {
   commissionTier?: 1 | 2 | 3;
   sourceMemberName?: string;
   txHash?: string;
+  adminAction?: 'credit' | 'debit' | 'adjustment' | 'bonus' | 'status_change';
+  adminReason?: string;
+  adminOperator?: string;
+  actionType?: string;
+  previousBalance?: number;
+  newBalance?: number;
   createdAt: string;
+}
+
+export interface AdminMemberSummary {
+  totalRegistered: number;
+  totalActive: number;
+  totalSuspended: number;
+  totalFrozen: number;
+  totalIncomePaused: number;
+  totalPlatformBalance: number;
+  totalPlatformFrozen: number;
+  totalPlatformAssets: number;
+  vipDistribution: {
+    vip1: number;
+    vip2: number;
+    vip3: number;
+    vip4: number;
+    vip5: number;
+    vip6: number;
+  };
+}
+
+export interface AdminMemberDetail {
+  user: User;
+  transactions: Transaction[];
+  incomeRecords: IncomeRecord[];
+  purchases: TicketPurchase[];
+  referrals: ReferralMember[];
+  withdrawals: WithdrawalRequest[];
+  deposits: DepositRequest[];
 }
 
 export interface WithdrawalRequest {
