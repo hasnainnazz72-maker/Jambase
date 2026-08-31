@@ -1,0 +1,6 @@
+{
+  "name": "JAMBASE",
+  "description": "Mobile-first music and event ticket marketplace with tiered VIP daily income, automated referral qualifying, finance and task hub.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,595 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { FileText, Sparkles, RefreshCw, AlertCircle, ChevronRight, CheckCircle2, DollarSign, Clock, Ticket, ArrowUpRight, Gift, Timer, Zap } from 'lucide-react';
+import confetti from 'canvas-confetti';
+import { IncomeResponse, api } from '../../services/api';
+import { User, TicketPurchase } from '../../types';
+import { useLanguage } from '../../i18n/LanguageContext';
+
+interface IncomeViewProps {
+  incomeData: IncomeResponse | null;
+  purchases: TicketPurchase[];
+  onRefresh: () => void;
+  onNavigateTab: (tab: any) => void;
+}
+
+export const IncomeView: React.FC<IncomeViewProps> = ({
+  incomeData,
+  purchases,
+  onRefresh,
+  onNavigateTab
+}) => {
+  const { t } = useLanguage();
+  const [claiming, setClaiming] = useState(false);
+  const [claimMsg, setClaimMsg] = useState<{ text: string; isError?: boolean } | null>(null);
+  const [utcCountdown, setUtcCountdown] = useState('');
+  const [nowTime, setNowTime] = useState<number>(Date.now());
+
+  const user = incomeData?.user;
+  const summary = incomeData?.summary;
+  const records = incomeData?.records || [];
+
+  const totalAssets = summary?.totalAssets ?? 0;
+  const availableBalance = summary?.availableBalance ?? 0;
+  const frozenAssets = summary?.frozenAssets ?? 0;
+
+  const startingDailyBalance = incomeData?.dailyTicketStartingBalance ?? (availableBalance + (incomeData?.dailyTicketSpent || 0));
+  const spentToday = incomeData?.dailyTicketSpent ?? (user?.dailyTicketSpent || 0);
+  const remainingTicketBalance = Math.max(0, Number((startingDailyBalance - spentToday).toFixed(2)));
+  const dailyUsagePercent = startingDailyBalance > 0 ? Math.min(100, Math.round((spentToday / startingDailyBalance) * 100)) : 0;
+
+  // Percentage calculations for donut chart
+  const availablePercent = totalAssets > 0 ? Math.round((availableBalance / totalAssets) * 100) : 100;
+
+  // Active / Frozen ticket purchases
+  const activePurchases = purchases.filter(p => p.status === 'active' || p.status === 'frozen');
+  const todayPurchasedAmount = activePurchases.reduce((sum, p) => sum + p.totalAmount, 0);
+  const todayTicketProfit = Number(activePurchases.reduce((sum, p) => sum + (p.profitAmount || 0), 0).toFixed(2));
+
+  const todayUtc = new Date().toISOString().slice(0, 10);
+  const isClaimedToday = user?.lastProfitClaimDate === todayUtc;
+
+  // Auto-settle handler
+  const handleAutoSettle = useCallback(async () => {
+    try {
+      const res = await api.settleTickets();
+      if (res.settled) {
+        confetti({
+          particleCount: 80,
+          spread: 60,
+          origin: { y: 0.6 }
+        });
+        setClaimMsg({
+          text: '🎉 2-Minute Task Completed! Both Investment and VIP Profit have been returned to your Available Balance.'
+        });
+        onRefresh();
+      }
+    } catch {}
+  }, [onRefresh]);
+
+  // Live 1-second timer ticker for 2-min countdown and UTC countdown
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const current = Date.now();
+      setNowTime(current);
+
+      // UTC Countdown
+      const now = new Date();
+      const nextUtc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0));
+      const diffMs = nextUtc.getTime() - now.getTime();
+      const hours = Math.floor(diffMs / (1000 * 60 * 60));
+      const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+      const secs = Math.floor((diffMs % (1000 * 60)) / 1000);
+      setUtcCountdown(`${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`);
+
+      // Check if any active/frozen ticket has reached 0
+      const hasReadyTicket = activePurchases.some(p => {
+        if (p.status === 'frozen' && p.frozenUntil) {
+          return current >= new Date(p.frozenUntil).getTime();
+        }
+        return false;
+      });
+
+      if (hasReadyTicket) {
+        handleAutoSettle();
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [activePurchases, handleAutoSettle]);
+
+  const handleClaimProfit = async () => {
+    if (claiming) return;
+    setClaiming(true);
+    setClaimMsg(null);
+
+    try {
+      const res = await api.claimDailyTicketProfit();
+      confetti({
+        particleCount: 90,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
+      setClaimMsg({
+        text: res.message || `Successfully claimed $${res.totalProfit.toFixed(2)} USDT profit!`
+      });
+      onRefresh();
+    } catch (err: any) {
+      setClaimMsg({
+        text: err.message || 'Failed to claim ticket profit',
+        isError: true
+      });
+    } finally {
+      setClaiming(false);
+    }
+  };
+
+  const handleManualSettle = async () => {
+    setClaiming(true);
+    try {
+      const res = await api.settleTickets();
+      confetti({
+        particleCount: 70,
+        spread: 60,
+        origin: { y: 0.6 }
+      });
+      setClaimMsg({
+        text: 'Checked and updated ticket balances successfully!'
+      });
+      onRefresh();
+    } catch (err: any) {
+      setClaimMsg({
+        text: err.message || 'Failed to settle tickets',
+        isError: true
+      });
+    } finally {
+      setClaiming(false);
+    }
+  };
+
+  return (
+    <div id="my-income-view" className="pb-28 space-y-4">
+      {/* 1. TOP GREEN HEADER BAR */}
+      <div className="-mx-4 -mt-3 mb-2 bg-[#00D26A] text-black px-4 py-3.5 shadow-md flex items-center justify-between">
+        <h1 className="text-base font-extrabold tracking-wide mx-auto">{t('income.title', 'My income')}</h1>
+      </div>
+
+      {/* 2. 2-MINUTE FAST RETURN & DAILY SETTLEMENT CARD */}
+      <div className="p-5 rounded-3xl bg-gradient-to-br from-[#0e2118] via-[#10141b] to-[#0d0e12] border-2 border-[#00D26A]/40 shadow-2xl relative overflow-hidden space-y-3.5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <span className="w-9 h-9 rounded-xl bg-[#00D26A] text-black flex items-center justify-center font-extrabold shadow-lg shadow-[#00D26A]/30">
+              <Zap size={20} />
+            </span>
+            <div>
+              <h3 className="text-sm font-extrabold text-white">2-Minute Ticket Return</h3>
+              <p className="text-[11px] text-emerald-400 font-medium">Investment + VIP Profit return in 2 minutes</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <span className="text-[10px] text-neutral-400 block font-mono">UTC Reset in</span>
+            <span className="text-xs font-mono font-bold text-[#00D26A] flex items-center gap-1 justify-end">
+              <Clock size={11} /> {utcCountdown}
+            </span>
+          </div>
+        </div>
+
+        {/* 2-Min Rule Banner */}
+        <div className="p-3 rounded-2xl bg-emerald-950/40 border border-emerald-800/40 text-xs text-emerald-300 space-y-1">
+          <div className="flex items-center gap-1.5 font-bold text-[#00D26A]">
+            <Timer size={14} />
+            <span>2-Minute Settlement Guarantee:</span>
+          </div>
+          <p className="text-[11px] text-neutral-300 leading-relaxed">
+            When you buy tickets, both your <strong>Investment Amount</strong> and <strong>VIP Yield Profit</strong> automatically return directly into your <strong>Available Balance</strong> after 2 minutes!
+          </p>
+        </div>
+
+        {/* Daily Ticket Balance Usage Meter */}
+        <div className="p-3.5 rounded-2xl bg-black/40 border border-neutral-800/90 space-y-2">
+          <div className="flex justify-between items-center text-xs">
+            <span className="text-neutral-300 font-medium">Daily Ticket Balance Quota</span>
+            <span className="text-white font-bold font-mono">
+              ${spentToday.toFixed(2)} / ${startingDailyBalance.toFixed(2)} used
+            </span>
+          </div>
+          {/* Progress Bar */}
+          <div className="w-full h-2.5 rounded-full bg-neutral-800 overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-emerald-500 to-[#00D26A] rounded-full transition-all duration-500"
+              style={{ width: `${dailyUsagePercent}%` }}
+            />
+          </div>
+          <div className="flex justify-between items-center text-[11px] text-neutral-400">
+            <span>Remaining for tickets today: <strong className="text-[#00D26A]">${remainingTicketBalance.toFixed(2)}</strong></span>
+            <span className="text-[10px] text-neutral-500">{dailyUsagePercent}% spent</span>
+          </div>
+          <p className="text-[10px] text-neutral-400 pt-1 border-t border-neutral-800/60 leading-relaxed">
+            💡 You can buy tickets gradually ($10, $20, $50, etc.) throughout this day until your full daily balance is used. Resets at 00:00 UTC.
+          </p>
+        </div>
+
+        {/* Active Purchased Tickets Stats */}
+        <div className="grid grid-cols-2 gap-2 p-3 rounded-2xl bg-neutral-900/90 border border-neutral-800 text-xs">
+          <div>
+            <span className="text-[11px] text-neutral-400 block">Processing Investment</span>
+            <span className="text-base font-extrabold text-white font-mono">${todayPurchasedAmount.toFixed(2)}</span>
+            <span className="text-[10px] text-neutral-500 block">{activePurchases.length} active order(s)</span>
+          </div>
+          <div>
+            <span className="text-[11px] text-neutral-400 block">VIP Yield Profit</span>
+            <span className="text-base font-extrabold text-[#00D26A] font-mono">+${todayTicketProfit.toFixed(2)} USDT</span>
+            <span className="text-[10px] text-[#00D26A]/80 block">VIP {user?.vipLevel || 1} Rate</span>
+          </div>
+        </div>
+
+        {/* Action Controls */}
+        <div>
+          {activePurchases.length > 0 ? (
+            <div className="space-y-2">
+              <button
+                onClick={handleManualSettle}
+                disabled={claiming}
+                id="btn-settle-tickets"
+                className="w-full py-3.5 rounded-2xl bg-[#00D26A] hover:bg-[#00e875] text-black font-extrabold text-sm shadow-lg shadow-[#00D26A]/30 flex items-center justify-center gap-2 transition-all active:scale-[0.99]"
+              >
+                <RefreshCw size={17} className={claiming ? "animate-spin" : ""} />
+                <span>
+                  {claiming ? 'Updating...' : `Check & Settle Active Orders (+$${todayTicketProfit.toFixed(2)} USDT)`}
+                </span>
+              </button>
+              <button
+                onClick={handleClaimProfit}
+                disabled={claiming}
+                className="w-full py-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-semibold text-xs flex items-center justify-center gap-2"
+              >
+                <Gift size={15} />
+                <span>Claim All Accumulated Yield</span>
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between p-3 rounded-2xl bg-black/50 border border-neutral-800 text-xs">
+              <span className="text-neutral-400">
+                Available: <strong className="text-[#00D26A]">${availableBalance.toFixed(2)}</strong>
+              </span>
+              <button
+                onClick={() => onNavigateTab('home')}
+                className="px-3.5 py-1.5 rounded-xl bg-[#00D26A] hover:bg-[#00e875] text-black font-extrabold text-xs flex items-center gap-1"
+              >
+                <span>Buy Concert Ticket</span>
+                <ArrowUpRight size={13} />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Notice feedback */}
+        {claimMsg && (
+          <div
+            className={`p-3 rounded-2xl text-xs flex items-center gap-2 ${
+              claimMsg.isError
+                ? 'bg-red-500/15 text-red-300 border border-red-500/30'
+                : 'bg-[#00D26A]/15 text-[#00D26A] border border-[#00D26A]/30'
+            }`}
+          >
+            {claimMsg.isError ? <AlertCircle size={15} /> : <CheckCircle2 size={15} />}
+            <span>{claimMsg.text}</span>
+          </div>
+        )}
+      </div>
+
+      {/* 3. DONUT CHART & ASSET SUMMARY */}
+      <div className="bg-[#12131a] rounded-2xl border border-neutral-800 p-4">
+        <div className="flex items-center justify-between gap-4">
+          {/* Donut Ring Visual */}
+          <div className="relative w-28 h-28 shrink-0 flex items-center justify-center">
+            <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+              <circle
+                cx="50"
+                cy="50"
+                r="38"
+                fill="transparent"
+                stroke="#262730"
+                strokeWidth="12"
+              />
+              <circle
+                cx="50"
+                cy="50"
+                r="38"
+                fill="transparent"
+                stroke="#00D26A"
+                strokeWidth="12"
+                strokeDasharray={`${(availablePercent * 238) / 100} 238`}
+                strokeLinecap="round"
+              />
+            </svg>
+            <div className="absolute w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-inner">
+              <span className="text-[11px] font-extrabold text-black">{availablePercent}%</span>
+            </div>
+          </div>
+
+          {/* Right: Total assets & Available Balance */}
+          <div className="flex-1 space-y-3">
+            <div className="flex justify-between items-baseline">
+              <span className="text-xs text-neutral-300 font-medium">{t('income.totalAssets', 'Total assets:')}</span>
+              <span className="text-xl font-extrabold text-[#00D26A]">
+                ${totalAssets.toFixed(2)}
+              </span>
+            </div>
+
+            <div className="flex justify-between items-baseline">
+              <span className="text-xs text-neutral-400">{t('income.availableSpendable', 'Available Balance:')}</span>
+              <span className="text-sm font-bold text-white">
+                ${availableBalance.toFixed(2)}
+              </span>
+            </div>
+
+            {/* Spendable notice */}
+            <div className="pt-2 border-t border-neutral-800 flex items-center justify-between text-[11px]">
+              <span className="text-neutral-400">Withdrawable anytime</span>
+              <button
+                onClick={() => onNavigateTab('mine')}
+                className="text-[#00D26A] font-bold hover:underline"
+              >
+                Withdraw →
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* THREE EXPENDITURE STATS ROW */}
+        <div className="mt-5 pt-4 border-t border-neutral-800/80 grid grid-cols-3 gap-2 text-center">
+          <div>
+            <div className="text-base font-extrabold text-white">
+              ${(summary?.recordExpenditure ?? 0).toFixed(0)}
+            </div>
+            <div className="text-[10px] text-neutral-400 mt-0.5 leading-tight">
+              {t('income.recordExpenditure', 'Record expenditure')}
+            </div>
+          </div>
+          <div>
+            <div className="text-base font-extrabold text-white">
+              ${(summary?.concertExpenditure ?? 0).toFixed(0)}
+            </div>
+            <div className="text-[10px] text-neutral-400 mt-0.5 leading-tight">
+              {t('income.concertExpenditure', 'Concert expenditure')}
+            </div>
+          </div>
+          <div>
+            <div className="text-base font-extrabold text-white">
+              ${(summary?.financialExpenditure ?? 0).toFixed(0)}
+            </div>
+            <div className="text-[10px] text-neutral-400 mt-0.5 leading-tight">
+              {t('income.financialExpenditure', 'Financial expenditure')}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 4. DEDICATED SEPARATED LEDGER ENTRIES: VIP PROFIT & TEAM COMMISSION */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between px-1">
+          <h3 className="text-xs font-black uppercase tracking-wider text-neutral-400">Account Earning Ledgers</h3>
+          <span className="text-[10px] text-[#00D26A] font-bold">100% Additive & Independent</span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* LEDGER 1: VIP PROFIT LEDGER */}
+          <div className="p-4 rounded-2xl bg-gradient-to-br from-[#121c17] to-[#0e1218] border border-[#00D26A]/30 space-y-2.5 shadow-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-[#00D26A]/20 text-[#00D26A] flex items-center justify-center font-black text-xs">
+                  VIP
+                </div>
+                <div>
+                  <h4 className="text-xs font-extrabold text-white">VIP Profit Ledger</h4>
+                  <span className="text-[10px] text-neutral-400">
+                    Tier VIP {user?.vipLevel || 1} • Rate: {((user?.vipLevel === 2 ? 0.025 : user?.vipLevel === 3 ? 0.03 : user?.vipLevel === 4 ? 0.04 : user?.vipLevel === 5 ? 0.05 : user?.vipLevel === 6 ? 0.06 : 0.019) * 100).toFixed(1)}% Daily
+                  </span>
+                </div>
+              </div>
+              <span className="px-2 py-0.5 rounded text-[10px] font-black bg-[#00D26A]/15 text-[#00D26A] border border-[#00D26A]/30">
+                VIP {user?.vipLevel || 1}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-neutral-800/80 text-xs">
+              <div>
+                <span className="text-[10px] text-neutral-400 block">Today's VIP Yield:</span>
+                <span className="font-extrabold text-[#00D26A]">
+                  +${(user?.todayVipProfit ?? user?.todayTicketIncome ?? 0).toFixed(2)} USDT
+                </span>
+              </div>
+              <div>
+                <span className="text-[10px] text-neutral-400 block">Total VIP Profit:</span>
+                <span className="font-extrabold text-white">
+                  ${(user?.totalVipProfit ?? 54.50).toFixed(2)} USDT
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* LEDGER 2: TEAM COMMISSION LEDGER */}
+          <div className="p-4 rounded-2xl bg-gradient-to-br from-[#1b1a13] to-[#12120e] border border-amber-500/30 space-y-2.5 shadow-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center font-black text-xs">
+                  %
+                </div>
+                <div>
+                  <h4 className="text-xs font-extrabold text-white">Team Commission Ledger</h4>
+                  <span className="text-[10px] text-neutral-400">
+                    Rebates: 16% (A) • 8% (B) • 4% (C)
+                  </span>
+                </div>
+              </div>
+              <span className="px-2 py-0.5 rounded text-[10px] font-black bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                Multi-Tier
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-neutral-800/80 text-xs">
+              <div>
+                <span className="text-[10px] text-neutral-400 block">Today's Rebates:</span>
+                <span className="font-extrabold text-amber-400">
+                  +${(user?.todayTeamCommission ?? 0).toFixed(2)} USDT
+                </span>
+              </div>
+              <div>
+                <span className="text-[10px] text-neutral-400 block">Total Commission:</span>
+                <span className="font-extrabold text-white">
+                  ${(user?.totalTeamCommission ?? 30.00).toFixed(2)} USDT
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 5. CUMULATIVE SUMMARY */}
+      <div className="bg-[#12131a] rounded-2xl border border-neutral-800 divide-y divide-neutral-800/70 overflow-hidden">
+        {/* Total Combined Income */}
+        <div className="p-3.5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-7 h-7 rounded-lg bg-[#00D26A]/15 border border-[#00D26A]/30 flex items-center justify-center text-[#00D26A]">
+              <FileText size={15} />
+            </div>
+            <div>
+              <span className="text-xs font-semibold text-neutral-200 block">Total Accumulated Earned Income:</span>
+              <span className="text-[10px] text-neutral-400">Combined sum of all additive VIP yields + Team rebates</span>
+            </div>
+          </div>
+          <span className="text-sm font-extrabold text-[#00D26A]">
+            ${(user?.totalEarnedIncome ?? summary?.totalIncome ?? 84.50).toFixed(2)} USDT
+          </span>
+        </div>
+      </div>
+
+      {/* 5. TICKET RECORD SECTION WITH LIVE 2-MINUTE TIMERS */}
+      <div>
+        <div className="flex items-center justify-between mb-3 px-0.5">
+          <h3 className="text-sm font-extrabold text-white tracking-wide">{t('income.myRecord', 'My record')}</h3>
+          <span
+            onClick={() => onNavigateTab('home')}
+            className="text-xs text-[#00D26A] font-semibold cursor-pointer hover:underline flex items-center gap-0.5"
+          >
+            Buy More
+            <ChevronRight size={13} />
+          </span>
+        </div>
+
+        {/* List of Held Record Cards */}
+        {purchases.length === 0 ? (
+          <div className="p-6 rounded-2xl bg-neutral-900/60 border border-neutral-800 text-center">
+            <p className="text-xs text-neutral-400">No ticket purchases yet.</p>
+            <button
+              onClick={() => onNavigateTab('home')}
+              className="mt-2.5 px-3 py-1.5 rounded-xl bg-[#00D26A] text-black text-xs font-bold"
+            >
+              Browse Ticket Market
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {purchases.map((pur) => {
+              const isFrozen = pur.status === 'frozen' && pur.frozenUntil;
+              const unfreezeTime = isFrozen ? new Date(pur.frozenUntil!).getTime() : 0;
+              const remainingSec = Math.max(0, Math.ceil((unfreezeTime - nowTime) / 1000));
+              const mins = Math.floor(remainingSec / 60);
+              const secs = remainingSec % 60;
+              const timerStr = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+              // 120 seconds total
+              const progressPercent = isFrozen ? Math.min(100, Math.round(((120 - remainingSec) / 120) * 100)) : 100;
+
+              return (
+                <div
+                  key={pur.id}
+                  className="bg-[#121319] border border-neutral-800 rounded-2xl p-3.5 space-y-2.5"
+                >
+                  <div className="flex items-center gap-3.5">
+                    <img
+                      src={pur.image}
+                      alt={pur.ticketName}
+                      className="w-14 h-14 rounded-xl object-cover border border-neutral-700 shrink-0"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-bold text-white truncate">{pur.ticketName}</h4>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
+                          pur.status === 'completed'
+                            ? 'bg-neutral-800 text-neutral-400 border border-neutral-700'
+                            : 'bg-[#00D26A]/15 text-[#00D26A] border border-[#00D26A]/30 animate-pulse'
+                        }`}>
+                          {pur.status === 'completed' ? '✅ Settled to Balance' : `⏳ 2-Min Lock: ${timerStr}`}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-neutral-400 truncate mt-0.5">{pur.artist}</p>
+                      <div className="mt-1 flex items-center gap-2 text-[10px] text-neutral-400">
+                        <span>Qty: {pur.quantity}</span>
+                        <span>•</span>
+                        <span>Invest: <strong className="text-white">${pur.totalAmount.toFixed(2)}</strong></span>
+                        <span>•</span>
+                        <span className="text-[#00D26A] font-bold">Profit: +${(pur.profitAmount || 0).toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 2-Minute Progress Bar / Settle Status Banner */}
+                  {isFrozen && remainingSec > 0 ? (
+                    <div className="p-2.5 rounded-xl bg-black/60 border border-neutral-800/80 space-y-1.5">
+                      <div className="flex justify-between items-center text-[10px]">
+                        <span className="text-emerald-400 font-semibold flex items-center gap-1">
+                          <Timer size={12} /> Auto-returning to Available Balance in:
+                        </span>
+                        <span className="text-white font-mono font-bold">{timerStr}</span>
+                      </div>
+                      <div className="w-full h-1.5 rounded-full bg-neutral-800 overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-emerald-500 to-[#00D26A] rounded-full transition-all duration-300"
+                          style={{ width: `${progressPercent}%` }}
+                        />
+                      </div>
+                      <div className="flex justify-between text-[9px] text-neutral-400">
+                        <span>Principal: ${pur.totalAmount.toFixed(2)}</span>
+                        <span className="text-[#00D26A]">Yield: +${(pur.profitAmount || 0).toFixed(2)} USDT</span>
+                        <span className="text-white font-bold">Total Credit: ${(pur.totalAmount + (pur.profitAmount || 0)).toFixed(2)}</span>
+                      </div>
+                    </div>
+                  ) : pur.status === 'completed' ? (
+                    <div className="p-2 rounded-xl bg-emerald-950/30 border border-emerald-800/30 flex items-center justify-between text-[10px] text-emerald-300">
+                      <span className="flex items-center gap-1">
+                        <CheckCircle2 size={12} className="text-[#00D26A]" />
+                        <span>Investment (${pur.totalAmount.toFixed(2)}) + Profit (+${(pur.profitAmount || 0).toFixed(2)}) credited to Balance</span>
+                      </span>
+                      <span className="font-bold text-white">${(pur.totalAmount + (pur.profitAmount || 0)).toFixed(2)} USDT</span>
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Income Transaction History Table */}
+        <div className="mt-4 pt-3 border-t border-neutral-800">
+          <h4 className="text-xs font-bold text-neutral-300 mb-2">Yield Audit History (Ticket Logs)</h4>
+          <div className="space-y-2">
+            {records.slice(0, 4).map((rec) => (
+              <div key={rec.id} className="p-2.5 rounded-xl bg-neutral-900/70 border border-neutral-800 text-[11px]">
+                <div className="flex justify-between items-center text-neutral-300">
+                  <span className="font-semibold text-white">{rec.ticketName}</span>
+                  <span className="font-extrabold text-[#00D26A]">+{rec.incomeAmount.toFixed(2)} USDT</span>
+                </div>
+                <div className="mt-1 flex justify-between text-neutral-500 text-[10px]">
+                  <span>TX: {rec.transactionId}</span>
+                  <span>VIP {rec.vipLevel} ({(rec.dailyRate * 100).toFixed(1)}%)</span>
+                  <span>{new Date(rec.timestamp).toUTCString().slice(0, 16)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};

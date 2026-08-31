@@ -1,0 +1,1729 @@
+import express from 'express';
+import path from 'path';
+import crypto from 'crypto';
+import { createServer as createViteServer } from 'vite';
+import {
+  VIP_TIERS,
+  INITIAL_CATEGORIES,
+  INITIAL_ARTISTS,
+  INITIAL_TICKETS,
+  INITIAL_TASKS,
+  INITIAL_NOTICES
+} from './src/data/seedData';
+import {
+  User,
+  Ticket,
+  Category,
+  TicketPurchase,
+  IncomeRecord,
+  Transaction,
+  WithdrawalRequest,
+  DepositRequest,
+  TaskItem,
+  ReferralMember
+} from './src/types';
+
+const app = express();
+const PORT = 3000;
+
+app.use(express.json());
+
+// ==========================================
+// PERSISTENT DATABASE ENGINE (Server Authoritative & Protected)
+// ==========================================
+import { dbManager } from './src/server/dbEngine';
+
+const PRIMARY_USER_ID = 'usr-main-777';
+
+let db = dbManager.getDb();
+let categories = db.categories;
+let tickets = db.tickets;
+let artists = db.artists;
+let notices = db.notices;
+let users = db.users;
+let referrals = db.referrals;
+let purchases = db.purchases;
+let incomeRecords = db.incomeRecords;
+let transactions = db.transactions;
+let withdrawals = db.withdrawals;
+let deposits = db.deposits;
+let userTasks = db.userTasks;
+let telegramSupportConfig = db.telegramSupportConfig;
+
+/**
+ * Resync pointers in memory after a snapshot restore or database import
+ */
+function syncMemoryPointers() {
+  db = dbManager.getDb();
+  categories = db.categories;
+  tickets = db.tickets;
+  artists = db.artists;
+  notices = db.notices;
+  users = db.users;
+  referrals = db.referrals;
+  purchases = db.purchases;
+  incomeRecords = db.incomeRecords;
+  transactions = db.transactions;
+  withdrawals = db.withdrawals;
+  deposits = db.deposits;
+  userTasks = db.userTasks;
+  telegramSupportConfig = db.telegramSupportConfig;
+}
+
+/**
+ * Safely persists database state to disk with optional automatic backup snapshot
+ */
+function persistDb(reason?: string, triggerBackup: boolean = false) {
+  db.categories = categories;
+  db.tickets = tickets;
+  db.artists = artists;
+  db.notices = notices;
+  db.users = users;
+  db.referrals = referrals;
+  db.purchases = purchases;
+  db.incomeRecords = incomeRecords;
+  db.transactions = transactions;
+  db.withdrawals = withdrawals;
+  db.deposits = deposits;
+  db.userTasks = userTasks;
+  db.telegramSupportConfig = telegramSupportConfig;
+  dbManager.save(reason, triggerBackup);
+}
+
+const OFFICIAL_PAYMENT_ADDRESSES = {
+  TRC20: 'TQn9Y2khEsLJW1ChV8L5H09ZNmC9aJbmSe',
+  BEP20: '0x71C836069919E3aF2dfA13EBEfDDE0c3065a7828'
+};
+
+// Set of processed date-strings for idempotent income scheduler
+let processedIncomeDays = new Set<string>();
+
+/**
+ * Helper to credit and record Team Commission into completely separate ledger entries
+ * Strictly additive, unique collision-free transaction ID, never overwriting existing balances or history!
+ */
+function creditTeamCommission(
+  userId: string,
+  sourceMemberId: string,
+  sourceMemberName: string,
+  tierLevel: 1 | 2 | 3,
+  baseYieldAmount: number,
+  notes?: string
+) {
+  const user = users[userId];
+  if (!user) return null;
+
+  // Multi-tier commission rates: Tier 1 = 16% (0.16), Tier 2 = 8% (0.08), Tier 3 = 4% (0.04)
+  const rateMap: Record<number, number> = { 1: 0.16, 2: 0.08, 3: 0.04 };
+  const commissionRate = rateMap[tierLevel] || 0.16;
+  const commissionAmount = Number((baseYieldAmount * commissionRate).toFixed(2));
+
+  if (commissionAmount <= 0) return null;
+
+  const randomSuffix = crypto.randomBytes(3).toString('hex').toUpperCase();
+  const txId = `TXN-COMM-${Date.now()}-${randomSuffix}`;
+  const incId = `INC-COMM-${Date.now()}-${randomSuffix}`;
+  const prevBalance = user.balance;
+
+  // Strictly Additive Balance & Cumulative Commission Updates
+  user.balance = Number((user.balance + commissionAmount).toFixed(2));
+  user.totalTeamCommission = Number(((user.totalTeamCommission || 0) + commissionAmount).toFixed(2));
+  user.todayTeamCommission = Number(((user.todayTeamCommission || 0) + commissionAmount).toFixed(2));
+  user.totalEarnedIncome = Number(((user.totalEarnedIncome || 0) + commissionAmount).toFixed(2));
+  user.totalAssets = Number((user.balance + user.frozenBalance).toFixed(2));
+
+  const tierLabel = tierLevel === 1 ? 'Tier 1 (Direct A - 16%)' : tierLevel === 2 ? 'Tier 2 (Sub-tier B - 8%)' : 'Tier 3 (Sub-tier C - 4%)';
+
+  // 1. Separate Income Record for Team Commission Ledger
+  const incRecord: IncomeRecord = {
+    id: incId,
+    userId: user.id,
+    ticketName: `Team Rebate: ${sourceMemberName} (${tierLabel})`,
+    categoryType: 'team_commission',
+    previousBalance: prevBalance,
+    incomeAmount: commissionAmount,
+    vipLevel: user.vipLevel,
+    dailyRate: commissionRate,
+    newBalance: user.balance,
+    timestamp: new Date().toISOString(),
+    status: 'credited',
+    transactionId: txId,
+    commissionTier: tierLevel,
+    sourceMemberName,
+    sourceMemberId,
+    notes: notes || `Earned +$${commissionAmount.toFixed(2)} USDT commission (${(commissionRate * 100).toFixed(0)}%) from ${sourceMemberName}'s activity.`
+  };
+  incomeRecords.unshift(incRecord);
+
+  // 2. Separate Transaction Record for General / Commission Ledger
+  const txRecord: Transaction = {
+    id: txId,
+    userId: user.id,
+    type: 'team_commission',
+    category: 'team_commission',
+    amount: commissionAmount,
+    status: 'completed',
+    title: `Team Commission: ${tierLabel}`,
+    description: `+$${commissionAmount.toFixed(2)} USDT commission from ${sourceMemberName} (Rate: ${(commissionRate * 100).toFixed(0)}%)`,
+    commissionTier: tierLevel,
+    appliedRate: commissionRate,
+    sourceMemberName,
+    createdAt: new Date().toISOString()
+  };
+  transactions.unshift(txRecord);
+
+  persistDb(`Team Commission Credited: +$${commissionAmount.toFixed(2)} from ${sourceMemberName}`);
+  return { commissionAmount, txId, incId, incRecord, txRecord };
+}
+
+/**
+ * Check and auto-settle tickets whose 2-minute (120s) period has elapsed.
+ * When 2 minutes complete:
+ * 1. Both Principal Investment AND Configured VIP Profit return directly to Available Balance!
+ * 2. Frozen balance is released.
+ * 3. Dedicated VIP Profit income record and transaction log are created with unique IDs.
+ * 4. Separate ledger entries are maintained without overwriting any existing balance or history.
+ */
+function checkAndSettleFrozenTickets(userId: string) {
+  const user = users[userId];
+  if (!user) return false;
+  const nowMs = Date.now();
+  let changed = false;
+
+  for (const p of purchases) {
+    if (p.userId === userId && p.status === 'frozen' && p.frozenUntil) {
+      const unfreezeTime = new Date(p.frozenUntil).getTime();
+      if (nowMs >= unfreezeTime) {
+        // Mark as completed
+        p.status = 'completed';
+        p.settledAt = new Date().toISOString();
+
+        const principal = p.totalAmount || 0;
+        const profit = p.profitAmount || 0;
+        const totalCredited = Number((principal + profit).toFixed(2));
+        const appliedRate = p.vipRateAtPurchase || 0.019;
+        const vipLevel = p.vipLevelAtPurchase || user.vipLevel || 1;
+
+        // Release principal from frozenBalance
+        user.frozenBalance = Number(Math.max(0, user.frozenBalance - principal).toFixed(2));
+
+        // Strictly Additive Balance & Cumulative VIP Profit updates!
+        user.balance = Number((user.balance + totalCredited).toFixed(2));
+        user.totalVipProfit = Number(((user.totalVipProfit || 0) + profit).toFixed(2));
+        user.todayVipProfit = Number(((user.todayVipProfit || 0) + profit).toFixed(2));
+        user.todayTicketIncome = Number(((user.todayTicketIncome || 0) + profit).toFixed(2));
+        user.totalEarnedIncome = Number(((user.totalEarnedIncome || 0) + profit).toFixed(2));
+        user.lastIncomeCalculatedAt = new Date().toISOString();
+
+        const todayKey = new Date().toISOString().slice(0, 10);
+        const randomSuffix = crypto.randomBytes(3).toString('hex').toUpperCase();
+        const recordId = `INC-VIP-${todayKey}-${randomSuffix}`;
+        const txId = `TXN-VIP-${Date.now()}-${randomSuffix}`;
+
+        // 1. Add Dedicated VIP Profit Income Record in Separate VIP Ledger
+        incomeRecords.unshift({
+          id: recordId,
+          userId: user.id,
+          ticketName: `${p.ticketName} (VIP ${vipLevel} Yield)`,
+          categoryType: 'vip_profit',
+          previousBalance: Number((user.balance - totalCredited).toFixed(2)),
+          incomeAmount: profit,
+          vipLevel: vipLevel,
+          dailyRate: appliedRate,
+          newBalance: user.balance,
+          timestamp: new Date().toISOString(),
+          status: 'credited',
+          transactionId: txId,
+          notes: `2-Minute Ticket Completed: Principal $${principal.toFixed(2)} returned + VIP ${vipLevel} profit +$${profit.toFixed(2)} (${(appliedRate * 100).toFixed(1)}%) credited to Available Balance.`
+        });
+
+        // 2. Add Dedicated VIP Profit Settlement Transaction in Ledger
+        transactions.unshift({
+          id: txId,
+          userId: user.id,
+          type: 'vip_profit',
+          category: 'vip_profit',
+          amount: totalCredited,
+          vipLevel: vipLevel,
+          appliedRate: appliedRate,
+          status: 'completed',
+          title: `VIP ${vipLevel} Profit Yield: ${p.ticketName}`,
+          description: `Principal $${principal.toFixed(2)} + VIP profit +$${profit.toFixed(2)} USDT (${(appliedRate * 100).toFixed(1)}%) returned to Available Balance (Total +$${totalCredited.toFixed(2)} USDT)`,
+          createdAt: new Date().toISOString()
+        });
+
+        changed = true;
+      }
+    }
+  }
+
+  if (changed) {
+    user.totalAssets = Number((user.balance + user.frozenBalance).toFixed(2));
+    persistDb('Ticket Settlement Completed');
+  }
+  return changed;
+}
+
+/**
+ * Recalculate user's VIP level, valid direct members count, daily ticket balance cycle, and income pause state
+ * VIP 1: $30–$499, 0 direct members, 1.9%
+ * VIP 2: $500–$1,999, min 3 direct members, 2.5%
+ * VIP 3: $2,000–$4,999, min 5 direct members, 3.0%
+ * VIP 4: $5,000–$20,000, min 10 direct members, 4.0%
+ * VIP 5: $20,000–$50,000, min 20 direct members, 5.0%
+ * VIP 6: $50,000–$500,000, min 50 direct members, 6.0%
+ * 
+ * NOTE: User balance, accumulated VIP profits, accumulated team commission, income records,
+ * and transaction history are NEVER overwritten or reset!
+ */
+function recalculateUserState(userId: string) {
+  checkAndSettleFrozenTickets(userId);
+
+  const user = users[userId];
+  if (!user) return null;
+
+  // Initialize separated ledger cumulative metrics safely if not yet set
+  if (user.totalVipProfit === undefined || user.totalVipProfit === null) {
+    const vipSum = incomeRecords
+      .filter(r => r.userId === user.id && (r.categoryType === 'vip_profit' || r.categoryType === 'ticket'))
+      .reduce((sum, r) => sum + (r.incomeAmount || 0), 0);
+    user.totalVipProfit = Number(vipSum.toFixed(2)) || 54.50;
+  }
+
+  if (user.totalTeamCommission === undefined || user.totalTeamCommission === null) {
+    const commSum = incomeRecords
+      .filter(r => r.userId === user.id && r.categoryType === 'team_commission')
+      .reduce((sum, r) => sum + (r.incomeAmount || 0), 0);
+    user.totalTeamCommission = Number(commSum.toFixed(2)) || 30.00;
+  }
+
+  if (user.todayVipProfit === undefined || user.todayVipProfit === null) {
+    user.todayVipProfit = user.todayTicketIncome || 0;
+  }
+
+  if (user.todayTeamCommission === undefined || user.todayTeamCommission === null) {
+    user.todayTeamCommission = 0;
+  }
+
+  const todayUtc = new Date().toISOString().slice(0, 10);
+
+  // UTC Daily Ticket Balance Cycle initialization / reset
+  if (!user.dailyTicketDate || user.dailyTicketDate !== todayUtc) {
+    user.dailyTicketDate = todayUtc;
+    // On each new UTC day, the daily ticket starting balance resets to the member's available balance
+    user.dailyTicketStartingBalance = user.balance;
+    user.dailyTicketSpent = 0;
+    user.todayTicketIncome = 0;
+    user.todayVipProfit = 0;
+    user.todayTeamCommission = 0;
+  }
+
+  // Ensure dailyTicketStartingBalance accommodates any deposits or balances
+  const effectiveCurrentPotential = Number((user.balance + (user.dailyTicketSpent || 0)).toFixed(2));
+  if (user.dailyTicketStartingBalance === undefined || user.dailyTicketStartingBalance === null || effectiveCurrentPotential > user.dailyTicketStartingBalance) {
+    user.dailyTicketStartingBalance = effectiveCurrentPotential;
+  }
+  if (user.dailyTicketSpent === undefined || user.dailyTicketSpent === null) {
+    user.dailyTicketSpent = 0;
+  }
+
+  // Calculate valid direct members (must have minimum $30 deposit/balance)
+  const validDirectMembers = referrals.filter(r => r.level === 1 && r.isValid && (r.totalDeposit >= 30 || r.balance >= 30)).length;
+  user.validDirectMembersCount = validDirectMembers;
+
+  user.totalAssets = Number((user.balance + user.frozenBalance).toFixed(2));
+
+  // Determine VIP level based on balance AND valid direct members
+  const totalFunds = user.totalAssets;
+  let computedVIP = 1;
+
+  if (totalFunds >= 50000 && validDirectMembers >= 50) {
+    computedVIP = 6;
+  } else if (totalFunds >= 20000 && validDirectMembers >= 20) {
+    computedVIP = 5;
+  } else if (totalFunds >= 5000 && validDirectMembers >= 10) {
+    computedVIP = 4;
+  } else if (totalFunds >= 2000 && validDirectMembers >= 5) {
+    computedVIP = 3;
+  } else if (totalFunds >= 500 && validDirectMembers >= 3) {
+    computedVIP = 2;
+  } else if (totalFunds >= 30) {
+    computedVIP = 1;
+  } else {
+    computedVIP = 1;
+  }
+
+  user.vipLevel = computedVIP;
+
+  // MINIMUM BALANCE REQUIREMENT: $30
+  // If totalAssets < 30, income must pause and ticket purchases must be blocked
+  if (user.totalAssets < 30) {
+    user.isIncomePaused = true;
+    user.incomePauseReason = 'Minimum $30.00 Account Balance Required to Work and Earn VIP Yield';
+  } else {
+    user.isIncomePaused = false;
+    user.incomePauseReason = undefined;
+  }
+
+  return user;
+}
+
+// ==========================================
+// API ROUTES
+// ==========================================
+
+// Health check
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', time: new Date().toISOString(), platform: 'JAMBASE' });
+});
+
+// GET Current User Profile & Synchronized State
+app.get('/api/user', (req, res) => {
+  const user = recalculateUserState(PRIMARY_USER_ID);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  res.json(user);
+});
+
+// GET VIP Tiers Info
+app.get('/api/vip-tiers', (req, res) => {
+  res.json(VIP_TIERS);
+});
+
+// GET Tickets (with optional category filter)
+app.get('/api/tickets', (req, res) => {
+  const { category, search } = req.query;
+  let filtered = [...tickets];
+
+  if (category && category !== 'all') {
+    filtered = filtered.filter(t => t.category.toLowerCase() === String(category).toLowerCase());
+  }
+
+  if (search) {
+    const q = String(search).toLowerCase();
+    filtered = filtered.filter(t =>
+      t.name.toLowerCase().includes(q) ||
+      t.artist.toLowerCase().includes(q) ||
+      t.venue.toLowerCase().includes(q) ||
+      t.location.toLowerCase().includes(q)
+    );
+  }
+
+  res.json(filtered);
+});
+
+// GET Categories
+app.get('/api/categories', (req, res) => {
+  res.json(categories);
+});
+
+// GET Artists
+app.get('/api/artists', (req, res) => {
+  res.json(artists);
+});
+
+// GET Notices
+app.get('/api/notices', (req, res) => {
+  res.json(notices);
+});
+
+// POST Purchase Ticket(s)
+// RULE: A member's available balance can be used for tickets once per UTC day,
+// and the member can use the entire available balance gradually throughout that same day.
+// Profit is calculated ONLY on the ticket amount actually purchased.
+app.post('/api/tickets/purchase', (req, res) => {
+  const { ticketId, quantity } = req.body;
+  const user = recalculateUserState(PRIMARY_USER_ID);
+
+  if (!user) return res.status(404).json({ error: 'User not found' });
+
+  // STRICT REQUIREMENT: Member must maintain minimum $30.00 total assets in account to work
+  if (user.totalAssets < 30 && user.balance < 30) {
+    return res.status(400).json({
+      error: 'Insufficient Balance — Your available balance is below $30. Please recharge your account to purchase tickets.'
+    });
+  }
+
+  const qty = parseInt(quantity, 10);
+  if (isNaN(qty) || qty < 1 || qty > 100) {
+    return res.status(400).json({ error: 'Invalid quantity (must be between 1 and 100)' });
+  }
+
+  const ticket = tickets.find(t => t.id === ticketId);
+  if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+
+  if (!ticket.isActive) {
+    return res.status(400).json({ error: 'This ticket event is currently inactive' });
+  }
+
+  // STRICT RULE: No VIP-level restriction on ticket purchases.
+  // VIP1 and all members can purchase any ticket amount (e.g. $120, $50, $20, $10, etc.)
+  // as long as they have sufficient balance/quota.
+
+  // Authoritative server-side price calculation
+  const totalAmount = Number((ticket.price * qty).toFixed(2));
+
+  const startingBalance = user.dailyTicketStartingBalance ?? (user.balance + (user.dailyTicketSpent || 0));
+  const spentSoFar = user.dailyTicketSpent || 0;
+  const remainingTicketQuota = Math.max(0, Number((startingBalance - spentSoFar).toFixed(2)));
+
+  // 1. Check if daily ticket quota is already exhausted
+  if (remainingTicketQuota <= 0) {
+    return res.status(400).json({
+      error: `Daily ticket balance limit reached for today ($${startingBalance.toFixed(2)} / $${startingBalance.toFixed(2)} fully used). The purchase cycle resets on the next UTC day (00:00 UTC).`
+    });
+  }
+
+  // 2. Check if this ticket exceeds remaining daily ticket quota
+  if (totalAmount > remainingTicketQuota) {
+    return res.status(400).json({
+      error: `Ticket cost ($${totalAmount.toFixed(2)}) exceeds your remaining daily ticket balance ($${remainingTicketQuota.toFixed(2)}). You can purchase tickets up to $${remainingTicketQuota.toFixed(2)} with your remaining balance today.`
+    });
+  }
+
+  // 3. Check if member has enough available wallet balance
+  if (user.balance < totalAmount) {
+    return res.status(400).json({
+      error: `Insufficient available balance ($${user.balance.toFixed(2)}). Required: $${totalAmount.toFixed(2)}.`
+    });
+  }
+
+  // Determine VIP Tier and daily rate
+  const tier = VIP_TIERS.find(t => t.level === user.vipLevel) || VIP_TIERS[0];
+  const rate = tier.dailyRate; // e.g. VIP 1 = 1.9%, VIP 2 = 2.5%, etc.
+
+  // STRICT RULE: Profit is generated ONLY on the purchased ticket amount
+  const profitAmount = Number((totalAmount * rate).toFixed(2));
+
+  // Deduct purchase amount from available balance into frozen state, and record daily ticket spending
+  user.balance = Number((user.balance - totalAmount).toFixed(2));
+  user.frozenBalance = Number((user.frozenBalance + totalAmount).toFixed(2));
+  user.dailyTicketSpent = Number((spentSoFar + totalAmount).toFixed(2));
+  user.recordExpenditure = Number(((user.recordExpenditure || 0) + totalAmount).toFixed(2));
+
+  // Update ticket sold count
+  ticket.soldCount += qty;
+
+  const now = new Date();
+  // 2 Minutes (120 seconds) cycle
+  const frozenUntil = new Date(Date.now() + 2 * 60 * 1000).toISOString();
+
+  // Record Purchase as frozen/processing (auto-settles in 2 minutes)
+  const newPurchase: TicketPurchase = {
+    id: `PUR-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+    userId: user.id,
+    ticketId: ticket.id,
+    ticketName: ticket.name,
+    artist: ticket.artist,
+    image: ticket.image,
+    unitPrice: ticket.price,
+    quantity: qty,
+    totalAmount,
+    vipLevelAtPurchase: user.vipLevel,
+    vipRateAtPurchase: rate,
+    profitAmount,
+    frozenUntil,
+    createdAt: now.toISOString(),
+    status: 'frozen'
+  };
+  purchases.unshift(newPurchase);
+
+  const remainingDailyBalance = Number((startingBalance - user.dailyTicketSpent).toFixed(2));
+
+  // Add Purchase Transaction record with unique ID and category
+  const txId = `TXN-PUR-${Date.now()}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
+  const newTx: Transaction = {
+    id: txId,
+    userId: user.id,
+    type: 'ticket_purchase',
+    category: 'ticket_purchase',
+    amount: totalAmount,
+    vipLevel: user.vipLevel,
+    appliedRate: rate,
+    status: 'completed',
+    title: `Purchased ${qty}x ${ticket.name}`,
+    description: `Ticket purchase of $${totalAmount.toFixed(2)}. In 2 minutes, both Principal ($${totalAmount.toFixed(2)}) and VIP Profit (+${profitAmount.toFixed(2)} USDT) will return to your Available Balance.`,
+    createdAt: now.toISOString()
+  };
+  transactions.unshift(newTx);
+
+  recalculateUserState(user.id);
+  persistDb(`Ticket Purchased: ${ticket.name}`);
+
+  res.json({
+    success: true,
+    message: `Ticket purchased successfully! In 2 minutes, both your $${totalAmount.toFixed(2)} investment and +$${profitAmount.toFixed(2)} USDT VIP profit will automatically return to your Available Balance.`,
+    purchase: newPurchase,
+    newBalance: user.balance,
+    frozenBalance: user.frozenBalance,
+    dailyTicketStartingBalance: user.dailyTicketStartingBalance,
+    dailyTicketSpent: user.dailyTicketSpent,
+    remainingDailyTicketBalance: remainingDailyBalance,
+    totalAssets: user.totalAssets,
+    user
+  });
+});
+
+// POST Claim Daily 24-Hour UTC Ticket Profit
+// RULE: Total ticket profit can also be claimed once per 24-hour UTC cycle if any active tickets remain.
+// Returns purchased ticket principal + accumulated ticket profit back to available balance.
+// Strictly additive, separate VIP ledger entry, unique transaction ID.
+app.post('/api/tickets/claim-profit', (req, res) => {
+  const user = recalculateUserState(PRIMARY_USER_ID);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+
+  const todayUtc = new Date().toISOString().slice(0, 10);
+  if (user.lastProfitClaimDate === todayUtc) {
+    return res.status(400).json({
+      error: `Total ticket profit can be claimed only once every 24 hours, following UTC time. You have already claimed for UTC ${todayUtc}. Next claim available at 00:00 UTC.`
+    });
+  }
+
+  // Find all active ticket purchases for the current cycle
+  const activePurchases = purchases.filter(p => p.userId === user.id && (p.status === 'active' || p.status === 'frozen'));
+  if (activePurchases.length === 0) {
+    return res.status(400).json({
+      error: 'No active ticket purchases found for today. Please buy concert tickets using your available balance to generate and claim daily profit.'
+    });
+  }
+
+  const totalPrincipal = Number(activePurchases.reduce((sum, p) => sum + p.totalAmount, 0).toFixed(2));
+  const totalProfit = Number(activePurchases.reduce((sum, p) => sum + (p.profitAmount || 0), 0).toFixed(2));
+  const totalCredited = Number((totalPrincipal + totalProfit).toFixed(2));
+  const appliedRate = (VIP_TIERS.find(t => t.level === user.vipLevel)?.dailyRate) || 0.019;
+
+  // Release frozen balance if any
+  user.frozenBalance = Number(Math.max(0, user.frozenBalance - totalPrincipal).toFixed(2));
+
+  // Strictly Additive Balance & Cumulative VIP Profit updates!
+  user.balance = Number((user.balance + totalCredited).toFixed(2));
+  user.totalVipProfit = Number(((user.totalVipProfit || 0) + totalProfit).toFixed(2));
+  user.todayVipProfit = Number(((user.todayVipProfit || 0) + totalProfit).toFixed(2));
+  user.todayTicketIncome = Number(((user.todayTicketIncome || 0) + totalProfit).toFixed(2));
+  user.totalEarnedIncome = Number(((user.totalEarnedIncome || 0) + totalProfit).toFixed(2));
+  user.lastProfitClaimDate = todayUtc;
+  user.lastIncomeCalculatedAt = new Date().toISOString();
+
+  // Mark all active purchases as completed
+  activePurchases.forEach(p => {
+    p.status = 'completed';
+    p.settledAt = new Date().toISOString();
+  });
+
+  const randomSuffix = crypto.randomBytes(3).toString('hex').toUpperCase();
+  const txId = `TXN-VIP-${Date.now()}-${randomSuffix}`;
+  const incId = `INC-VIP-${todayUtc}-${randomSuffix}`;
+
+  // 1. Add Dedicated VIP Profit Income Record
+  incomeRecords.unshift({
+    id: incId,
+    userId: user.id,
+    ticketName: `Daily Ticket VIP Yield Claim (${activePurchases.length} Orders)`,
+    categoryType: 'vip_profit',
+    previousBalance: Number((user.balance - totalCredited).toFixed(2)),
+    incomeAmount: totalProfit,
+    vipLevel: user.vipLevel,
+    dailyRate: appliedRate,
+    newBalance: user.balance,
+    timestamp: new Date().toISOString(),
+    status: 'credited',
+    transactionId: txId,
+    notes: `Daily VIP Yield Settled: $${totalPrincipal.toFixed(2)} principal + VIP ${user.vipLevel} profit +$${totalProfit.toFixed(2)} (${(appliedRate * 100).toFixed(1)}%) credited to Available Balance.`
+  });
+
+  // 2. Add Dedicated VIP Profit Settlement Transaction in Ledger
+  transactions.unshift({
+    id: txId,
+    userId: user.id,
+    type: 'vip_profit',
+    category: 'vip_profit',
+    amount: totalCredited,
+    vipLevel: user.vipLevel,
+    appliedRate: appliedRate,
+    status: 'completed',
+    title: `VIP ${user.vipLevel} Profit Claimed (UTC ${todayUtc})`,
+    description: `Principal $${totalPrincipal.toFixed(2)} returned + VIP ${user.vipLevel} Profit +$${totalProfit.toFixed(2)} USDT (${(appliedRate * 100).toFixed(1)}%) credited to Available Balance`,
+    createdAt: new Date().toISOString()
+  });
+
+  recalculateUserState(user.id);
+  persistDb('Claimed Daily Ticket Profit');
+
+  res.json({
+    success: true,
+    message: `Successfully credited $${totalCredited.toFixed(2)} USDT ($${totalPrincipal.toFixed(2)} investment + $${totalProfit.toFixed(2)} VIP profit) to your Available Balance!`,
+    totalCredited,
+    totalProfit,
+    totalPrincipal,
+    user
+  });
+});
+
+// GET Separate Ledger Breakdown API
+// Completely separates VIP Profit ledger from Team Commission ledger!
+app.get('/api/ledger/breakdown', (req, res) => {
+  const user = recalculateUserState(PRIMARY_USER_ID);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+
+  const userRecords = incomeRecords.filter(r => r.userId === user.id);
+  const userTx = transactions.filter(t => t.userId === user.id);
+
+  // 1. Completely Separate VIP Profit Ledger
+  const vipProfitIncome = userRecords.filter(r => r.categoryType === 'vip_profit' || r.categoryType === 'ticket');
+  const vipProfitTransactions = userTx.filter(t => t.type === 'vip_profit' || t.category === 'vip_profit' || t.type === 'daily_income');
+
+  // 2. Completely Separate Team Commission Ledger
+  const teamCommissionIncome = userRecords.filter(r => r.categoryType === 'team_commission');
+  const teamCommissionTransactions = userTx.filter(t => t.type === 'team_commission' || t.category === 'team_commission' || t.type === 'referral_commission');
+
+  // 3. Other Specific Ledgers
+  const depositTransactions = userTx.filter(t => t.type === 'deposit' || t.category === 'deposit');
+  const withdrawalTransactions = userTx.filter(t => t.type === 'withdrawal' || t.category === 'withdrawal');
+  const purchaseTransactions = userTx.filter(t => t.type === 'ticket_purchase' || t.category === 'ticket_purchase');
+  const taskRewardTransactions = userTx.filter(t => t.type === 'task_reward' || t.category === 'task_reward');
+
+  const vipTier = VIP_TIERS.find(t => t.level === user.vipLevel) || VIP_TIERS[0];
+
+  res.json({
+    summary: {
+      availableBalance: user.balance,
+      frozenBalance: user.frozenBalance,
+      totalAssets: user.totalAssets,
+      vipLevel: user.vipLevel,
+      vipDailyRate: vipTier.dailyRate,
+      vipDailyRatePercent: `${(vipTier.dailyRate * 100).toFixed(1)}%`,
+      totalVipProfit: user.totalVipProfit || 0,
+      todayVipProfit: user.todayVipProfit || 0,
+      totalTeamCommission: user.totalTeamCommission || 0,
+      todayTeamCommission: user.todayTeamCommission || 0,
+      totalEarnedIncome: user.totalEarnedIncome || 0,
+      commissionRates: {
+        tier1: '16.0%',
+        tier2: '8.0%',
+        tier3: '4.0%'
+      }
+    },
+    vipProfitLedger: {
+      totalVipProfit: user.totalVipProfit || 0,
+      todayVipProfit: user.todayVipProfit || 0,
+      records: vipProfitIncome,
+      transactions: vipProfitTransactions
+    },
+    teamCommissionLedger: {
+      totalTeamCommission: user.totalTeamCommission || 0,
+      todayTeamCommission: user.todayTeamCommission || 0,
+      records: teamCommissionIncome,
+      transactions: teamCommissionTransactions
+    },
+    otherLedgers: {
+      deposits: depositTransactions,
+      withdrawals: withdrawalTransactions,
+      ticketPurchases: purchaseTransactions,
+      taskRewards: taskRewardTransactions
+    },
+    allTransactions: userTx,
+    allIncomeRecords: userRecords
+  });
+});
+
+// POST Claim or Distribute Team Rebate / Commission (16% / 8% / 4%)
+app.post('/api/team/claim-commission', (req, res) => {
+  const user = recalculateUserState(PRIMARY_USER_ID);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+
+  // Example automated rebate generation from active direct referrals
+  const validDirects = referrals.filter(r => r.level === 1 && r.isValid);
+  if (validDirects.length === 0) {
+    return res.status(400).json({ error: 'No active direct team members available for rebate claim.' });
+  }
+
+  // Credit a realistic rebate reward from the first active referral for testing/claiming
+  const ref = validDirects[0];
+  const yieldSimulated = 50.0; // base yield activity
+  const result = creditTeamCommission(
+    user.id,
+    ref.id,
+    ref.username,
+    1, // Tier 1 Direct (16%)
+    yieldSimulated,
+    `Direct Level A 16.0% commission from ${ref.username}'s daily concert yield ($${yieldSimulated.toFixed(2)})`
+  );
+
+  if (!result) {
+    return res.status(400).json({ error: 'Failed to process team commission' });
+  }
+
+  recalculateUserState(user.id);
+
+  res.json({
+    success: true,
+    message: `Successfully credited +$${result.commissionAmount.toFixed(2)} USDT team commission (Tier 1 - 16%) into your dedicated Team Commission ledger!`,
+    commissionAmount: result.commissionAmount,
+    txId: result.txId,
+    user
+  });
+});
+
+// POST Admin Distribute Multi-Tier Referral Commission (16% Level A / 8% Level B / 4% Level C)
+app.post('/api/admin/distribute-team-commission', (req, res) => {
+  const { targetUserId, sourceMemberId, sourceMemberName, tierLevel, baseAmount, notes } = req.body;
+  const userToCredit = targetUserId || PRIMARY_USER_ID;
+  const tier = (parseInt(tierLevel, 10) || 1) as 1 | 2 | 3;
+  const base = parseFloat(baseAmount) || 100.0;
+
+  const result = creditTeamCommission(
+    userToCredit,
+    sourceMemberId || 'ref-admin-sim',
+    sourceMemberName || 'Team_Member',
+    tier,
+    base,
+    notes
+  );
+
+  if (!result) {
+    return res.status(400).json({ error: 'Could not credit team commission. Amount must be positive.' });
+  }
+
+  const updatedUser = recalculateUserState(userToCredit);
+
+  res.json({
+    success: true,
+    message: `Credited +$${result.commissionAmount.toFixed(2)} USDT commission (Tier ${tier}) to ${updatedUser?.username || userToCredit}`,
+    result,
+    user: updatedUser
+  });
+});
+
+// POST Settle Ticket Purchases (Check and unfreeze/credit 2-min tickets)
+app.post('/api/tickets/settle', (req, res) => {
+  const settled = checkAndSettleFrozenTickets(PRIMARY_USER_ID);
+  const user = recalculateUserState(PRIMARY_USER_ID);
+  const userPurchases = purchases.filter(p => p.userId === PRIMARY_USER_ID);
+  
+  res.json({
+    success: true,
+    settled,
+    user,
+    purchases: userPurchases
+  });
+});
+
+// GET User Purchases
+app.get('/api/purchases', (req, res) => {
+  const userPurchases = purchases.filter(p => p.userId === PRIMARY_USER_ID);
+  res.json(userPurchases);
+});
+
+// GET Income Summary & Records
+app.get('/api/income', (req, res) => {
+  const user = recalculateUserState(PRIMARY_USER_ID);
+  const records = incomeRecords.filter(r => r.userId === PRIMARY_USER_ID);
+  const userPurchases = purchases.filter(p => p.userId === PRIMARY_USER_ID);
+  const activePurchases = userPurchases.filter(p => p.status === 'active' || p.status === 'frozen');
+  
+  const todayUtc = new Date().toISOString().slice(0, 10);
+  const isClaimedToday = user?.lastProfitClaimDate === todayUtc;
+  const todayPurchasedTotal = Number(activePurchases.reduce((sum, p) => sum + p.totalAmount, 0).toFixed(2));
+  const todayPendingProfit = Number(activePurchases.reduce((sum, p) => sum + (p.profitAmount || 0), 0).toFixed(2));
+  const startingBalance = user?.dailyTicketStartingBalance ?? (user?.balance || 0);
+  const spentToday = user?.dailyTicketSpent ?? 0;
+  const remainingDailyTicketBalance = Math.max(0, Number((startingBalance - spentToday).toFixed(2)));
+
+  res.json({
+    user,
+    records,
+    activePurchases,
+    todayPurchasedTotal,
+    todayPendingProfit,
+    isClaimedToday,
+    currentUtcDate: todayUtc,
+    dailyTicketStartingBalance: startingBalance,
+    dailyTicketSpent: spentToday,
+    remainingDailyTicketBalance,
+    summary: {
+      totalAssets: user?.totalAssets || 0,
+      availableBalance: user?.balance || 0,
+      frozenAssets: user?.frozenBalance || 0,
+      todayTicketIncome: user?.todayTicketIncome || 0,
+      todayConcertIncome: user?.todayConcertIncome || 0,
+      todayFinancialIncome: user?.todayFinancialIncome || 0,
+      totalIncome: user?.totalEarnedIncome || 0,
+      recordExpenditure: user?.recordExpenditure || 0,
+      concertExpenditure: user?.concertExpenditure || 0,
+      financialExpenditure: user?.financialExpenditure || 0,
+      isIncomePaused: user?.isIncomePaused || false,
+      incomePauseReason: user?.incomePauseReason
+    }
+  });
+});
+
+// POST Trigger Daily Income Calculation - Redirects to Ticket Profit Claim
+app.post('/api/income/calculate-daily', (req, res) => {
+  res.redirect(307, '/api/tickets/claim-profit');
+});
+
+// GET Finance Dashboard (Balances, History, Withdrawals, Deposits)
+app.get('/api/finance', (req, res) => {
+  const user = recalculateUserState(PRIMARY_USER_ID);
+  const userTx = transactions.filter(t => t.userId === PRIMARY_USER_ID);
+  const userWd = withdrawals.filter(w => w.userId === PRIMARY_USER_ID);
+  const userDep = deposits.filter(d => d.userId === PRIMARY_USER_ID);
+
+  res.json({
+    user,
+    transactions: userTx,
+    withdrawals: userWd,
+    deposits: userDep
+  });
+});
+
+// POST Create Deposit (Simulated recharge or crypto webhook)
+app.post('/api/finance/deposit', (req, res) => {
+  const { amount, network, txHash } = req.body;
+  const user = users[PRIMARY_USER_ID];
+  if (!user) return res.status(404).json({ error: 'User not found' });
+
+  const depAmount = parseFloat(amount);
+  if (isNaN(depAmount) || depAmount < 10) {
+    return res.status(400).json({ error: 'Minimum deposit amount is $10.00' });
+  }
+
+  const newDeposit: DepositRequest = {
+    id: `DEP-${Date.now().toString().slice(-5)}`,
+    userId: user.id,
+    username: user.username,
+    amount: depAmount,
+    network: network || 'TRC20',
+    walletAddress: user.walletAddress || (network === 'BEP20' ? OFFICIAL_PAYMENT_ADDRESSES.BEP20 : OFFICIAL_PAYMENT_ADDRESSES.TRC20),
+    txHash: txHash || `0x${Math.random().toString(16).slice(2, 18)}...`,
+    status: 'Completed',
+    createdAt: new Date().toISOString()
+  };
+
+  deposits.unshift(newDeposit);
+
+  // Credit balance immediately
+  user.balance = Number((user.balance + depAmount).toFixed(2));
+
+  transactions.unshift({
+    id: `TXN-DEP-${Date.now()}`,
+    userId: user.id,
+    type: 'deposit',
+    amount: depAmount,
+    status: 'completed',
+    title: `USDT Deposit (${network || 'TRC20'})`,
+    description: `Deposit credited to available balance`,
+    txHash: newDeposit.txHash,
+    createdAt: new Date().toISOString()
+  });
+
+  recalculateUserState(user.id);
+  persistDb(`Deposit Created: $${depAmount}`);
+
+  res.json({
+    success: true,
+    message: `Deposit of $${depAmount.toFixed(2)} credited successfully!`,
+    deposit: newDeposit,
+    user
+  });
+});
+
+// POST Create Withdrawal Request
+// Checks available balance, reserves/freezes requested amount while pending
+app.post('/api/finance/withdraw', (req, res) => {
+  const { amount, walletAddress, network } = req.body;
+  const user = users[PRIMARY_USER_ID];
+  if (!user) return res.status(404).json({ error: 'User not found' });
+
+  const wdAmount = parseFloat(amount);
+  if (isNaN(wdAmount) || wdAmount < 8) {
+    return res.status(400).json({ error: 'Minimum withdrawal amount is $8.00' });
+  }
+
+  if (user.balance < wdAmount) {
+    return res.status(400).json({
+      error: `Insufficient available balance ($${user.balance.toFixed(2)}). Cannot withdraw $${wdAmount.toFixed(2)}.`
+    });
+  }
+
+  // 8% platform service fee calculation
+  const fee = Number((wdAmount * 0.08).toFixed(2));
+  const netAmount = Number((wdAmount - fee).toFixed(2));
+
+  // Reserve/Freeze funds
+  user.balance = Number((user.balance - wdAmount).toFixed(2));
+  user.frozenBalance = Number((user.frozenBalance + wdAmount).toFixed(2));
+
+  const txId = `WD-${Math.floor(1000 + Math.random() * 9000)}`;
+
+  const newWd: WithdrawalRequest = {
+    id: txId,
+    userId: user.id,
+    username: user.username,
+    amount: wdAmount,
+    fee,
+    netAmount,
+    walletAddress: walletAddress || user.walletAddress || 'TQn9Y2khEsLJW1ChV8L5H09ZNmC9aJbmSe',
+    network: network || 'TRC20',
+    status: 'Pending',
+    createdAt: new Date().toISOString(),
+    txId: `${txId}-USDT`
+  };
+
+  withdrawals.unshift(newWd);
+
+  transactions.unshift({
+    id: `TXN-WD-${Date.now()}`,
+    userId: user.id,
+    type: 'withdrawal',
+    amount: wdAmount,
+    fee,
+    status: 'pending',
+    title: `Withdrawal Request (${network || 'TRC20'})`,
+    description: `Net payout: $${netAmount.toFixed(2)} (Fee: $${fee.toFixed(2)} [8%])`,
+    createdAt: new Date().toISOString()
+  });
+
+  recalculateUserState(user.id);
+  persistDb(`Withdrawal Requested: $${wdAmount}`);
+
+  res.json({
+    success: true,
+    message: `Withdrawal request for $${wdAmount.toFixed(2)} submitted. Funds frozen pending verification.`,
+    withdrawal: newWd,
+    user
+  });
+});
+
+// GET Team & Referrals (Commission tiers 16% / 8% / 4%)
+app.get('/api/team', (req, res) => {
+  const user = recalculateUserState(PRIMARY_USER_ID);
+  res.json({
+    user,
+    referrals,
+    commissionRates: {
+      tier1: 0.16, // 16% Level A direct
+      tier2: 0.08, // 8% Level B
+      tier3: 0.04  // 4% Level C
+    },
+    summary: {
+      directValidCount: referrals.filter(r => r.level === 1 && r.isValid).length,
+      directTotalCount: referrals.filter(r => r.level === 1).length,
+      level2Count: referrals.filter(r => r.level === 2).length,
+      level3Count: referrals.filter(r => r.level === 3).length,
+      totalTeamDeposit: referrals.reduce((sum, r) => sum + r.totalDeposit, 0)
+    }
+  });
+});
+
+// GET Tasks (Strictly the 4 Referral & Activation Milestone Tasks)
+app.get('/api/tasks', (req, res) => {
+  const user = recalculateUserState(PRIMARY_USER_ID);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  const validDirectCount = referrals.filter(r => r.level === 1 && r.isValid).length;
+  const claimedIds = user.claimedTaskIds || [];
+
+  const dynamicTasks: TaskItem[] = [
+    {
+      id: 'task-invite-5',
+      title: 'Invite 5 valid A-level direct members',
+      description: 'Invite 5 valid A-level direct members to claim $15 reward',
+      rewardAmount: 15.0,
+      rewardType: 'balance',
+      progress: Math.min(5, validDirectCount),
+      maxProgress: 5,
+      isCompleted: validDirectCount >= 5,
+      isClaimed: claimedIds.includes('task-invite-5'),
+      icon: 'Users',
+      category: 'growth'
+    },
+    {
+      id: 'task-activate-10',
+      title: 'Activate 10 valid A-level direct members',
+      description: 'Activate 10 valid A-level direct members to claim $30 reward',
+      rewardAmount: 30.0,
+      rewardType: 'balance',
+      progress: Math.min(10, validDirectCount),
+      maxProgress: 10,
+      isCompleted: validDirectCount >= 10,
+      isClaimed: claimedIds.includes('task-activate-10'),
+      icon: 'Users',
+      category: 'growth'
+    },
+    {
+      id: 'task-activate-20',
+      title: 'Activate 20 valid A-level direct members',
+      description: 'Activate 20 valid A-level direct members to claim $100 reward',
+      rewardAmount: 100.0,
+      rewardType: 'balance',
+      progress: Math.min(20, validDirectCount),
+      maxProgress: 20,
+      isCompleted: validDirectCount >= 20,
+      isClaimed: claimedIds.includes('task-activate-20'),
+      icon: 'Users',
+      category: 'growth'
+    },
+    {
+      id: 'task-activate-50',
+      title: 'Activate 50 valid direct members',
+      description: 'Activate 50 valid direct members to claim $500 reward',
+      rewardAmount: 500.0,
+      rewardType: 'balance',
+      progress: Math.min(50, validDirectCount),
+      maxProgress: 50,
+      isCompleted: validDirectCount >= 50,
+      isClaimed: claimedIds.includes('task-activate-50'),
+      icon: 'Users',
+      category: 'growth'
+    }
+  ];
+
+  res.json(dynamicTasks);
+});
+
+// POST Task Claim - Claim $15 / $30 / $100 / $500 reward when condition is completed
+app.post('/api/tasks/claim', (req, res) => {
+  const { taskId } = req.body;
+  const user = users[PRIMARY_USER_ID];
+  if (!user) return res.status(404).json({ error: 'User not found' });
+
+  if (!user.claimedTaskIds) {
+    user.claimedTaskIds = [];
+  }
+
+  if (user.claimedTaskIds.includes(taskId)) {
+    return res.status(400).json({ error: 'This task reward has already been claimed!' });
+  }
+
+  const validDirectCount = referrals.filter(r => r.level === 1 && r.isValid).length;
+
+  let rewardAmount = 0;
+  let requiredMembers = 0;
+  let taskTitle = '';
+
+  if (taskId === 'task-invite-5') {
+    requiredMembers = 5;
+    rewardAmount = 15;
+    taskTitle = 'Invite 5 valid A-level direct members';
+  } else if (taskId === 'task-activate-10') {
+    requiredMembers = 10;
+    rewardAmount = 30;
+    taskTitle = 'Activate 10 valid A-level direct members';
+  } else if (taskId === 'task-activate-20') {
+    requiredMembers = 20;
+    rewardAmount = 100;
+    taskTitle = 'Activate 20 valid A-level direct members';
+  } else if (taskId === 'task-activate-50') {
+    requiredMembers = 50;
+    rewardAmount = 500;
+    taskTitle = 'Activate 50 valid direct members';
+  } else {
+    return res.status(400).json({ error: 'Invalid task ID' });
+  }
+
+  if (validDirectCount < requiredMembers) {
+    return res.status(400).json({
+      error: `Required condition not yet met! You have ${validDirectCount} / ${requiredMembers} valid direct members. Condition requires ${requiredMembers} active direct members.`
+    });
+  }
+
+  // Grant reward to available balance
+  user.claimedTaskIds.push(taskId);
+  user.balance = Number((user.balance + rewardAmount).toFixed(2));
+  user.totalEarnedIncome = Number(((user.totalEarnedIncome || 0) + rewardAmount).toFixed(2));
+
+  // Add transaction
+  transactions.unshift({
+    id: `TXN-TASK-${Date.now()}`,
+    userId: user.id,
+    type: 'task_reward',
+    amount: rewardAmount,
+    status: 'completed',
+    title: `Task Reward: ${taskTitle}`,
+    description: `Claimed +$${rewardAmount.toFixed(2)} USDT directly to available balance`,
+    createdAt: new Date().toISOString()
+  });
+
+  // Add Income record
+  incomeRecords.unshift({
+    id: `INC-TASK-${Date.now().toString().slice(-6)}`,
+    userId: user.id,
+    ticketName: taskTitle,
+    categoryType: 'ticket',
+    previousBalance: Number((user.balance - rewardAmount).toFixed(2)),
+    incomeAmount: rewardAmount,
+    vipLevel: user.vipLevel,
+    dailyRate: 0,
+    newBalance: user.balance,
+    timestamp: new Date().toISOString(),
+    status: 'credited',
+    transactionId: `TXN-TASK-${Date.now()}`,
+    notes: `Task Milestone Reward: ${taskTitle} (+$${rewardAmount.toFixed(2)})`
+  });
+
+  recalculateUserState(user.id);
+  persistDb(`Task Claimed: ${taskTitle}`);
+
+  res.json({
+    success: true,
+    message: `Congratulations! Successfully claimed $${rewardAmount.toFixed(2)} USDT reward for ${taskTitle}!`,
+    rewardAmount,
+    user
+  });
+});
+
+// POST Daily Attendance Check-in (Welfare Center: Claim $0.10 USDT once daily)
+app.post('/api/welfare/attendance', (req, res) => {
+  const user = users[PRIMARY_USER_ID];
+  if (!user) return res.status(404).json({ error: 'User not found' });
+
+  const todayStr = new Date().toISOString().slice(0, 10);
+  if (user.lastAttendanceClaimDate === todayStr) {
+    return res.status(400).json({ 
+      error: 'Today\'s daily attendance reward ($0.10 USDT) has already been claimed. Please come back tomorrow!' 
+    });
+  }
+
+  user.lastAttendanceClaimDate = todayStr;
+  user.attendanceStreak = (user.attendanceStreak || 0) + 1;
+  const rewardAmount = 0.10;
+  user.balance = Number((user.balance + rewardAmount).toFixed(2));
+  user.totalEarnedIncome = Number(((user.totalEarnedIncome || 0) + rewardAmount).toFixed(2));
+
+  transactions.unshift({
+    id: `TXN-ATTEND-${Date.now()}`,
+    userId: user.id,
+    type: 'deposit',
+    amount: rewardAmount,
+    status: 'completed',
+    title: 'Daily Attendance Reward',
+    description: `Claimed +$0.10 USDT daily check-in bonus (Streak Day ${user.attendanceStreak})`,
+    createdAt: new Date().toISOString()
+  });
+
+  recalculateUserState(user.id);
+  persistDb('Daily Attendance Check-in Claimed');
+
+  res.json({
+    success: true,
+    message: 'Successfully claimed $0.10 USDT Daily Attendance Reward!',
+    rewardAmount: 0.10,
+    attendanceStreak: user.attendanceStreak,
+    user
+  });
+});
+
+// POST Auth Register with Country Code, Phone/User, Password, and Captcha
+// When a new member registers, their account is initialized with 0 balance, 0 team report, 0 income, and clean state.
+app.post('/api/auth/register', (req, res) => {
+  const { username, countryCode, phone, password, referralCode } = req.body;
+  if (!username || !phone || !password) {
+    return res.status(400).json({ error: 'Username, phone number, and password are required' });
+  }
+
+  const cleanUserId = PRIMARY_USER_ID;
+  
+  // Clean fresh slate initialization for new registration
+  users[cleanUserId] = {
+    id: cleanUserId,
+    username: username.trim(),
+    email: `${username.toLowerCase().replace(/[^a-z0-9]/g, '')}@jambase.vip`,
+    avatar: `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&auto=format&fit=crop&q=80`,
+    phone: `${countryCode || '+92'} ${phone.trim()}`,
+    walletAddress: '',
+    balance: 0.0, // Initial 0.0 balance on new registration
+    frozenBalance: 0.0,
+    totalAssets: 0.0,
+    vipLevel: 1,
+    referralCode: `JB${Math.floor(100000 + Math.random() * 900000)}`,
+    referredBy: referralCode ? referralCode.trim() : undefined,
+    validDirectMembersCount: 0,
+    totalTeamMembersCount: 0,
+    totalTeamDeposit: 0.0,
+    isIncomePaused: true,
+    incomePauseReason: 'Minimum $30.00 Account Balance Required to Work and Earn VIP Yield',
+    autoCompound: true,
+    totalEarnedIncome: 0.0,
+    todayTicketIncome: 0.0,
+    todayConcertIncome: 0.0,
+    todayFinancialIncome: 0.0,
+    recordExpenditure: 0.0,
+    concertExpenditure: 0.0,
+    financialExpenditure: 0.0,
+    createdAt: new Date().toISOString(),
+    isAdmin: false
+  };
+
+  // Reset team referrals to 0 for this fresh registration
+  referrals = [];
+  purchases = [];
+  incomeRecords = [];
+  transactions = [];
+  withdrawals = [];
+  deposits = [];
+  processedIncomeDays.clear();
+
+  recalculateUserState(cleanUserId);
+  persistDb(`New Member Registered: ${username}`, true);
+
+  res.json({
+    success: true,
+    message: 'Account registered successfully! Welcome to JAMBASE. Please deposit at least $30 to activate your account and start earning VIP yields.',
+    user: users[cleanUserId]
+  });
+});
+
+// GET Telegram Customer Service Configuration & Support Info
+app.get('/api/support/telegram', (req, res) => {
+  res.json({
+    success: true,
+    telegram: telegramSupportConfig
+  });
+});
+
+// ==========================================
+// ADMIN CREDENTIALS & TOKEN SESSIONS
+// ==========================================
+const ADMIN_USERNAME = 'admin';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'JamBase#VIP2026!Adm99x$Secure';
+const activeAdminSessions = new Set<string>();
+
+/**
+ * Middleware: Enforce Admin Session Authentication
+ */
+function requireAdminAuth(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const authHeader = req.headers['authorization'] || '';
+  const customHeader = (req.headers['x-admin-token'] as string) || '';
+  let token = customHeader;
+  if (!token && authHeader.startsWith('Bearer ')) {
+    token = authHeader.slice(7).trim();
+  }
+
+  if (!token || !activeAdminSessions.has(token)) {
+    return res.status(401).json({
+      error: 'Unauthorized: Valid VIP Admin authentication token is required to access administrative controls.'
+    });
+  }
+  next();
+}
+
+// POST Admin Login
+app.post('/api/admin/login', (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Admin username and password are required' });
+  }
+
+  if (username !== ADMIN_USERNAME || password !== ADMIN_PASSWORD) {
+    return res.status(401).json({ error: 'Invalid admin credentials. Access denied.' });
+  }
+
+  const token = `adm_${Math.random().toString(36).slice(2)}${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
+  activeAdminSessions.add(token);
+
+  res.json({
+    success: true,
+    message: 'Admin authenticated successfully',
+    token,
+    admin: {
+      username: ADMIN_USERNAME,
+      role: 'VIP_SUPER_ADMIN',
+      loginTime: new Date().toISOString()
+    }
+  });
+});
+
+// GET Admin Verify Token
+app.get('/api/admin/verify', requireAdminAuth, (req, res) => {
+  res.json({
+    success: true,
+    authenticated: true,
+    username: ADMIN_USERNAME
+  });
+});
+
+// POST Admin Logout
+app.post('/api/admin/logout', (req, res) => {
+  const authHeader = req.headers['authorization'] || '';
+  const customHeader = (req.headers['x-admin-token'] as string) || '';
+  let token = customHeader;
+  if (!token && authHeader.startsWith('Bearer ')) {
+    token = authHeader.slice(7).trim();
+  }
+  if (token) {
+    activeAdminSessions.delete(token);
+  }
+  res.json({ success: true, message: 'Admin logged out successfully' });
+});
+
+// POST Admin Update Telegram Support Username
+app.post('/api/admin/telegram', requireAdminAuth, (req, res) => {
+  const { username, channelUsername } = req.body;
+  if (username) {
+    const cleanUser = username.startsWith('@') ? username : `@${username}`;
+    telegramSupportConfig.username = cleanUser;
+    telegramSupportConfig.link = `https://t.me/${cleanUser.replace('@', '')}`;
+  }
+  if (channelUsername) {
+    const cleanChan = channelUsername.startsWith('@') ? channelUsername : `@${channelUsername}`;
+    telegramSupportConfig.channelUsername = cleanChan;
+    telegramSupportConfig.channelLink = `https://t.me/${cleanChan.replace('@', '')}`;
+  }
+
+  persistDb(`Admin Updated Telegram Support: ${telegramSupportConfig.username}`);
+
+  res.json({
+    success: true,
+    message: 'Telegram customer support settings updated',
+    telegram: telegramSupportConfig
+  });
+});
+
+// POST Auth Login
+app.post('/api/auth/login', (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username/phone and password are required' });
+  }
+
+  res.json({
+    success: true,
+    message: 'Logged in successfully!',
+    user: users[PRIMARY_USER_ID]
+  });
+});
+
+// ==========================================
+// ADMIN CONTROL APIs
+// ==========================================
+
+// GET Admin Dashboard overview
+app.get('/api/admin/overview', requireAdminAuth, (req, res) => {
+  res.json({
+    totalUsers: Object.keys(users).length,
+    totalTickets: tickets.length,
+    activeTickets: tickets.filter(t => t.isActive).length,
+    totalWithdrawals: withdrawals.length,
+    pendingWithdrawals: withdrawals.filter(w => w.status === 'Pending').length,
+    totalReferrals: referrals.length,
+    validReferrals: referrals.filter(r => r.isValid).length,
+    withdrawalsList: withdrawals,
+    referralsList: referrals,
+    ticketsList: tickets
+  });
+});
+
+// Admin: Process Withdrawal (Approve, Reject, Complete)
+app.post('/api/admin/withdrawals/:id/action', requireAdminAuth, (req, res) => {
+  const { id } = req.params;
+  const { action, rejectReason } = req.body; // 'Approve' | 'Reject' | 'Complete'
+  const wd = withdrawals.find(w => w.id === id);
+
+  if (!wd) return res.status(404).json({ error: 'Withdrawal not found' });
+
+  const user = users[wd.userId];
+  if (!user) return res.status(404).json({ error: 'Associated user not found' });
+
+  if (action === 'Approve') {
+    wd.status = 'Approved';
+    wd.processedAt = new Date().toISOString();
+  } else if (action === 'Complete') {
+    wd.status = 'Completed';
+    wd.processedAt = new Date().toISOString();
+
+    // Deduct permanently from frozenBalance
+    user.frozenBalance = Number(Math.max(0, user.frozenBalance - wd.amount).toFixed(2));
+
+    // Update related transaction
+    const tx = transactions.find(t => t.id.includes(wd.id) || (t.type === 'withdrawal' && t.status === 'pending'));
+    if (tx) tx.status = 'completed';
+
+    // If remaining total assets fall below $30, automatically pause income
+    recalculateUserState(user.id);
+  } else if (action === 'Reject') {
+    wd.status = 'Rejected';
+    wd.processedAt = new Date().toISOString();
+    wd.rejectReason = rejectReason || 'Administrative rejection';
+
+    // Return frozen funds back to available balance
+    user.frozenBalance = Number(Math.max(0, user.frozenBalance - wd.amount).toFixed(2));
+    user.balance = Number((user.balance + wd.amount).toFixed(2));
+
+    const tx = transactions.find(t => t.id.includes(wd.id) || (t.type === 'withdrawal' && t.status === 'pending'));
+    if (tx) tx.status = 'rejected';
+
+    recalculateUserState(user.id);
+  } else {
+    return res.status(400).json({ error: 'Invalid action' });
+  }
+
+  persistDb(`Admin Processed Withdrawal: ${action} #${wd.id}`);
+
+  res.json({ success: true, withdrawal: wd, user });
+});
+
+// Admin: Toggle / Review Referral Validity
+app.post('/api/admin/referrals/:id/toggle-valid', requireAdminAuth, (req, res) => {
+  const { id } = req.params;
+  const { reason } = req.body;
+  const ref = referrals.find(r => r.id === id);
+
+  if (!ref) return res.status(404).json({ error: 'Referral member not found' });
+
+  ref.isValid = !ref.isValid;
+  if (!ref.isValid) {
+    ref.disqualifiedReason = reason || 'Disqualified by administrator during compliance audit.';
+  } else {
+    ref.disqualifiedReason = undefined;
+  }
+
+  recalculateUserState(PRIMARY_USER_ID);
+  persistDb(`Admin Referral Validity Toggle: ${ref.username} (Valid: ${ref.isValid})`);
+
+  res.json({
+    success: true,
+    referral: ref,
+    user: users[PRIMARY_USER_ID]
+  });
+});
+
+// Admin: Create / Edit / Delete Ticket
+app.post('/api/admin/tickets', requireAdminAuth, (req, res) => {
+  const {
+    name, artist, category, price, voucherQty, image, description,
+    eventDate, venue, location, vipRequired, purchaseLimit, maxQuantity
+  } = req.body;
+
+  if (!name || !artist || !price) {
+    return res.status(400).json({ error: 'Name, artist, and price are required' });
+  }
+
+  const newTicket: Ticket = {
+    id: `tkt-custom-${Date.now()}`,
+    name,
+    artist,
+    category: category || 'Music',
+    price: parseFloat(price),
+    voucherQty: parseInt(voucherQty, 10) || 1,
+    image: image || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600&auto=format&fit=crop&q=80',
+    description: description || 'Exciting live musical showcase.',
+    eventDate: eventDate || '2026-11-30',
+    venue: venue || 'JAMBASE Arena',
+    location: location || 'Global Stream & In-Person',
+    vipRequired: parseInt(vipRequired, 10) || 1,
+    purchaseLimit: parseInt(purchaseLimit, 10) || 50,
+    maxQuantity: parseInt(maxQuantity, 10) || 10,
+    soldCount: 0,
+    isActive: true,
+    isPopular: true
+  };
+
+  tickets.unshift(newTicket);
+  persistDb(`Admin Created Ticket: ${newTicket.name}`);
+  res.json({ success: true, ticket: newTicket });
+});
+
+app.put('/api/admin/tickets/:id', requireAdminAuth, (req, res) => {
+  const { id } = req.params;
+  const index = tickets.findIndex(t => t.id === id);
+  if (index === -1) return res.status(404).json({ error: 'Ticket not found' });
+
+  tickets[index] = {
+    ...tickets[index],
+    ...req.body,
+    price: req.body.price !== undefined ? parseFloat(req.body.price) : tickets[index].price
+  };
+
+  persistDb(`Admin Updated Ticket: ${tickets[index].name}`);
+  res.json({ success: true, ticket: tickets[index] });
+});
+
+app.delete('/api/admin/tickets/:id', requireAdminAuth, (req, res) => {
+  const { id } = req.params;
+  tickets = tickets.filter(t => t.id !== id);
+  persistDb(`Admin Deleted Ticket: ${id}`);
+  res.json({ success: true, message: 'Ticket removed' });
+});
+
+// Admin: Create Category
+app.post('/api/admin/categories', requireAdminAuth, (req, res) => {
+  const { name } = req.body;
+  if (!name) return res.status(400).json({ error: 'Category name is required' });
+
+  const newCat: Category = {
+    id: `cat-${Date.now()}`,
+    name,
+    slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+    isActive: true
+  };
+
+  categories.push(newCat);
+  persistDb(`Admin Created Category: ${newCat.name}`);
+  res.json({ success: true, category: newCat });
+});
+
+// Admin: Update Announcement / Notices
+app.put('/api/admin/notices', requireAdminAuth, (req, res) => {
+  const { title, content } = req.body;
+  if (!title) return res.status(400).json({ error: 'Announcement title is required' });
+
+  if (notices.length > 0) {
+    notices[0].title = title;
+    if (content) notices[0].content = content;
+    notices[0].date = new Date().toISOString().slice(0, 10);
+  } else {
+    notices.push({
+      id: `n-${Date.now()}`,
+      title,
+      content: content || title,
+      date: new Date().toISOString().slice(0, 10),
+      type: 'info'
+    });
+  }
+
+  persistDb('Update Announcement', true);
+  res.json({ success: true, message: 'Announcement updated successfully', notices });
+});
+
+// ==========================================
+// VIP DATA PROTECTION & DATABASE BACKUP APIs
+// ==========================================
+
+// GET List of all database backups and snapshots
+app.get('/api/admin/backups', requireAdminAuth, (req, res) => {
+  const snapshots = dbManager.listBackupSnapshots();
+  res.json({
+    success: true,
+    backups: snapshots,
+    count: snapshots.length
+  });
+});
+
+// POST Create manual backup snapshot
+app.post('/api/admin/backups/create', requireAdminAuth, (req, res) => {
+  const { reason } = req.body;
+  const snapshot = dbManager.createBackupSnapshot(
+    dbManager.getDb(),
+    'manual',
+    reason || 'Manual Administrator VIP Protection Snapshot'
+  );
+
+  if (!snapshot) {
+    return res.status(500).json({ error: 'Failed to create backup snapshot' });
+  }
+
+  res.json({
+    success: true,
+    message: `Backup snapshot ${snapshot.filename} created successfully.`,
+    snapshot
+  });
+});
+
+// POST Restore database from a backup snapshot
+app.post('/api/admin/backups/restore', requireAdminAuth, (req, res) => {
+  const { snapshotId } = req.body;
+  if (!snapshotId) {
+    return res.status(400).json({ error: 'Snapshot ID is required' });
+  }
+
+  const result = dbManager.restoreFromSnapshot(snapshotId);
+  if (!result.success) {
+    return res.status(500).json({ error: result.message });
+  }
+
+  // Refresh active in-memory pointers
+  syncMemoryPointers();
+  recalculateUserState(PRIMARY_USER_ID);
+
+  res.json({
+    success: true,
+    message: result.message
+  });
+});
+
+// GET Database Integrity Audit Report
+app.get('/api/admin/backups/verify-integrity', requireAdminAuth, (req, res) => {
+  const report = dbManager.verifyIntegrity();
+  res.json(report);
+});
+
+// GET Export entire database JSON
+app.get('/api/admin/backups/export', requireAdminAuth, (req, res) => {
+  const fullDb = dbManager.exportData();
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Content-Disposition', `attachment; filename=jambase_backup_${new Date().toISOString().slice(0, 10)}.json`);
+  res.json(fullDb);
+});
+
+// POST Import database JSON with pre-validation and safety latch
+app.post('/api/admin/backups/import', requireAdminAuth, (req, res) => {
+  const { data } = req.body;
+  if (!data) {
+    return res.status(400).json({ error: 'No database payload provided' });
+  }
+
+  const result = dbManager.importData(data);
+  if (!result.success) {
+    return res.status(400).json({ error: result.message });
+  }
+
+  // Refresh active in-memory pointers
+  syncMemoryPointers();
+  recalculateUserState(PRIMARY_USER_ID);
+
+  res.json({
+    success: true,
+    message: result.message
+  });
+});
+
+// User: Update Profile
+app.put('/api/user/profile', (req, res) => {
+  const user = users[PRIMARY_USER_ID];
+  if (!user) return res.status(404).json({ error: 'User not found' });
+
+  const { username, email, phone, walletAddress, avatar } = req.body;
+  if (username) user.username = username;
+  if (email) user.email = email;
+  if (phone) user.phone = phone;
+  if (walletAddress) user.walletAddress = walletAddress;
+  if (avatar) user.avatar = avatar;
+
+  recalculateUserState(PRIMARY_USER_ID);
+  res.json({ success: true, message: 'Profile updated successfully', user });
+});
+
+// User: Update Security & Preferences
+app.put('/api/user/security', (req, res) => {
+  const user = users[PRIMARY_USER_ID];
+  if (!user) return res.status(404).json({ error: 'User not found' });
+
+  const { autoCompound } = req.body;
+  if (autoCompound !== undefined) user.autoCompound = Boolean(autoCompound);
+
+  res.json({ success: true, message: 'Security preferences updated', user });
+});
+
+// ==========================================
+// VITE MIDDLEWARE / SPA FALLBACK
+// ==========================================
+async function startServer() {
+  if (process.env.NODE_ENV !== 'production') {
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: 'spa'
+    });
+    app.use(vite.middlewares);
+  } else {
+    const distPath = path.join(process.cwd(), 'dist');
+    app.use(express.static(distPath));
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(distPath, 'index.html'));
+    });
+  }
+
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`JAMBASE server running on http://0.0.0.0:${PORT}`);
+  });
+}
+
+startServer();
