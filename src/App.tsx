@@ -157,15 +157,17 @@ export default function App() {
     <div className="min-h-screen bg-[#0b0c10] text-neutral-100 flex justify-center selection:bg-[#00D26A] selection:text-black">
       {/* Mobile viewport wrapper (max-w-md matching real smartphone screens) */}
       <div className="w-full max-w-md min-h-screen flex flex-col relative bg-[#0d0e12] border-x border-neutral-800/40 shadow-2xl">
-        {/* Top Header */}
-        <Header
-          user={user}
-          currentTab={currentTab}
-          onOpenNotifications={() => setShowNotifications(true)}
-          onOpenVIPModal={() => setCurrentTab('mine')}
-          onOpenLanguageModal={() => setShowLanguageModal(true)}
-          onOpenCustomerService={() => setShowCustomerServiceModal(true)}
-        />
+        {/* Top Header - ONLY displayed on Homepage */}
+        {currentTab === 'home' && (
+          <Header
+            user={user}
+            currentTab={currentTab}
+            onOpenNotifications={() => setShowNotifications(true)}
+            onOpenVIPModal={() => setCurrentTab('mine')}
+            onOpenLanguageModal={() => setShowLanguageModal(true)}
+            onOpenCustomerService={() => setShowCustomerServiceModal(true)}
+          />
+        )}
 
         {/* Global Toast Notification */}
         {toastMessage && (
@@ -175,7 +177,7 @@ export default function App() {
         )}
 
         {/* Main Dynamic View Outlet */}
-        <main className="flex-1 px-4 pt-3">
+        <main className={`flex-1 px-4 ${currentTab === 'home' ? 'pt-3' : 'pt-5'}`}>
           {currentTab === 'home' && (
             <HomeView
               tickets={tickets}
