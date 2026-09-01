@@ -87,8 +87,8 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
   // Execute Withdrawal
   const handleExecuteWithdrawal = async () => {
     const amt = parseFloat(withdrawAmount);
-    if (isNaN(amt) || amt < 8) {
-      setWithdrawMsg({ text: 'Minimum withdrawal is $8.00', isError: true });
+    if (isNaN(amt) || amt < 10) {
+      setWithdrawMsg({ text: 'Minimum withdrawal is $10.00', isError: true });
       return;
     }
 
@@ -112,7 +112,7 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
     }
   };
 
-  const calcWdFee = (parseFloat(withdrawAmount) || 0) * 0.08;
+  const calcWdFee = (parseFloat(withdrawAmount) || 0) * 0.05;
   const calcWdNet = Math.max(0, (parseFloat(withdrawAmount) || 0) - calcWdFee);
   const remainingIfWd = (user?.balance || 0) - (parseFloat(withdrawAmount) || 0);
 
@@ -461,9 +461,9 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
 
           {/* Quick Preset Withdrawal Amounts */}
           <div>
-            <label className="text-xs font-semibold text-neutral-300 mb-1.5 block">Quick Select Amount (Min $8.00)</label>
+            <label className="text-xs font-semibold text-neutral-300 mb-1.5 block">Quick Select Amount (Min $10.00)</label>
             <div className="grid grid-cols-5 gap-1.5">
-              {['8', '20', '50', '100', '500'].map((amt) => (
+              {['10', '20', '50', '100', '500'].map((amt) => (
                 <button
                   key={amt}
                   onClick={() => setWithdrawAmount(amt)}
@@ -486,7 +486,7 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
               <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 font-bold">$</span>
               <input
                 type="number"
-                min="8"
+                min="10"
                 value={withdrawAmount}
                 onChange={(e) => setWithdrawAmount(e.target.value)}
                 className="w-full pl-8 pr-16 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white text-sm font-bold focus:outline-none focus:border-[#00D26A]"
@@ -521,7 +521,7 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
               <span className="font-semibold text-neutral-200">${(parseFloat(withdrawAmount) || 0).toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-neutral-400">
-              <span>Platform Service Fee (8%)</span>
+              <span>Platform Service Fee (5%)</span>
               <span className="font-semibold text-neutral-200">-${calcWdFee.toFixed(2)}</span>
             </div>
             <div className="pt-2 border-t border-neutral-800 flex justify-between font-bold">

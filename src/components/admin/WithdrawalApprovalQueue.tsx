@@ -389,13 +389,13 @@ export const WithdrawalApprovalQueue: React.FC<WithdrawalApprovalQueueProps> = (
                     <span className="font-mono font-bold text-white">${wd.amount.toFixed(2)}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] text-neutral-400 block font-medium">Platform Fee (8%)</span>
-                    <span className="font-mono font-bold text-red-400">-${(wd.fee || wd.amount * 0.08).toFixed(2)}</span>
+                    <span className="text-[10px] text-neutral-400 block font-medium">Platform Fee (5%)</span>
+                    <span className="font-mono font-bold text-red-400">-${(wd.fee || wd.amount * 0.05).toFixed(2)}</span>
                   </div>
                   <div>
                     <span className="text-[10px] text-emerald-400 block font-bold">Net Member Payout</span>
                     <span className="font-mono font-black text-[#00D26A] text-sm">
-                      ${(wd.netAmount || wd.amount - (wd.fee || wd.amount * 0.08)).toFixed(2)}
+                      ${(wd.netAmount || wd.amount - (wd.fee || wd.amount * 0.05)).toFixed(2)}
                     </span>
                   </div>
                 </div>
@@ -523,16 +523,16 @@ export const WithdrawalApprovalQueue: React.FC<WithdrawalApprovalQueueProps> = (
               </div>
 
               <div className="flex justify-between items-center pb-2 border-b border-neutral-850">
-                <span className="text-neutral-400">Platform Service Fee (8%):</span>
+                <span className="text-neutral-400">Platform Service Fee (5%):</span>
                 <span className="font-mono font-bold text-red-400">
-                  -${(selectedForApproval.fee || selectedForApproval.amount * 0.08).toFixed(2)} USDT
+                  -${(selectedForApproval.fee || selectedForApproval.amount * 0.05).toFixed(2)} USDT
                 </span>
               </div>
 
               <div className="flex justify-between items-center pt-1 bg-emerald-950/30 p-2.5 rounded-xl border border-emerald-500/30">
                 <span className="font-bold text-emerald-300">NET MEMBER PAYOUT:</span>
                 <span className="font-mono font-black text-[#00D26A] text-base">
-                  ${(selectedForApproval.netAmount || selectedForApproval.amount - (selectedForApproval.fee || selectedForApproval.amount * 0.08)).toFixed(2)} USDT
+                  ${(selectedForApproval.netAmount || selectedForApproval.amount - (selectedForApproval.fee || selectedForApproval.amount * 0.05)).toFixed(2)} USDT
                 </span>
               </div>
             </div>

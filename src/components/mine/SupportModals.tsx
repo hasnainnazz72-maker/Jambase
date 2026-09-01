@@ -103,7 +103,7 @@ export const SupportModal: React.FC<SupportModalProps> = ({
     },
     {
       q: 'What are the withdrawal limits and fees?',
-      a: 'The minimum withdrawal is $8.00 USDT (TRC20). Standard platform network service fee is 8%. Funds are processed rapidly following administrative security audit.'
+      a: 'The minimum withdrawal is $10.00 USDT (TRC20). Standard platform network service fee is 5%. Funds are processed rapidly following administrative security audit.'
     }
   ];
 

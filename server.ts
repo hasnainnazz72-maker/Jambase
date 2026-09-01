@@ -942,8 +942,8 @@ app.post('/api/finance/withdraw', (req, res) => {
   if (!user) return res.status(404).json({ error: 'User not found' });
 
   const wdAmount = parseFloat(amount);
-  if (isNaN(wdAmount) || wdAmount < 8) {
-    return res.status(400).json({ error: 'Minimum withdrawal amount is $8.00' });
+  if (isNaN(wdAmount) || wdAmount < 10) {
+    return res.status(400).json({ error: 'Minimum withdrawal amount is $10.00' });
   }
 
   if (user.balance < wdAmount) {
@@ -952,8 +952,8 @@ app.post('/api/finance/withdraw', (req, res) => {
     });
   }
 
-  // 8% platform service fee calculation
-  const fee = Number((wdAmount * 0.08).toFixed(2));
+  // 5% platform service fee calculation
+  const fee = Number((wdAmount * 0.05).toFixed(2));
   const netAmount = Number((wdAmount - fee).toFixed(2));
   const cleanNetwork = network === 'BEP20' ? 'BEP20' : 'TRC20';
   const targetWallet = walletAddress?.trim() || user.walletAddress || (cleanNetwork === 'BEP20' ? OFFICIAL_PAYMENT_ADDRESSES.BEP20 : OFFICIAL_PAYMENT_ADDRESSES.TRC20);
@@ -996,7 +996,7 @@ app.post('/api/finance/withdraw', (req, res) => {
     newBalance: user.balance,
     status: 'pending', // STRICTLY PENDING
     title: `Withdrawal Request (${cleanNetwork})`,
-    description: `Net payout: $${netAmount.toFixed(2)} USDT (Fee: $${fee.toFixed(2)} [8%]). Reserved in frozen balance pending Admin review.`,
+    description: `Net payout: $${netAmount.toFixed(2)} USDT (Fee: $${fee.toFixed(2)} [5%]). Reserved in frozen balance pending Admin review.`,
     createdAt: new Date().toISOString()
   });
 

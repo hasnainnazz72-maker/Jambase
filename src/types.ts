@@ -214,7 +214,7 @@ export interface WithdrawalRequest {
   userBalanceAtRequest?: number;
   currentUserBalance?: number;
   amount: number;
-  fee: number; // 8% service fee
+  fee: number; // 5% service fee
   netAmount: number;
   walletAddress: string;
   network: string; // 'TRC20' | 'BEP20'

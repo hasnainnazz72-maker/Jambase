@@ -68,7 +68,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     'income.lockDuration': '3-Minute Investment Lock',
     'income.profitOnTicket': 'Profit on Ticket',
     'income.useRemaining': 'Use Remaining Balance',
-    'income.disclaimer': 'VIP profit is calculated strictly on the individual ticket investment amount with a 3-minute lock. Standard withdrawal fee is 8%.',
+    'income.disclaimer': 'VIP profit is calculated strictly on the individual ticket investment amount with a 3-minute lock. Standard withdrawal fee is 5%.',
 
     // Task View
     'task.title': 'Task Center',
@@ -252,7 +252,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     'income.lockDuration': 'Bloqueo de inversión de 3 minutos',
     'income.profitOnTicket': 'Ganancia en entrada',
     'income.useRemaining': 'Usar saldo restante',
-    'income.disclaimer': 'La ganancia VIP se calcula estrictamente sobre el importe de la entrada adquirida con un bloqueo de 3 minutos. La comisión de retiro estándar es del 8%.',
+    'income.disclaimer': 'La ganancia VIP se calcula estrictamente sobre el importe de la entrada adquirida con un bloqueo de 3 minutos. La comisión de retiro estándar es del 5%.',
 
     'task.title': 'Centro de Tareas',
     'task.dailyTasks': 'Tareas Diarias de Ingresos',
@@ -342,7 +342,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     'income.lockDuration': 'Blocage d\'Investissement de 3 Minutes',
     'income.profitOnTicket': 'Bénéfice sur le Billet',
     'income.useRemaining': 'Utiliser le Solde Restant',
-    'income.disclaimer': 'Le profit VIP est calculé strictement sur le montant du billet acheté avec un blocage de 3 minutes. Frais de retrait standard de 8%.',
+    'income.disclaimer': 'Le profit VIP est calculé strictement sur le montant du billet acheté avec un blocage de 3 minutes. Frais de retrait standard de 5%.',
 
     'task.title': 'Centre de Tâches',
     'task.dailyTasks': 'Tâches Quotidiennes de Revenus',
@@ -432,7 +432,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     'income.lockDuration': '3-Minuten Investitionssperre',
     'income.profitOnTicket': 'Gewinn pro Ticket',
     'income.useRemaining': 'Restguthaben Nutzen',
-    'income.disclaimer': 'Der VIP-Gewinn wird streng auf den Betrag des gekauften Tickets berechnet (3 Minuten Sperrfrist). Standard-Auszahlungsgebühr beträgt 8%.',
+    'income.disclaimer': 'Der VIP-Gewinn wird streng auf den Betrag des gekauften Tickets berechnet (3 Minuten Sperrfrist). Standard-Auszahlungsgebühr beträgt 5%.',
 
     'task.title': 'Aufgaben-Zentrum',
     'task.dailyTasks': 'Tägliche Ertrags-Aufgaben',
@@ -522,7 +522,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     'income.lockDuration': 'قفل استثماري لمدة 3 دقائق',
     'income.profitOnTicket': 'الربح من التذكرة',
     'income.useRemaining': 'استخدم الرصيد المتبقي',
-    'income.disclaimer': 'يتم احتساب ربح VIP بشكل حصري على قيمة التذكرة المشتراة مع قفل لمدة 3 دقائق. رسوم السحب القياسية 8%.',
+    'income.disclaimer': 'يتم احتساب ربح VIP بشكل حصري على قيمة التذكرة المشتراة مع قفل لمدة 3 دقائق. رسوم السحب القياسية 5%.',
 
     'task.title': 'مركز المهام',
     'task.dailyTasks': 'مهام الإيرادات اليومية',
@@ -612,7 +612,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     'income.lockDuration': 'Bloqueio de Investimento de 3 Minutos',
     'income.profitOnTicket': 'Lucro do Ingresso',
     'income.useRemaining': 'Usar Saldo Restante',
-    'income.disclaimer': 'O lucro VIP é calculado estritamente sobre o valor do ingresso adquirido com bloqueio de 3 minutos. Taxa de saque padrão de 8%.',
+    'income.disclaimer': 'O lucro VIP é calculado estritamente sobre o valor do ingresso adquirido com bloqueio de 3 minutos. Taxa de saque padrão de 5%.',
 
     'task.title': 'Central de Tarefas',
     'task.dailyTasks': 'Tarefas Diárias de Renda',
@@ -702,7 +702,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     'income.lockDuration': '3-Минутная Заморозка Инвестиции',
     'income.profitOnTicket': 'Прибыль с Билета',
     'income.useRemaining': 'Использовать Остаток',
-    'income.disclaimer': 'VIP-прибыль рассчитывается строго от суммы купленного билета с 3-минутной заморозкой. Стандартная комиссия на вывод — 8%.',
+    'income.disclaimer': 'VIP-прибыль рассчитывается строго от суммы купленного билета с 3-минутной заморозкой. Стандартная комиссия на вывод — 5%.',
 
     'task.title': 'Центр Заданий',
     'task.dailyTasks': 'Ежедневные Доходные Задания',
@@ -792,7 +792,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     'income.lockDuration': '3分間の投資ロック',
     'income.profitOnTicket': 'チケット収益',
     'income.useRemaining': '残高を使用する',
-    'income.disclaimer': 'VIP利益は、3分間のロックを伴う購入チケット額に基づいて計算されます。標準出金手数料は8%です。',
+    'income.disclaimer': 'VIP利益は、3分間のロックを伴う購入チケット額に基づいて計算されます。標準出金手数料は5%です。',
 
     'task.title': 'タスクセンター',
     'task.dailyTasks': 'デイリー収益タスク',
@@ -882,7 +882,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     'income.lockDuration': '3分钟投资冻结锁定',
     'income.profitOnTicket': '门票收益',
     'income.useRemaining': '使用剩余余额',
-    'income.disclaimer': 'VIP收益严格按照单次门票购买金额计算，冻结3分钟后连同本金自动返还至可用余额。标准提现手续费为8%。',
+    'income.disclaimer': 'VIP收益严格按照单次门票购买金额计算，冻结3分钟后连同本金自动返还至可用余额。标准提现手续费为5%。',
 
     'task.title': '任务中心',
     'task.dailyTasks': '每日收益任务',
