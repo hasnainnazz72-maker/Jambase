@@ -177,6 +177,63 @@ function creditTeamCommission(
 }
 
 /**
+ * Distribute multi-level team commission ONLY from member's daily ticket profit/income.
+ * - A Level (Direct Inviter): 16% (0.16)
+ * - B Level (Tier 2 Inviter): 8% (0.08)
+ * - C Level (Tier 3 Inviter): 4% (0.04)
+ * Rules:
+ * 1. Strictly calculated from ticket income/profit only.
+ * 2. NO commissions calculated from deposits/recharges.
+ * 3. NO automatic first-deposit rewards to member or inviter.
+ */
+function distributeTicketProfitTeamCommissions(sourceUserId: string, ticketProfit: number, ticketName?: string) {
+  if (!ticketProfit || ticketProfit <= 0) return;
+  const sourceUser = users[sourceUserId];
+  if (!sourceUser) return;
+
+  // Level A (Direct inviter - 16%)
+  const uplineAId = sourceUser.inviterId || (sourceUserId !== PRIMARY_USER_ID ? PRIMARY_USER_ID : undefined);
+  if (uplineAId && users[uplineAId] && uplineAId !== sourceUserId) {
+    creditTeamCommission(
+      uplineAId,
+      sourceUser.id,
+      sourceUser.username,
+      1,
+      ticketProfit,
+      `A-Level 16% Team Commission from ${sourceUser.username}'s ticket profit (${ticketName || 'Daily Ticket Yield'})`
+    );
+
+    // Level B (Tier 2 inviter - 8%)
+    const uplineA = users[uplineAId];
+    const uplineBId = uplineA.inviterId;
+    if (uplineBId && users[uplineBId] && uplineBId !== uplineAId && uplineBId !== sourceUserId) {
+      creditTeamCommission(
+        uplineBId,
+        sourceUser.id,
+        sourceUser.username,
+        2,
+        ticketProfit,
+        `B-Level 8% Team Commission from ${sourceUser.username}'s ticket profit (${ticketName || 'Daily Ticket Yield'})`
+      );
+
+      // Level C (Tier 3 inviter - 4%)
+      const uplineB = users[uplineBId];
+      const uplineCId = uplineB.inviterId;
+      if (uplineCId && users[uplineCId] && uplineCId !== uplineBId && uplineCId !== uplineAId && uplineCId !== sourceUserId) {
+        creditTeamCommission(
+          uplineCId,
+          sourceUser.id,
+          sourceUser.username,
+          3,
+          ticketProfit,
+          `C-Level 4% Team Commission from ${sourceUser.username}'s ticket profit (${ticketName || 'Daily Ticket Yield'})`
+        );
+      }
+    }
+  }
+}
+
+/**
  * Check and auto-settle tickets whose 1-minute (60s) period has elapsed.
  * When 1 minute completes:
  * 1. Both Principal Investment AND Configured Ticket Profit return directly to Available Balance!
@@ -184,6 +241,7 @@ function creditTeamCommission(
  * 3. Dedicated VIP Profit income record and transaction log are created with unique IDs.
  * 4. Separate ledger entries are maintained without overwriting any existing balance or history.
  * 5. Strict idempotency prevents any double settlement or duplicate credits.
+ * 6. Team commissions (A: 16%, B: 8%, C: 4%) are credited ONLY from ticket profit.
  */
 function checkAndSettleFrozenTickets(userId: string) {
   const user = users[userId];
@@ -252,6 +310,9 @@ function checkAndSettleFrozenTickets(userId: string) {
           description: `Principal $${principal.toFixed(2)} + Profit +$${profit.toFixed(2)} USDT returned to Available Balance (Total: +$${totalCredited.toFixed(2)} USDT)`,
           createdAt: new Date().toISOString()
         });
+
+        // 3. Distribute Team Commission strictly from ticket profit (A: 16%, B: 8%, C: 4%)
+        distributeTicketProfitTeamCommissions(user.id, profit, p.ticketName);
 
         changed = true;
       }
@@ -640,6 +701,9 @@ const handleDailyProfitClaim = (req: express.Request, res: express.Response) => 
     createdAt: new Date().toISOString()
   });
 
+  // Distribute Team Commission strictly from daily ticket profit (A: 16%, B: 8%, C: 4%)
+  distributeTicketProfitTeamCommissions(user.id, dailyProfit, `Daily VIP ${user.vipLevel} Yield`);
+
   recalculateUserState(user.id);
   persistDb(`Daily VIP Profit Claimed: +$${dailyProfit.toFixed(2)}`);
 
@@ -880,7 +944,7 @@ app.get('/api/finance', (req, res) => {
 
 // POST Create Deposit / Recharge Request (Strictly Pending until Admin Manual Approval)
 app.post('/api/finance/deposit', (req, res) => {
-  const { amount, network, txHash, walletAddress } = req.body;
+  const { amount, network, txHash, txUid, walletAddress } = req.body;
   const user = users[PRIMARY_USER_ID];
   if (!user) return res.status(404).json({ error: 'User not found' });
 
@@ -891,16 +955,22 @@ app.post('/api/finance/deposit', (req, res) => {
 
   const cleanNetwork = network === 'BEP20' ? 'BEP20' : 'TRC20';
   const targetWallet = walletAddress?.trim() || user.walletAddress || (cleanNetwork === 'BEP20' ? OFFICIAL_PAYMENT_ADDRESSES.BEP20 : OFFICIAL_PAYMENT_ADDRESSES.TRC20);
-  const cleanTxHash = txHash?.trim() || `0x${crypto.randomBytes(16).toString('hex')}...`;
+  const rawTx = (txHash || txUid || '')?.trim();
+  const cleanTxHash = rawTx ? rawTx : `TXID-${Date.now().toString().slice(-8)}`;
 
   const newDeposit: DepositRequest = {
     id: `DEP-${Date.now().toString().slice(-6)}`,
     userId: user.id,
     username: user.username,
+    userEmail: user.email,
+    userPhone: user.phone,
+    userBalanceAtRequest: user.balance,
+    currentUserBalance: user.balance,
     amount: depAmount,
     network: cleanNetwork,
     walletAddress: targetWallet,
     txHash: cleanTxHash,
+    txUid: cleanTxHash,
     status: 'Pending', // STRICTLY PENDING: Must be manually approved by Admin in Admin Panel
     createdAt: new Date().toISOString()
   };
@@ -918,7 +988,7 @@ app.post('/api/finance/deposit', (req, res) => {
     newBalance: user.balance,
     status: 'pending', // STRICTLY PENDING
     title: `USDT Recharge Request (${cleanNetwork})`,
-    description: `Recharge request of $${depAmount.toFixed(2)} USDT submitted. Pending manual Admin review and approval.`,
+    description: `Recharge request of $${depAmount.toFixed(2)} USDT submitted (TXID/UID: ${cleanTxHash}). Pending manual Admin review and approval.`,
     txHash: newDeposit.txHash,
     createdAt: new Date().toISOString()
   });
@@ -1439,6 +1509,20 @@ app.get('/api/admin/overview', requireAdminAuth, (req, res) => {
     };
   });
 
+  const enrichedDeposits = deposits.map(d => {
+    const user = users[d.userId] || Object.values(users).find(u => u.username === d.username);
+    const tx = d.txHash || d.txUid || `0x${crypto.createHash('sha256').update(d.id + (d.walletAddress || '')).digest('hex').slice(0, 32)}`;
+    return {
+      ...d,
+      userEmail: d.userEmail || user?.email || `${(d.username || 'member').toLowerCase()}@member.jambase.vip`,
+      userPhone: d.userPhone || user?.phone || '+1 (555) 839-2041',
+      userBalanceAtRequest: d.userBalanceAtRequest ?? user?.balance ?? 0,
+      currentUserBalance: user?.balance ?? 0,
+      txHash: tx,
+      txUid: d.txUid || tx
+    };
+  });
+
   res.json({
     totalUsers: allUsersList.length,
     totalRegisteredMembers: allUsersList.length,
@@ -1458,7 +1542,7 @@ app.get('/api/admin/overview', requireAdminAuth, (req, res) => {
     totalPlatformBalance: Number(allUsersList.reduce((sum, u) => sum + (u.balance || 0), 0).toFixed(2)),
     totalPlatformAssets: Number(allUsersList.reduce((sum, u) => sum + (u.totalAssets || (u.balance + (u.frozenBalance || 0)) || 0), 0).toFixed(2)),
     withdrawalsList: enrichedWithdrawals,
-    depositsList: deposits,
+    depositsList: enrichedDeposits,
     referralsList: referrals,
     ticketsList: tickets,
     membersList: allUsersList
@@ -1471,9 +1555,23 @@ app.get('/api/admin/deposits', requireAdminAuth, (req, res) => {
   const approved = deposits.filter(d => d.status === 'Approved' || d.status === 'Completed').length;
   const rejected = deposits.filter(d => d.status === 'Rejected').length;
 
+  const enrichedDeposits = deposits.map(d => {
+    const user = users[d.userId] || Object.values(users).find(u => u.username === d.username);
+    const tx = d.txHash || d.txUid || `0x${crypto.createHash('sha256').update(d.id + (d.walletAddress || '')).digest('hex').slice(0, 32)}`;
+    return {
+      ...d,
+      userEmail: d.userEmail || user?.email || `${(d.username || 'member').toLowerCase()}@member.jambase.vip`,
+      userPhone: d.userPhone || user?.phone || '+1 (555) 839-2041',
+      userBalanceAtRequest: d.userBalanceAtRequest ?? user?.balance ?? 0,
+      currentUserBalance: user?.balance ?? 0,
+      txHash: tx,
+      txUid: d.txUid || tx
+    };
+  });
+
   res.json({
     success: true,
-    deposits,
+    deposits: enrichedDeposits,
     summary: {
       total: deposits.length,
       pending,

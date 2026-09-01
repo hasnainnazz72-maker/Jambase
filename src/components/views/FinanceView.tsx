@@ -195,6 +195,21 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
             </div>
           </div>
 
+          {/* Pending Recharges Watcher */}
+          {deposits.filter(d => d.status === 'Pending').length > 0 && (
+            <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30">
+              <div className="flex items-center justify-between text-xs font-bold text-amber-300">
+                <span className="flex items-center gap-1.5">
+                  <Clock size={14} className="animate-spin" /> Pending Recharge in Queue ({deposits.filter(d => d.status === 'Pending').length})
+                </span>
+                <span>${deposits.find(d => d.status === 'Pending')?.amount.toFixed(2)} USDT</span>
+              </div>
+              <p className="text-[11px] text-neutral-400 mt-1 font-mono">
+                TXID/UID: {deposits.find(d => d.status === 'Pending')?.txHash || deposits.find(d => d.status === 'Pending')?.txUid || deposits.find(d => d.status === 'Pending')?.id} • Status: <span className="text-amber-400 font-bold">Pending Admin Approval</span>
+              </p>
+            </div>
+          )}
+
           {/* Pending Withdrawals Watcher */}
           {withdrawals.filter(w => w.status === 'Pending').length > 0 && (
             <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30">
@@ -394,16 +409,32 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
             </div>
           </div>
 
-          {/* Optional Tx Hash */}
+          {/* Transaction UID / TXID Input */}
           <div>
-            <label className="text-xs font-semibold text-neutral-400 mb-1 block">Transaction Hash (Optional)</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs font-bold text-amber-300">Transaction UID / TXID (Payment Reference)</label>
+              <span className="text-[10px] text-neutral-400 font-mono">Required for verification</span>
+            </div>
             <input
               type="text"
               value={txHashInput}
               onChange={(e) => setTxHashInput(e.target.value)}
-              placeholder="e.g. 0x892a490..."
-              className="w-full px-3.5 py-2 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-neutral-300 focus:outline-none focus:border-[#00D26A]"
+              placeholder="e.g. 0x892a490... or UID / Reference 839201"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-white placeholder-neutral-500 font-mono focus:outline-none focus:border-[#00D26A]"
             />
+            <p className="text-[11px] text-neutral-400 mt-1">
+              Paste the TXID hash or payment transaction UID from your wallet after transferring funds.
+            </p>
+          </div>
+
+          <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-200/90 space-y-1">
+            <p className="font-semibold text-amber-300 flex items-center gap-1">
+              <Clock size={12} />
+              Recharge Manual Approval Policy:
+            </p>
+            <p className="text-neutral-300">
+              Submitted recharge requests immediately enter the <strong className="text-white">Admin Pending Queue</strong>. Your available balance will be credited as soon as Admin reviews and verifies the blockchain transaction UID.
+            </p>
           </div>
 
           {depositMsg && (
@@ -424,7 +455,7 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
             disabled={depositLoading}
             className="w-full py-3.5 rounded-xl bg-[#00D26A] hover:bg-[#00e875] text-black font-extrabold text-sm shadow-lg shadow-[#00D26A]/20 transition-all active:scale-[0.98]"
           >
-            {depositLoading ? 'Verifying Blockchain Recharge...' : `Confirm Deposit $${depositAmount || '0.00'}`}
+            {depositLoading ? 'Submitting Recharge Request...' : `Submit Recharge Request $${depositAmount || '0.00'}`}
           </button>
         </div>
       )}

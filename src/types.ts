@@ -233,10 +233,15 @@ export interface DepositRequest {
   id: string;
   userId: string;
   username: string;
+  userEmail?: string;
+  userPhone?: string;
+  userBalanceAtRequest?: number;
+  currentUserBalance?: number;
   amount: number;
   network: string; // 'TRC20' | 'BEP20'
   walletAddress: string;
   txHash?: string;
+  txUid?: string;
   status: 'Pending' | 'Approved' | 'Completed' | 'Rejected' | 'Cancelled';
   createdAt: string;
   processedAt?: string;

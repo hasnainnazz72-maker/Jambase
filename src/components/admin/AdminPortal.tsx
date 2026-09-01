@@ -32,12 +32,14 @@ import {
   Save,
   History,
   AlertTriangle,
-  FileCode
+  FileCode,
+  ArrowDownLeft
 } from 'lucide-react';
 import { api, AdminOverviewResponse } from '../../services/api';
-import { Ticket, ReferralMember, WithdrawalRequest, BackupSnapshot, DatabaseIntegrityReport } from '../../types';
+import { Ticket, ReferralMember, WithdrawalRequest, DepositRequest, BackupSnapshot, DatabaseIntegrityReport } from '../../types';
 import { MemberManagementView } from './MemberManagementView';
 import { WithdrawalApprovalQueue } from './WithdrawalApprovalQueue';
+import { RechargeApprovalQueue } from './RechargeApprovalQueue';
 
 interface AdminPortalProps {
   onBackToWebsite: () => void;
@@ -55,7 +57,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
   const [loginError, setLoginError] = useState<string | null>(null);
 
   // Admin Dashboard state
-  const [activeTab, setActiveTab] = useState<'members' | 'withdrawals' | 'referrals' | 'tickets' | 'notices' | 'telegram' | 'metrics' | 'backups'>('members');
+  const [activeTab, setActiveTab] = useState<'members' | 'recharges' | 'withdrawals' | 'referrals' | 'tickets' | 'notices' | 'telegram' | 'metrics' | 'backups'>('members');
   const [overview, setOverview] = useState<AdminOverviewResponse | null>(null);
   const [dataLoading, setDataLoading] = useState(false);
   const [actionMsg, setActionMsg] = useState<{ text: string; isError?: boolean } | null>(null);
@@ -544,7 +546,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
         )}
 
         {/* Top KPI Metrics Row */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3.5">
           <div className="p-4 rounded-2xl bg-[#11131a] border border-neutral-800/80">
             <div className="flex items-center justify-between text-neutral-400 text-xs font-semibold">
               <span>Total Members</span>
@@ -554,7 +556,33 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
             <span className="text-[10px] text-neutral-500 font-mono">Platform registered</span>
           </div>
 
-          <div className="p-4 rounded-2xl bg-[#11131a] border border-neutral-800/80">
+          <div
+            onClick={() => setActiveTab('recharges')}
+            className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+              (overview?.pendingDeposits || 0) > 0
+                ? 'bg-amber-500/10 border-amber-500/40 hover:bg-amber-500/15'
+                : 'bg-[#11131a] border-neutral-800/80 hover:border-neutral-700'
+            }`}
+          >
+            <div className="flex items-center justify-between text-neutral-400 text-xs font-semibold">
+              <span className="flex items-center gap-1 text-amber-300">
+                {(overview?.pendingDeposits || 0) > 0 && <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />}
+                Pending Recharge
+              </span>
+              <ArrowDownLeft size={16} className="text-amber-400" />
+            </div>
+            <div className="text-2xl font-black text-amber-400 mt-1.5">{overview?.pendingDeposits || 0}</div>
+            <span className="text-[10px] text-neutral-500 font-mono">Recharge queue</span>
+          </div>
+
+          <div
+            onClick={() => setActiveTab('withdrawals')}
+            className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+              (overview?.pendingWithdrawals || 0) > 0
+                ? 'bg-amber-500/10 border-amber-500/40 hover:bg-amber-500/15'
+                : 'bg-[#11131a] border-neutral-800/80 hover:border-neutral-700'
+            }`}
+          >
             <div className="flex items-center justify-between text-neutral-400 text-xs font-semibold">
               <span>Pending Withdrawals</span>
               <Clock size={16} className="text-amber-400" />
@@ -588,7 +616,8 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
         <div className="flex flex-wrap items-center gap-2 border-b border-neutral-800 pb-3">
           {[
             { id: 'members', label: 'Member Management', count: overview?.totalRegisteredMembers || overview?.totalUsers, highlight: true },
-            { id: 'withdrawals', label: 'Withdrawal Approvals', count: overview?.pendingWithdrawals },
+            { id: 'recharges', label: 'Pending Recharge', count: overview?.pendingDeposits, isPendingHighlight: (overview?.pendingDeposits || 0) > 0 },
+            { id: 'withdrawals', label: 'Withdrawal Approvals', count: overview?.pendingWithdrawals, isPendingHighlight: (overview?.pendingWithdrawals || 0) > 0 },
             { id: 'referrals', label: 'Referral Compliance', count: overview?.totalReferrals },
             { id: 'tickets', label: 'Concert & Ticket Hub', count: overview?.totalTickets },
             { id: 'notices', label: '24h Announcements' },
@@ -608,19 +637,29 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
                 activeTab === tab.id
                   ? tab.highlight 
                     ? 'bg-amber-400 text-slate-950 shadow-md shadow-amber-500/20'
+                    : tab.isPendingHighlight
+                    ? 'bg-amber-400 text-black shadow-md shadow-amber-500/20 font-black'
                     : 'bg-[#00D26A] text-black shadow-md shadow-[#00D26A]/20'
-                  : tab.highlight
+                  : tab.isPendingHighlight
                     ? 'bg-amber-950/40 text-amber-300 border border-amber-500/40 hover:bg-amber-900/60'
+                    : tab.highlight
+                    ? 'bg-neutral-900 text-amber-300 border border-amber-500/30 hover:bg-neutral-850'
                     : 'bg-neutral-900 text-neutral-400 hover:text-white border border-neutral-800'
               }`}
             >
               {tab.id === 'members' && <Users size={13} />}
+              {tab.id === 'recharges' && <ArrowDownLeft size={13} />}
+              {tab.id === 'withdrawals' && <Clock size={13} />}
               {tab.id === 'backups' && <Database size={13} />}
               <span>{tab.label}</span>
               {tab.count !== undefined && (
                 <span
-                  className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
-                    activeTab === tab.id ? 'bg-black/30 text-black' : 'bg-neutral-800 text-neutral-300'
+                  className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${
+                    activeTab === tab.id
+                      ? 'bg-black/30 text-black'
+                      : tab.isPendingHighlight
+                      ? 'bg-amber-500/30 text-amber-200 border border-amber-500/40'
+                      : 'bg-neutral-800 text-neutral-300'
                   }`}
                 >
                   {tab.count}
@@ -635,7 +674,16 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
           <MemberManagementView onRefreshOverview={loadDashboardData} />
         )}
 
-        {/* TAB 1: WITHDRAWALS */}
+        {/* TAB 1: PENDING RECHARGES / DEPOSITS */}
+        {activeTab === 'recharges' && (
+          <RechargeApprovalQueue
+            deposits={overview?.depositsList || []}
+            onRefresh={loadDashboardData}
+            onSetActionMsg={setActionMsg}
+          />
+        )}
+
+        {/* TAB 2: WITHDRAWALS */}
         {activeTab === 'withdrawals' && (
           <WithdrawalApprovalQueue
             withdrawals={overview?.withdrawalsList || []}
