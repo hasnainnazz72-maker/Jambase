@@ -37,6 +37,7 @@ import {
 import { api, AdminOverviewResponse } from '../../services/api';
 import { Ticket, ReferralMember, WithdrawalRequest, BackupSnapshot, DatabaseIntegrityReport } from '../../types';
 import { MemberManagementView } from './MemberManagementView';
+import { WithdrawalApprovalQueue } from './WithdrawalApprovalQueue';
 
 interface AdminPortalProps {
   onBackToWebsite: () => void;
@@ -636,77 +637,11 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
 
         {/* TAB 1: WITHDRAWALS */}
         {activeTab === 'withdrawals' && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-base font-extrabold text-white">Withdrawal Approval Queue</h2>
-                <p className="text-xs text-neutral-400">Review, approve, complete, or reject pending payout requests</p>
-              </div>
-            </div>
-
-            {(!overview?.withdrawalsList || overview.withdrawalsList.length === 0) ? (
-              <div className="p-8 text-center rounded-2xl bg-neutral-900/50 border border-neutral-800 text-neutral-400 text-xs">
-                No withdrawal requests found in the system.
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {overview.withdrawalsList.map((wd) => (
-                  <div
-                    key={wd.id}
-                    className="p-4 rounded-2xl bg-[#11131a] border border-neutral-800 space-y-3 shadow-md"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs text-neutral-400 font-bold">{wd.id}</span>
-                        <span
-                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                            wd.status === 'Completed'
-                              ? 'bg-emerald-500/20 text-[#00D26A] border border-emerald-500/30'
-                              : wd.status === 'Pending'
-                              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                              : wd.status === 'Approved'
-                              ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
-                              : 'bg-red-500/20 text-red-300 border border-red-500/30'
-                          }`}
-                        >
-                          {wd.status}
-                        </span>
-                      </div>
-                      <span className="text-base font-black text-white">${wd.amount.toFixed(2)} USDT</span>
-                    </div>
-
-                    <div className="text-xs space-y-1 bg-black/40 p-2.5 rounded-xl border border-neutral-850 font-mono text-neutral-300">
-                      <div><strong className="text-neutral-400">Network:</strong> {wd.network || 'TRC20'}</div>
-                      <div className="truncate"><strong className="text-neutral-400">Address:</strong> {wd.address}</div>
-                      <div><strong className="text-neutral-400">Requested:</strong> {new Date(wd.createdAt).toLocaleString()}</div>
-                      {wd.rejectReason && <div className="text-red-400"><strong className="text-red-300">Reject Note:</strong> {wd.rejectReason}</div>}
-                    </div>
-
-                    {wd.status === 'Pending' && (
-                      <div className="flex items-center gap-2 pt-1">
-                        <button
-                          onClick={() => handleWithdrawalAction(wd.id, 'Complete')}
-                          className="flex-1 py-2 rounded-xl bg-[#00D26A] hover:bg-[#00e875] text-black font-extrabold text-xs transition-colors flex items-center justify-center gap-1"
-                        >
-                          <CheckCircle2 size={14} />
-                          <span>Approve & Complete</span>
-                        </button>
-                        <button
-                          onClick={() => {
-                            const reason = window.prompt('Enter reason for rejecting withdrawal (funds will be refunded to member):');
-                            if (reason) handleWithdrawalAction(wd.id, 'Reject', reason);
-                          }}
-                          className="py-2 px-3 rounded-xl bg-red-950/60 hover:bg-red-900/80 border border-red-500/30 text-red-300 font-bold text-xs transition-colors"
-                        >
-                          Reject Payout
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <WithdrawalApprovalQueue
+            withdrawals={overview?.withdrawalsList || []}
+            onRefresh={loadDashboardData}
+            onSetActionMsg={setActionMsg}
+          />
         )}
 
         {/* TAB 2: REFERRALS */}

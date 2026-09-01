@@ -85,16 +85,16 @@ export const HomeView: React.FC<HomeViewProps> = ({
           {/* 3 Value Pillars */}
           <div className="grid grid-cols-3 gap-2 pt-1">
             <div className="p-2 rounded-xl bg-black/50 border border-neutral-800 text-center">
-              <div className="text-[#00D26A] text-xs font-black">2-Min</div>
-              <div className="text-[10px] text-neutral-400 font-medium mt-0.5">Fast Return</div>
+              <div className="text-[#00D26A] text-xs font-black">1-Min</div>
+              <div className="text-[10px] text-neutral-400 font-medium mt-0.5">Fast Settle</div>
             </div>
             <div className="p-2 rounded-xl bg-black/50 border border-neutral-800 text-center">
               <div className="text-[#00D26A] text-xs font-black">1.9% - 6.0%</div>
-              <div className="text-[10px] text-neutral-400 font-medium mt-0.5">Daily Yield</div>
+              <div className="text-[10px] text-neutral-400 font-medium mt-0.5">Ticket Yield</div>
             </div>
             <div className="p-2 rounded-xl bg-black/50 border border-neutral-800 text-center">
-              <div className="text-[#00D26A] text-xs font-black">Flexible</div>
-              <div className="text-[10px] text-neutral-400 font-medium mt-0.5">Gradual Buys</div>
+              <div className="text-[#00D26A] text-xs font-black">Multiple</div>
+              <div className="text-[10px] text-neutral-400 font-medium mt-0.5">Daily Tickets</div>
             </div>
           </div>
 

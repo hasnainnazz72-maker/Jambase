@@ -31,13 +31,7 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   const unitPrice = ticket.price;
   const totalPrice = Number((unitPrice * quantity).toFixed(2));
   const currentBalance = user?.balance ?? 0;
-  const startingDailyBalance = user?.dailyTicketStartingBalance ?? (currentBalance + (user?.dailyTicketSpent || 0));
-  const spentToday = user?.dailyTicketSpent || 0;
-  const remainingTicketQuota = Math.max(0, Number((startingDailyBalance - spentToday).toFixed(2)));
-  const spendableTicketBalance = Math.min(currentBalance, remainingTicketQuota);
-
-  const meetsMinWorkBalance = currentBalance >= 30;
-  const hasEnoughBalance = currentBalance >= totalPrice && totalPrice <= remainingTicketQuota;
+  const hasEnoughBalance = currentBalance >= totalPrice;
 
   const handleIncrement = () => {
     if (quantity < (ticket.maxQuantity || 10)) {
@@ -54,24 +48,14 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   const handleBuy = async () => {
     setError(null);
 
-    // ACTION-TRIGGERED NOTIFICATION: Balance below $30
-    if (currentBalance < 30) {
+    // ACTION-TRIGGERED NOTIFICATION: Account below minimum $30
+    if (currentBalance < 30 && (user?.totalAssets || 0) < 30) {
       setError('Insufficient Balance — Your available balance is below $30. Please recharge your account to purchase tickets.');
       return;
     }
 
-    if (remainingTicketQuota <= 0) {
-      setError(`Daily ticket balance limit reached for today ($${startingDailyBalance.toFixed(2)} / $${startingDailyBalance.toFixed(2)} used). Resets at 00:00 UTC.`);
-      return;
-    }
-
-    if (totalPrice > remainingTicketQuota) {
-      setError(`Ticket amount ($${totalPrice.toFixed(2)}) exceeds your remaining daily ticket balance ($${remainingTicketQuota.toFixed(2)}). You can select a ticket up to $${remainingTicketQuota.toFixed(2)}.`);
-      return;
-    }
-
     if (currentBalance < totalPrice) {
-      setError(`Insufficient available balance ($${currentBalance.toFixed(2)}). Please deposit $${(totalPrice - currentBalance).toFixed(2)} to complete this purchase.`);
+      setError(`Insufficient available balance ($${currentBalance.toFixed(2)}). Please recharge $${(totalPrice - currentBalance).toFixed(2)} to complete this purchase.`);
       return;
     }
 
@@ -100,10 +84,9 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   };
 
   const vipDailyRate = user?.vipLevel === 1 ? 0.019 : user?.vipLevel === 2 ? 0.025 : user?.vipLevel === 3 ? 0.03 : user?.vipLevel === 4 ? 0.04 : user?.vipLevel === 5 ? 0.05 : 0.06;
-  // STRICT RULE: Profit calculated strictly on the ticket investment amount, NOT total account balance
+  // STRICT RULE: Profit calculated strictly on the ticket investment amount
   const estimatedProfit = Number((totalPrice * vipDailyRate).toFixed(2));
   const remainingBalanceAfterBuy = Number(Math.max(0, currentBalance - totalPrice).toFixed(2));
-  const remainingQuotaAfterBuy = Number(Math.max(0, remainingTicketQuota - totalPrice).toFixed(2));
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -232,12 +215,12 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
           </div>
 
           <div className="p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-800/40 text-[11px] text-emerald-300 space-y-1">
-            <span className="font-bold block text-[#00D26A]">⚡ 2-Minute Fast Settle Rule:</span>
+            <span className="font-bold block text-[#00D26A]">⚡ 1-Minute Fast Settle Rule:</span>
             <p>
-              In <strong>2 minutes</strong>, both your <strong>Investment (${totalPrice.toFixed(2)})</strong> and <strong>VIP Profit (+${estimatedProfit.toFixed(2)} USDT)</strong> will automatically return directly to your Available Balance!
+              In exactly <strong>1 minute</strong>, both your <strong>Investment (${totalPrice.toFixed(2)})</strong> and <strong>Ticket Profit (+${estimatedProfit.toFixed(2)} USDT)</strong> will automatically settle and return directly to your Available Balance!
             </p>
             <p className="text-emerald-400">
-              Your remaining <strong>${remainingBalanceAfterBuy.toFixed(2)}</strong> balance remains fully usable to buy more tickets (e.g. $10, $20, $50) anytime today.
+              Your remaining <strong>${remainingBalanceAfterBuy.toFixed(2)}</strong> balance remains fully usable to buy more tickets (e.g. $10, $20, $50, $100) anytime without daily limits.
             </p>
           </div>
 

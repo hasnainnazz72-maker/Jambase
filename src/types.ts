@@ -209,6 +209,10 @@ export interface WithdrawalRequest {
   id: string;
   userId: string;
   username: string;
+  userEmail?: string;
+  userPhone?: string;
+  userBalanceAtRequest?: number;
+  currentUserBalance?: number;
   amount: number;
   fee: number; // 8% service fee
   netAmount: number;
@@ -222,6 +226,7 @@ export interface WithdrawalRequest {
   rejectReason?: string;
   adminNotes?: string;
   txId: string;
+  txHash?: string;
 }
 
 export interface DepositRequest {

@@ -177,12 +177,13 @@ function creditTeamCommission(
 }
 
 /**
- * Check and auto-settle tickets whose 2-minute (120s) period has elapsed.
- * When 2 minutes complete:
- * 1. Both Principal Investment AND Configured VIP Profit return directly to Available Balance!
+ * Check and auto-settle tickets whose 1-minute (60s) period has elapsed.
+ * When 1 minute completes:
+ * 1. Both Principal Investment AND Configured Ticket Profit return directly to Available Balance!
  * 2. Frozen balance is released.
  * 3. Dedicated VIP Profit income record and transaction log are created with unique IDs.
  * 4. Separate ledger entries are maintained without overwriting any existing balance or history.
+ * 5. Strict idempotency prevents any double settlement or duplicate credits.
  */
 function checkAndSettleFrozenTickets(userId: string) {
   const user = users[userId];
@@ -191,10 +192,10 @@ function checkAndSettleFrozenTickets(userId: string) {
   let changed = false;
 
   for (const p of purchases) {
-    if (p.userId === userId && p.status === 'frozen' && p.frozenUntil) {
+    if (p.userId === userId && (p.status === 'frozen' || p.status === 'active') && p.frozenUntil) {
       const unfreezeTime = new Date(p.frozenUntil).getTime();
       if (nowMs >= unfreezeTime) {
-        // Mark as completed
+        // Mark as completed (strictly idempotent transition)
         p.status = 'completed';
         p.settledAt = new Date().toISOString();
 
@@ -205,9 +206,9 @@ function checkAndSettleFrozenTickets(userId: string) {
         const vipLevel = p.vipLevelAtPurchase || user.vipLevel || 1;
 
         // Release principal from frozenBalance
-        user.frozenBalance = Number(Math.max(0, user.frozenBalance - principal).toFixed(2));
+        user.frozenBalance = Number(Math.max(0, (user.frozenBalance || 0) - principal).toFixed(2));
 
-        // Strictly Additive Balance & Cumulative VIP Profit updates!
+        // Strictly Additive Balance & Cumulative VIP Profit updates: Principal + Profit returned to Available Balance
         user.balance = Number((user.balance + totalCredited).toFixed(2));
         user.totalVipProfit = Number(((user.totalVipProfit || 0) + profit).toFixed(2));
         user.todayVipProfit = Number(((user.todayVipProfit || 0) + profit).toFixed(2));
@@ -224,7 +225,7 @@ function checkAndSettleFrozenTickets(userId: string) {
         incomeRecords.unshift({
           id: recordId,
           userId: user.id,
-          ticketName: `${p.ticketName} (VIP ${vipLevel} Yield)`,
+          ticketName: `${p.ticketName} (1-Min Yield Settlement)`,
           categoryType: 'vip_profit',
           previousBalance: Number((user.balance - totalCredited).toFixed(2)),
           incomeAmount: profit,
@@ -234,7 +235,7 @@ function checkAndSettleFrozenTickets(userId: string) {
           timestamp: new Date().toISOString(),
           status: 'credited',
           transactionId: txId,
-          notes: `2-Minute Ticket Completed: Principal $${principal.toFixed(2)} returned + VIP ${vipLevel} profit +$${profit.toFixed(2)} (${(appliedRate * 100).toFixed(1)}%) credited to Available Balance.`
+          notes: `1-Minute Ticket Auto-Settled: Principal $${principal.toFixed(2)} returned + VIP profit +$${profit.toFixed(2)} (${(appliedRate * 100).toFixed(1)}%) credited to Available Balance.`
         });
 
         // 2. Add Dedicated VIP Profit Settlement Transaction in Ledger
@@ -247,8 +248,8 @@ function checkAndSettleFrozenTickets(userId: string) {
           vipLevel: vipLevel,
           appliedRate: appliedRate,
           status: 'completed',
-          title: `VIP ${vipLevel} Profit Yield: ${p.ticketName}`,
-          description: `Principal $${principal.toFixed(2)} + VIP profit +$${profit.toFixed(2)} USDT (${(appliedRate * 100).toFixed(1)}%) returned to Available Balance (Total +$${totalCredited.toFixed(2)} USDT)`,
+          title: `Ticket Settlement: ${p.ticketName}`,
+          description: `Principal $${principal.toFixed(2)} + Profit +$${profit.toFixed(2)} USDT returned to Available Balance (Total: +$${totalCredited.toFixed(2)} USDT)`,
           createdAt: new Date().toISOString()
         });
 
@@ -258,7 +259,7 @@ function checkAndSettleFrozenTickets(userId: string) {
   }
 
   if (changed) {
-    user.totalAssets = Number((user.balance + user.frozenBalance).toFixed(2));
+    user.totalAssets = Number((user.balance + (user.frozenBalance || 0)).toFixed(2));
     persistDb('Ticket Settlement Completed');
   }
   return changed;
@@ -427,17 +428,23 @@ app.get('/api/notices', (req, res) => {
 });
 
 // POST Purchase Ticket(s)
-// RULE: A member's available balance can be used for tickets once per UTC day,
-// and the member can use the entire available balance gradually throughout that same day.
-// Profit is calculated ONLY on the ticket amount actually purchased.
+// TICKET PURCHASE & BALANCE RULES:
+// 1. Immediately after purchase, exactly the ticket total is deducted from Available Balance (e.g. $100 - $10 = $90).
+// 2. The ticket enters an active/processing state.
+// 3. After exactly 1 minute (60s), the ticket is automatically settled.
+// 4. At settlement, Principal + Profit defined by the ticket rate is credited back to Available Balance.
+// 5. The member is NOT restricted to one ticket per day.
+// 6. The remaining Available Balance remains usable immediately to purchase more tickets anytime.
+// 7. Any ticket denomination allowed by the system can be purchased without VIP level restrictions.
+// 8. Available Balance is validated before every purchase.
 app.post('/api/tickets/purchase', (req, res) => {
   const { ticketId, quantity } = req.body;
   const user = recalculateUserState(PRIMARY_USER_ID);
 
   if (!user) return res.status(404).json({ error: 'User not found' });
 
-  // STRICT REQUIREMENT: Member must maintain minimum $30.00 total assets in account to work
-  if (user.totalAssets < 30 && user.balance < 30) {
+  // STRICT REQUIREMENT: Member must maintain minimum $30.00 total account assets to work
+  if ((user.totalAssets || 0) < 30 && (user.balance || 0) < 30) {
     return res.status(400).json({
       error: 'Insufficient Balance — Your available balance is below $30. Please recharge your account to purchase tickets.'
     });
@@ -455,61 +462,41 @@ app.post('/api/tickets/purchase', (req, res) => {
     return res.status(400).json({ error: 'This ticket event is currently inactive' });
   }
 
-  // STRICT RULE: No VIP-level restriction on ticket purchases.
-  // VIP1 and all members can purchase any ticket amount (e.g. $120, $50, $20, $10, etc.)
-  // as long as they have sufficient balance/quota.
-
   // Authoritative server-side price calculation
   const totalAmount = Number((ticket.price * qty).toFixed(2));
 
-  const startingBalance = user.dailyTicketStartingBalance ?? (user.balance + (user.dailyTicketSpent || 0));
-  const spentSoFar = user.dailyTicketSpent || 0;
-  const remainingTicketQuota = Math.max(0, Number((startingBalance - spentSoFar).toFixed(2)));
-
-  // 1. Check if daily ticket quota is already exhausted
-  if (remainingTicketQuota <= 0) {
-    return res.status(400).json({
-      error: `Daily ticket balance limit reached for today ($${startingBalance.toFixed(2)} / $${startingBalance.toFixed(2)} fully used). The purchase cycle resets on the next UTC day (00:00 UTC).`
-    });
-  }
-
-  // 2. Check if this ticket exceeds remaining daily ticket quota
-  if (totalAmount > remainingTicketQuota) {
-    return res.status(400).json({
-      error: `Ticket cost ($${totalAmount.toFixed(2)}) exceeds your remaining daily ticket balance ($${remainingTicketQuota.toFixed(2)}). You can purchase tickets up to $${remainingTicketQuota.toFixed(2)} with your remaining balance today.`
-    });
-  }
-
-  // 3. Check if member has enough available wallet balance
+  // Validate Available Balance before purchase: Must have enough available wallet balance
   if (user.balance < totalAmount) {
     return res.status(400).json({
-      error: `Insufficient available balance ($${user.balance.toFixed(2)}). Required: $${totalAmount.toFixed(2)}.`
+      error: `Insufficient available balance ($${user.balance.toFixed(2)}). Required: $${totalAmount.toFixed(2)}. Please recharge or select a lower ticket denomination.`
     });
   }
 
   // Determine VIP Tier and daily rate
   const tier = VIP_TIERS.find(t => t.level === user.vipLevel) || VIP_TIERS[0];
-  const rate = tier.dailyRate; // e.g. VIP 1 = 1.9%, VIP 2 = 2.5%, etc.
+  const rate = tier.dailyRate; // e.g. VIP 1 = 1.9%, VIP 2 = 2.5%, VIP 3 = 3.0%, etc.
 
   // STRICT RULE: Profit is generated ONLY on the purchased ticket amount
   const profitAmount = Number((totalAmount * rate).toFixed(2));
 
-  // Deduct purchase amount from available balance into frozen state, and record daily ticket spending
+  // Exactly deduct purchase amount from available balance into frozen state
+  const prevAvailableBalance = user.balance;
   user.balance = Number((user.balance - totalAmount).toFixed(2));
-  user.frozenBalance = Number((user.frozenBalance + totalAmount).toFixed(2));
-  user.dailyTicketSpent = Number((spentSoFar + totalAmount).toFixed(2));
+  user.frozenBalance = Number(((user.frozenBalance || 0) + totalAmount).toFixed(2));
   user.recordExpenditure = Number(((user.recordExpenditure || 0) + totalAmount).toFixed(2));
+  user.dailyTicketSpent = Number(((user.dailyTicketSpent || 0) + totalAmount).toFixed(2));
 
   // Update ticket sold count
   ticket.soldCount += qty;
 
   const now = new Date();
-  // 2 Minutes (120 seconds) cycle
-  const frozenUntil = new Date(Date.now() + 2 * 60 * 1000).toISOString();
+  // EXACTLY 1 MINUTE (60 SECONDS) CYCLE
+  const frozenUntil = new Date(Date.now() + 1 * 60 * 1000).toISOString();
 
-  // Record Purchase as frozen/processing (auto-settles in 2 minutes)
+  // Record Purchase with unique ID as frozen/processing (auto-settles in 1 minute)
+  const uniquePurchaseId = `PUR-${Date.now()}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
   const newPurchase: TicketPurchase = {
-    id: `PUR-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+    id: uniquePurchaseId,
     userId: user.id,
     ticketId: ticket.id,
     ticketName: ticket.name,
@@ -527,9 +514,7 @@ app.post('/api/tickets/purchase', (req, res) => {
   };
   purchases.unshift(newPurchase);
 
-  const remainingDailyBalance = Number((startingBalance - user.dailyTicketSpent).toFixed(2));
-
-  // Add Purchase Transaction record with unique ID and category
+  // Add Purchase Transaction record with unique ID and category in member ledger
   const txId = `TXN-PUR-${Date.now()}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
   const newTx: Transaction = {
     id: txId,
@@ -537,27 +522,26 @@ app.post('/api/tickets/purchase', (req, res) => {
     type: 'ticket_purchase',
     category: 'ticket_purchase',
     amount: totalAmount,
+    previousBalance: prevAvailableBalance,
+    newBalance: user.balance,
     vipLevel: user.vipLevel,
     appliedRate: rate,
     status: 'completed',
     title: `Purchased ${qty}x ${ticket.name}`,
-    description: `Ticket purchase of $${totalAmount.toFixed(2)}. In 2 minutes, both Principal ($${totalAmount.toFixed(2)}) and VIP Profit (+${profitAmount.toFixed(2)} USDT) will return to your Available Balance.`,
+    description: `Ticket purchase of $${totalAmount.toFixed(2)}. In 1 minute, Principal ($${totalAmount.toFixed(2)}) and Profit (+$${profitAmount.toFixed(2)} USDT) will automatically return to your Available Balance.`,
     createdAt: now.toISOString()
   };
   transactions.unshift(newTx);
 
   recalculateUserState(user.id);
-  persistDb(`Ticket Purchased: ${ticket.name}`);
+  persistDb(`Ticket Purchased: ${ticket.name} (1-Min Cycle)`);
 
   res.json({
     success: true,
-    message: `Ticket purchased successfully! In 2 minutes, both your $${totalAmount.toFixed(2)} investment and +$${profitAmount.toFixed(2)} USDT VIP profit will automatically return to your Available Balance.`,
+    message: `Ticket #${uniquePurchaseId} purchased successfully! $${totalAmount.toFixed(2)} deducted from Available Balance (Remaining Available: $${user.balance.toFixed(2)}). In exactly 1 minute, your ticket will auto-settle, returning your $${totalAmount.toFixed(2)} principal + $${profitAmount.toFixed(2)} USDT profit back to your Available Balance.`,
     purchase: newPurchase,
     newBalance: user.balance,
     frozenBalance: user.frozenBalance,
-    dailyTicketStartingBalance: user.dailyTicketStartingBalance,
-    dailyTicketSpent: user.dailyTicketSpent,
-    remainingDailyTicketBalance: remainingDailyBalance,
     totalAssets: user.totalAssets,
     user
   });
@@ -985,6 +969,10 @@ app.post('/api/finance/withdraw', (req, res) => {
     id: txId,
     userId: user.id,
     username: user.username,
+    userEmail: user.email || `${user.username.toLowerCase()}@member.jambase.vip`,
+    userPhone: user.phone || '+1 (555) 839-2041',
+    userBalanceAtRequest: previousBalance,
+    currentUserBalance: user.balance,
     amount: wdAmount,
     fee,
     netAmount,
@@ -1438,6 +1426,19 @@ app.get('/api/admin/overview', requireAdminAuth, (req, res) => {
   const approvedDepositsCount = deposits.filter(d => d.status === 'Approved' || d.status === 'Completed').length;
   const rejectedDepositsCount = deposits.filter(d => d.status === 'Rejected').length;
 
+  const enrichedWithdrawals = withdrawals.map(w => {
+    const user = users[w.userId] || Object.values(users).find(u => u.username === w.username);
+    return {
+      ...w,
+      userEmail: w.userEmail || user?.email || `${(w.username || 'member').toLowerCase()}@member.jambase.vip`,
+      userPhone: w.userPhone || user?.phone || '+1 (555) 839-2041',
+      userBalanceAtRequest: w.userBalanceAtRequest ?? user?.balance ?? 0,
+      currentUserBalance: user?.balance ?? 0,
+      txId: w.txId || `${w.id}-USDT`,
+      txHash: w.txHash || `0x${crypto.createHash('sha256').update(w.id + (w.walletAddress || '')).digest('hex').slice(0, 32)}`
+    };
+  });
+
   res.json({
     totalUsers: allUsersList.length,
     totalRegisteredMembers: allUsersList.length,
@@ -1456,7 +1457,7 @@ app.get('/api/admin/overview', requireAdminAuth, (req, res) => {
     validReferrals: referrals.filter(r => r.isValid).length,
     totalPlatformBalance: Number(allUsersList.reduce((sum, u) => sum + (u.balance || 0), 0).toFixed(2)),
     totalPlatformAssets: Number(allUsersList.reduce((sum, u) => sum + (u.totalAssets || (u.balance + (u.frozenBalance || 0)) || 0), 0).toFixed(2)),
-    withdrawalsList: withdrawals,
+    withdrawalsList: enrichedWithdrawals,
     depositsList: deposits,
     referralsList: referrals,
     ticketsList: tickets,
@@ -1484,15 +1485,28 @@ app.get('/api/admin/deposits', requireAdminAuth, (req, res) => {
 
 // GET All Withdrawal Requests (Admin View with Summaries)
 app.get('/api/admin/withdrawals', requireAdminAuth, (req, res) => {
-  const pending = withdrawals.filter(w => w.status === 'Pending').length;
-  const approved = withdrawals.filter(w => w.status === 'Approved' || w.status === 'Completed').length;
-  const rejected = withdrawals.filter(w => w.status === 'Rejected').length;
+  const enrichedWithdrawals = withdrawals.map(w => {
+    const user = users[w.userId] || Object.values(users).find(u => u.username === w.username);
+    return {
+      ...w,
+      userEmail: w.userEmail || user?.email || `${(w.username || 'member').toLowerCase()}@member.jambase.vip`,
+      userPhone: w.userPhone || user?.phone || '+1 (555) 839-2041',
+      userBalanceAtRequest: w.userBalanceAtRequest ?? user?.balance ?? 0,
+      currentUserBalance: user?.balance ?? 0,
+      txId: w.txId || `${w.id}-USDT`,
+      txHash: w.txHash || `0x${crypto.createHash('sha256').update(w.id + (w.walletAddress || '')).digest('hex').slice(0, 32)}`
+    };
+  });
+
+  const pending = enrichedWithdrawals.filter(w => w.status === 'Pending').length;
+  const approved = enrichedWithdrawals.filter(w => w.status === 'Approved' || w.status === 'Completed').length;
+  const rejected = enrichedWithdrawals.filter(w => w.status === 'Rejected').length;
 
   res.json({
     success: true,
-    withdrawals,
+    withdrawals: enrichedWithdrawals,
     summary: {
-      total: withdrawals.length,
+      total: enrichedWithdrawals.length,
       pending,
       approved,
       rejected

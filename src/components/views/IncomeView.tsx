@@ -59,7 +59,7 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
           origin: { y: 0.6 }
         });
         setClaimMsg({
-          text: '🎉 2-Minute Task Completed! Both Investment and VIP Profit have been returned to your Available Balance.'
+          text: '🎉 1-Minute Ticket Settled! Both Principal Investment and Ticket Profit have been returned to your Available Balance.'
         });
         onRefresh();
       }
@@ -543,8 +543,8 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
               const mins = Math.floor(remainingSec / 60);
               const secs = remainingSec % 60;
               const timerStr = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-              // 120 seconds total
-              const progressPercent = isFrozen ? Math.min(100, Math.round(((120 - remainingSec) / 120) * 100)) : 100;
+              // 60 seconds total (1 minute)
+              const progressPercent = isFrozen ? Math.min(100, Math.round(((60 - remainingSec) / 60) * 100)) : 100;
 
               return (
                 <div
@@ -566,7 +566,7 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
                             ? 'bg-neutral-800 text-neutral-400 border border-neutral-700'
                             : 'bg-[#00D26A]/15 text-[#00D26A] border border-[#00D26A]/30 animate-pulse'
                         }`}>
-                          {pur.status === 'completed' ? '✅ Settled to Balance' : `⏳ 2-Min Lock: ${timerStr}`}
+                          {pur.status === 'completed' ? '✅ Settled to Balance' : `⏳ 1-Min Lock: ${timerStr}`}
                         </span>
                       </div>
                       <p className="text-[11px] text-neutral-400 truncate mt-0.5">{pur.artist}</p>
@@ -580,12 +580,12 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
                     </div>
                   </div>
 
-                  {/* 2-Minute Progress Bar / Settle Status Banner */}
+                  {/* 1-Minute Progress Bar / Settle Status Banner */}
                   {isFrozen && remainingSec > 0 ? (
                     <div className="p-2.5 rounded-xl bg-black/60 border border-neutral-800/80 space-y-1.5">
                       <div className="flex justify-between items-center text-[10px]">
                         <span className="text-emerald-400 font-semibold flex items-center gap-1">
-                          <Timer size={12} /> Auto-returning to Available Balance in:
+                          <Timer size={12} /> Auto-settling to Available Balance in:
                         </span>
                         <span className="text-white font-mono font-bold">{timerStr}</span>
                       </div>
