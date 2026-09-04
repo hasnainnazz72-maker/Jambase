@@ -327,6 +327,18 @@ function checkAndSettleFrozenTickets(userId: string) {
 }
 
 /**
+ * Safely resolves the active user ID from HTTP headers (X-User-Id) or query params,
+ * falling back to PRIMARY_USER_ID. Validates that the user exists in memory.
+ */
+function resolveUserId(req: express.Request): string {
+  const headerUserId = req.headers['x-user-id'] as string;
+  if (headerUserId && users[headerUserId]) return headerUserId;
+  const queryUserId = req.query.userId as string;
+  if (queryUserId && users[queryUserId]) return queryUserId;
+  return PRIMARY_USER_ID;
+}
+
+/**
  * Recalculate user's VIP level, valid direct members count, daily ticket balance cycle, and income pause state
  * VIP 1: $30–$499, 0 direct members, 1.9%
  * VIP 2: $500–$1,999, min 3 direct members, 2.5%
@@ -338,7 +350,7 @@ function checkAndSettleFrozenTickets(userId: string) {
  * NOTE: User balance, accumulated VIP profits, accumulated team commission, income records,
  * and transaction history are NEVER overwritten or reset!
  */
-function recalculateUserState(userId: string) {
+function recalculateUserState(userId: string = PRIMARY_USER_ID) {
   checkAndSettleFrozenTickets(userId);
 
   const user = users[userId];
@@ -349,14 +361,14 @@ function recalculateUserState(userId: string) {
     const vipSum = incomeRecords
       .filter(r => r.userId === user.id && (r.categoryType === 'vip_profit' || r.categoryType === 'ticket'))
       .reduce((sum, r) => sum + (r.incomeAmount || 0), 0);
-    user.totalVipProfit = Number(vipSum.toFixed(2)) || 54.50;
+    user.totalVipProfit = Number(vipSum.toFixed(2)) || (user.id === PRIMARY_USER_ID ? 54.50 : 0.0);
   }
 
   if (user.totalTeamCommission === undefined || user.totalTeamCommission === null) {
     const commSum = incomeRecords
       .filter(r => r.userId === user.id && r.categoryType === 'team_commission')
       .reduce((sum, r) => sum + (r.incomeAmount || 0), 0);
-    user.totalTeamCommission = Number(commSum.toFixed(2)) || 30.00;
+    user.totalTeamCommission = Number(commSum.toFixed(2)) || (user.id === PRIMARY_USER_ID ? 30.00 : 0.0);
   }
 
   if (user.todayVipProfit === undefined || user.todayVipProfit === null) {
@@ -390,7 +402,7 @@ function recalculateUserState(userId: string) {
   }
 
   // Calculate valid direct members (must have minimum $30 deposit/balance)
-  const validDirectMembers = referrals.filter(r => r.level === 1 && r.isValid && (r.totalDeposit >= 30 || r.balance >= 30)).length;
+  const validDirectMembers = referrals.filter(r => (r.userId === user.id || (!r.userId && user.id === PRIMARY_USER_ID)) && r.level === 1 && r.isValid && (r.totalDeposit >= 30 || r.balance >= 30)).length;
   user.validDirectMembersCount = validDirectMembers;
 
   user.totalAssets = Number((user.balance + user.frozenBalance).toFixed(2));
@@ -441,7 +453,8 @@ app.get('/api/health', (req, res) => {
 
 // GET Current User Profile & Synchronized State
 app.get('/api/user', (req, res) => {
-  const user = recalculateUserState(PRIMARY_USER_ID);
+  const targetId = resolveUserId(req);
+  const user = recalculateUserState(targetId);
   if (!user) return res.status(404).json({ error: 'User not found' });
   res.json(user);
 });
@@ -500,7 +513,8 @@ app.get('/api/notices', (req, res) => {
 // 8. Available Balance is validated before every purchase.
 app.post('/api/tickets/purchase', (req, res) => {
   const { ticketId, quantity } = req.body;
-  const user = recalculateUserState(PRIMARY_USER_ID);
+  const targetId = resolveUserId(req);
+  const user = recalculateUserState(targetId);
 
   if (!user) return res.status(404).json({ error: 'User not found' });
 
@@ -616,7 +630,8 @@ app.post('/api/tickets/purchase', (req, res) => {
 // 4. Compounding Profit: Every day as balance increases with profit/recharges, the daily profit grows automatically on the larger balance.
 // 5. Minimum $30 balance required.
 const handleDailyProfitClaim = (req: express.Request, res: express.Response) => {
-  const user = recalculateUserState(PRIMARY_USER_ID);
+  const targetId = resolveUserId(req);
+  const user = recalculateUserState(targetId);
   if (!user) return res.status(404).json({ error: 'User not found' });
 
   const todayUtc = new Date().toISOString().slice(0, 10);
@@ -727,7 +742,8 @@ app.post('/api/income/claim-daily-vip', handleDailyProfitClaim);
 // GET Separate Ledger Breakdown API
 // Completely separates VIP Profit ledger from Team Commission ledger!
 app.get('/api/ledger/breakdown', (req, res) => {
-  const user = recalculateUserState(PRIMARY_USER_ID);
+  const targetId = resolveUserId(req);
+  const user = recalculateUserState(targetId);
   if (!user) return res.status(404).json({ error: 'User not found' });
 
   const userRecords = incomeRecords.filter(r => r.userId === user.id);
@@ -793,7 +809,8 @@ app.get('/api/ledger/breakdown', (req, res) => {
 
 // POST Claim or Distribute Team Rebate / Commission (16% / 8% / 4%)
 app.post('/api/team/claim-commission', (req, res) => {
-  const user = recalculateUserState(PRIMARY_USER_ID);
+  const targetId = resolveUserId(req);
+  const user = recalculateUserState(targetId);
   if (!user) return res.status(404).json({ error: 'User not found' });
 
   // Example automated rebate generation from active direct referrals
@@ -861,9 +878,10 @@ app.post('/api/admin/distribute-team-commission', (req, res) => {
 
 // POST Settle Ticket Purchases (Check and unfreeze/credit 2-min tickets)
 app.post('/api/tickets/settle', (req, res) => {
-  const settled = checkAndSettleFrozenTickets(PRIMARY_USER_ID);
-  const user = recalculateUserState(PRIMARY_USER_ID);
-  const userPurchases = purchases.filter(p => p.userId === PRIMARY_USER_ID);
+  const targetId = resolveUserId(req);
+  const settled = checkAndSettleFrozenTickets(targetId);
+  const user = recalculateUserState(targetId);
+  const userPurchases = purchases.filter(p => p.userId === targetId);
   
   res.json({
     success: true,
@@ -875,15 +893,17 @@ app.post('/api/tickets/settle', (req, res) => {
 
 // GET User Purchases
 app.get('/api/purchases', (req, res) => {
-  const userPurchases = purchases.filter(p => p.userId === PRIMARY_USER_ID);
+  const targetId = resolveUserId(req);
+  const userPurchases = purchases.filter(p => p.userId === targetId);
   res.json(userPurchases);
 });
 
 // GET Income Summary & Records
 app.get('/api/income', (req, res) => {
-  const user = recalculateUserState(PRIMARY_USER_ID);
-  const records = incomeRecords.filter(r => r.userId === PRIMARY_USER_ID);
-  const userPurchases = purchases.filter(p => p.userId === PRIMARY_USER_ID);
+  const targetId = resolveUserId(req);
+  const user = recalculateUserState(targetId);
+  const records = incomeRecords.filter(r => r.userId === targetId);
+  const userPurchases = purchases.filter(p => p.userId === targetId);
   const activePurchases = userPurchases.filter(p => p.status === 'active' || p.status === 'frozen');
   
   const todayUtc = new Date().toISOString().slice(0, 10);
@@ -929,10 +949,11 @@ app.post('/api/income/calculate-daily', (req, res) => {
 
 // GET Finance Dashboard (Balances, History, Withdrawals, Deposits)
 app.get('/api/finance', (req, res) => {
-  const user = recalculateUserState(PRIMARY_USER_ID);
-  const userTx = transactions.filter(t => t.userId === PRIMARY_USER_ID);
-  const userWd = withdrawals.filter(w => w.userId === PRIMARY_USER_ID);
-  const userDep = deposits.filter(d => d.userId === PRIMARY_USER_ID);
+  const targetId = resolveUserId(req);
+  const user = recalculateUserState(targetId);
+  const userTx = transactions.filter(t => t.userId === targetId);
+  const userWd = withdrawals.filter(w => w.userId === targetId);
+  const userDep = deposits.filter(d => d.userId === targetId);
 
   res.json({
     user,
@@ -945,7 +966,8 @@ app.get('/api/finance', (req, res) => {
 // POST Create Deposit / Recharge Request (Strictly Pending until Admin Manual Approval)
 app.post('/api/finance/deposit', (req, res) => {
   const { amount, network, txHash, txUid, walletAddress } = req.body;
-  const user = users[PRIMARY_USER_ID];
+  const targetId = resolveUserId(req);
+  const user = users[targetId] || users[PRIMARY_USER_ID];
   if (!user) return res.status(404).json({ error: 'User not found' });
 
   const depAmount = parseFloat(amount);
@@ -1008,7 +1030,8 @@ app.post('/api/finance/deposit', (req, res) => {
 // Checks available balance, reserves/freezes requested amount while strictly Pending Admin approval
 app.post('/api/finance/withdraw', (req, res) => {
   const { amount, walletAddress, network } = req.body;
-  const user = users[PRIMARY_USER_ID];
+  const targetId = resolveUserId(req);
+  const user = users[targetId] || users[PRIMARY_USER_ID];
   if (!user) return res.status(404).json({ error: 'User not found' });
 
   const wdAmount = parseFloat(amount);
@@ -1083,30 +1106,36 @@ app.post('/api/finance/withdraw', (req, res) => {
 
 // GET Team & Referrals (Commission tiers 16% / 8% / 4%)
 app.get('/api/team', (req, res) => {
-  const user = recalculateUserState(PRIMARY_USER_ID);
+  const targetId = resolveUserId(req);
+  const user = recalculateUserState(targetId);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  
+  const userReferrals = referrals.filter(r => (r as any).uplineId === user.id || (!(r as any).uplineId && user.id === PRIMARY_USER_ID));
   res.json({
     user,
-    referrals,
+    referrals: userReferrals,
     commissionRates: {
       tier1: 0.16, // 16% Level A direct
       tier2: 0.08, // 8% Level B
       tier3: 0.04  // 4% Level C
     },
     summary: {
-      directValidCount: referrals.filter(r => r.level === 1 && r.isValid).length,
-      directTotalCount: referrals.filter(r => r.level === 1).length,
-      level2Count: referrals.filter(r => r.level === 2).length,
-      level3Count: referrals.filter(r => r.level === 3).length,
-      totalTeamDeposit: referrals.reduce((sum, r) => sum + r.totalDeposit, 0)
+      directValidCount: userReferrals.filter(r => r.level === 1 && r.isValid).length,
+      directTotalCount: userReferrals.filter(r => r.level === 1).length,
+      level2Count: userReferrals.filter(r => r.level === 2).length,
+      level3Count: userReferrals.filter(r => r.level === 3).length,
+      totalTeamDeposit: userReferrals.reduce((sum, r) => sum + r.totalDeposit, 0)
     }
   });
 });
 
 // GET Tasks (Strictly the 4 Referral & Activation Milestone Tasks)
 app.get('/api/tasks', (req, res) => {
-  const user = recalculateUserState(PRIMARY_USER_ID);
+  const targetId = resolveUserId(req);
+  const user = recalculateUserState(targetId);
   if (!user) return res.status(404).json({ error: 'User not found' });
-  const validDirectCount = referrals.filter(r => r.level === 1 && r.isValid).length;
+  const userReferrals = referrals.filter(r => (r as any).uplineId === user.id || (!(r as any).uplineId && user.id === PRIMARY_USER_ID));
+  const validDirectCount = userReferrals.filter(r => r.level === 1 && r.isValid).length;
   const claimedIds = user.claimedTaskIds || [];
 
   const dynamicTasks: TaskItem[] = [
@@ -1170,7 +1199,8 @@ app.get('/api/tasks', (req, res) => {
 // POST Task Claim - Claim $15 / $30 / $100 / $500 reward when condition is completed
 app.post('/api/tasks/claim', (req, res) => {
   const { taskId } = req.body;
-  const user = users[PRIMARY_USER_ID];
+  const targetId = resolveUserId(req);
+  const user = users[targetId] || users[PRIMARY_USER_ID];
   if (!user) return res.status(404).json({ error: 'User not found' });
 
   if (!user.claimedTaskIds) {
@@ -1181,7 +1211,8 @@ app.post('/api/tasks/claim', (req, res) => {
     return res.status(400).json({ error: 'This task reward has already been claimed!' });
   }
 
-  const validDirectCount = referrals.filter(r => r.level === 1 && r.isValid).length;
+  const userReferrals = referrals.filter(r => (r as any).uplineId === user.id || (!(r as any).uplineId && user.id === PRIMARY_USER_ID));
+  const validDirectCount = userReferrals.filter(r => r.level === 1 && r.isValid).length;
 
   let rewardAmount = 0;
   let requiredMembers = 0;
@@ -1260,7 +1291,8 @@ app.post('/api/tasks/claim', (req, res) => {
 
 // POST Daily Attendance Check-in (Welfare Center: Claim $0.10 USDT once daily)
 app.post('/api/welfare/attendance', (req, res) => {
-  const user = users[PRIMARY_USER_ID];
+  const targetId = resolveUserId(req);
+  const user = users[targetId] || users[PRIMARY_USER_ID];
   if (!user) return res.status(404).json({ error: 'User not found' });
 
   const todayStr = new Date().toISOString().slice(0, 10);
@@ -1300,29 +1332,55 @@ app.post('/api/welfare/attendance', (req, res) => {
 });
 
 // POST Auth Register with Country Code, Phone/User, Password, and Captcha
-// When a new member registers, their account is initialized with 0 balance, 0 team report, 0 income, and clean state.
+// When a new member registers, their account is initialized with unique user ID and stored in the database.
 app.post('/api/auth/register', (req, res) => {
   const { username, countryCode, phone, password, referralCode } = req.body;
   if (!username || !phone || !password) {
     return res.status(400).json({ error: 'Username, phone number, and password are required' });
   }
 
-  const cleanUserId = PRIMARY_USER_ID;
-  
-  // Clean fresh slate initialization for new registration
-  users[cleanUserId] = {
+  const cleanUsername = username.trim();
+  const cleanPhone = `${countryCode || '+92'} ${phone.trim()}`;
+
+  // Check if username or phone already exists
+  const existingUser = Object.values(users).find(
+    u => u.username.toLowerCase() === cleanUsername.toLowerCase() ||
+         (u.phone && u.phone === cleanPhone)
+  );
+  if (existingUser) {
+    return res.status(400).json({ error: `An account with username "${cleanUsername}" or this phone number already exists.` });
+  }
+
+  // Generate unique User ID
+  const cleanUserId = `usr-${Date.now().toString(36)}-${crypto.randomBytes(3).toString('hex')}`;
+
+  // Check inviter if referralCode provided
+  let uplineId: string | undefined = undefined;
+  if (referralCode && referralCode.trim()) {
+    const inviter = Object.values(users).find(
+      u => u.referralCode && u.referralCode.toLowerCase() === referralCode.trim().toLowerCase()
+    );
+    if (inviter) {
+      uplineId = inviter.id;
+    }
+  }
+
+  // Create clean fresh slate user record
+  const newUser: User & { password?: string; inviterId?: string } = {
     id: cleanUserId,
-    username: username.trim(),
-    email: `${username.toLowerCase().replace(/[^a-z0-9]/g, '')}@jambase.vip`,
+    username: cleanUsername,
+    password: password.trim(),
+    email: `${cleanUsername.toLowerCase().replace(/[^a-z0-9]/g, '')}@jambase.vip`,
     avatar: `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&auto=format&fit=crop&q=80`,
-    phone: `${countryCode || '+92'} ${phone.trim()}`,
+    phone: cleanPhone,
     walletAddress: '',
-    balance: 0.0, // Initial 0.0 balance on new registration
+    balance: 0.0,
     frozenBalance: 0.0,
     totalAssets: 0.0,
     vipLevel: 1,
     referralCode: `JB${Math.floor(100000 + Math.random() * 900000)}`,
     referredBy: referralCode ? referralCode.trim() : undefined,
+    inviterId: uplineId,
     validDirectMembersCount: 0,
     totalTeamMembersCount: 0,
     totalTeamDeposit: 0.0,
@@ -1340,22 +1398,39 @@ app.post('/api/auth/register', (req, res) => {
     isAdmin: false
   };
 
-  // Reset team referrals to 0 for this fresh registration
-  referrals = [];
-  purchases = [];
-  incomeRecords = [];
-  transactions = [];
-  withdrawals = [];
-  deposits = [];
-  processedIncomeDays.clear();
+  users[cleanUserId] = newUser;
+
+  // If referred by another user, add to referrals list for the upline
+  if (uplineId && users[uplineId]) {
+    referrals.push({
+      id: `ref-${Date.now().toString(36)}-${crypto.randomBytes(2).toString('hex')}`,
+      userId: uplineId,
+      uplineId: uplineId,
+      username: newUser.username,
+      email: newUser.email,
+      avatar: newUser.avatar,
+      registeredAt: newUser.createdAt,
+      totalDeposit: 0,
+      totalPurchases: 0,
+      balance: 0,
+      isValid: false,
+      disqualifiedReason: 'Pending initial deposit of $30+',
+      level: 1
+    } as any);
+  }
 
   recalculateUserState(cleanUserId);
-  persistDb(`New Member Registered: ${username}`, true);
+  if (uplineId) {
+    recalculateUserState(uplineId);
+  }
+  
+  persistDb(`New Member Registered: ${cleanUsername} (ID: ${cleanUserId})`, true);
 
   res.json({
     success: true,
     message: 'Account registered successfully! Welcome to JAMBASE. Please deposit at least $30 to activate your account and start earning VIP yields.',
-    user: users[cleanUserId]
+    user: users[cleanUserId],
+    token: `jwt-${cleanUserId}-${Date.now()}`
   });
 });
 
@@ -1472,10 +1547,33 @@ app.post('/api/auth/login', (req, res) => {
     return res.status(400).json({ error: 'Username/phone and password are required' });
   }
 
+  const cleanUserQuery = username.trim().toLowerCase();
+  const allUsers = Object.values(users);
+  
+  // Find matching user by username, phone or email
+  const matchedUser = allUsers.find(u => 
+    u.username.toLowerCase() === cleanUserQuery ||
+    (u.phone && (u.phone.toLowerCase() === cleanUserQuery || u.phone.replace(/[^0-9]/g, '') === cleanUserQuery.replace(/[^0-9]/g, ''))) ||
+    (u.email && u.email.toLowerCase() === cleanUserQuery)
+  );
+
+  if (!matchedUser) {
+    return res.status(401).json({ error: 'Invalid username or password' });
+  }
+
+  // If password exists, check it
+  if ((matchedUser as any).password && (matchedUser as any).password !== password.trim()) {
+    return res.status(401).json({ error: 'Invalid username or password' });
+  }
+
+  // Recalculate user state
+  const refreshedUser = recalculateUserState(matchedUser.id) || matchedUser;
+
   res.json({
     success: true,
     message: 'Logged in successfully!',
-    user: users[PRIMARY_USER_ID]
+    user: refreshedUser,
+    token: `jwt-${refreshedUser.id}-${Date.now()}`
   });
 });
 
@@ -1664,6 +1762,7 @@ app.get('/api/admin/members', requireAdminAuth, (req, res) => {
   res.json({
     success: true,
     summary: {
+      totalMembers: allUsersList.length,
       totalRegistered: allUsersList.length,
       totalActive: activeCount,
       totalSuspended: suspendedCount,
@@ -2431,7 +2530,8 @@ app.post('/api/admin/backups/import', requireAdminAuth, (req, res) => {
 
 // User: Update Profile
 app.put('/api/user/profile', (req, res) => {
-  const user = users[PRIMARY_USER_ID];
+  const targetId = resolveUserId(req);
+  const user = users[targetId] || users[PRIMARY_USER_ID];
   if (!user) return res.status(404).json({ error: 'User not found' });
 
   const { username, email, phone, walletAddress, avatar } = req.body;
@@ -2441,18 +2541,21 @@ app.put('/api/user/profile', (req, res) => {
   if (walletAddress) user.walletAddress = walletAddress;
   if (avatar) user.avatar = avatar;
 
-  recalculateUserState(PRIMARY_USER_ID);
+  recalculateUserState(user.id);
+  persistDb(`User Profile Updated: ${user.username}`);
   res.json({ success: true, message: 'Profile updated successfully', user });
 });
 
 // User: Update Security & Preferences
 app.put('/api/user/security', (req, res) => {
-  const user = users[PRIMARY_USER_ID];
+  const targetId = resolveUserId(req);
+  const user = users[targetId] || users[PRIMARY_USER_ID];
   if (!user) return res.status(404).json({ error: 'User not found' });
 
   const { autoCompound } = req.body;
   if (autoCompound !== undefined) user.autoCompound = Boolean(autoCompound);
 
+  persistDb(`User Security Updated: ${user.username}`);
   res.json({ success: true, message: 'Security preferences updated', user });
 });
 

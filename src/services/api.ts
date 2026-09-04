@@ -65,6 +65,8 @@ export interface AdminOverviewResponse {
   totalUsers: number;
   totalRegisteredMembers?: number;
   totalActiveMembers?: number;
+  totalInactiveMembers?: number;
+  recentRegistrations?: number;
   totalTickets: number;
   activeTickets: number;
   totalWithdrawals: number;
@@ -99,6 +101,37 @@ export const setAdminToken = (token: string) => {
 };
 
 export const getAdminToken = () => adminAuthToken;
+
+let memberUserId: string = (typeof window !== 'undefined' && localStorage.getItem('jambase_member_user_id')) || '';
+
+export const setMemberUserId = (userId: string) => {
+  memberUserId = userId;
+  if (typeof window !== 'undefined') {
+    if (userId) {
+      localStorage.setItem('jambase_member_user_id', userId);
+    } else {
+      localStorage.removeItem('jambase_member_user_id');
+    }
+  }
+};
+
+export const getMemberUserId = () => memberUserId;
+
+export const clearMemberSession = () => {
+  setMemberUserId('');
+};
+
+const getUserHeaders = (extra: Record<string, string> = {}) => {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...extra
+  };
+  const uid = getMemberUserId();
+  if (uid) {
+    headers['X-User-Id'] = uid;
+  }
+  return headers;
+};
 
 const getAdminHeaders = (extra: Record<string, string> = {}) => {
   const headers: Record<string, string> = {
@@ -149,7 +182,9 @@ export const api = {
   },
 
   async getUser(): Promise<User> {
-    const res = await fetch('/api/user');
+    const res = await fetch('/api/user', {
+      headers: getUserHeaders()
+    });
     if (!res.ok) throw new Error('Failed to fetch user');
     return res.json();
   },
@@ -190,7 +225,7 @@ export const api = {
   async purchaseTicket(ticketId: string, quantity: number): Promise<{ success: boolean; message: string; purchase: TicketPurchase; newBalance: number; totalAssets: number }> {
     const res = await fetch('/api/tickets/purchase', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getUserHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ ticketId, quantity })
     });
     const data = await res.json();
@@ -199,20 +234,25 @@ export const api = {
   },
 
   async getPurchases(): Promise<TicketPurchase[]> {
-    const res = await fetch('/api/purchases');
+    const res = await fetch('/api/purchases', {
+      headers: getUserHeaders()
+    });
     if (!res.ok) throw new Error('Failed to fetch purchases');
     return res.json();
   },
 
   async getIncome(): Promise<IncomeResponse> {
-    const res = await fetch('/api/income');
+    const res = await fetch('/api/income', {
+      headers: getUserHeaders()
+    });
     if (!res.ok) throw new Error('Failed to fetch income summary');
     return res.json();
   },
 
   async calculateDailyIncome(): Promise<{ success: boolean; message: string; record: IncomeRecord; user: User }> {
     const res = await fetch('/api/income/claim-daily-vip', {
-      method: 'POST'
+      method: 'POST',
+      headers: getUserHeaders()
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to claim daily profit');
@@ -221,7 +261,8 @@ export const api = {
 
   async claimDailyVipIncome(): Promise<{ success: boolean; message: string; totalCredited: number; totalProfit: number; baseBalance: number; appliedRate: number; vipLevel: number; newBalance: number; user: User }> {
     const res = await fetch('/api/income/claim-daily-vip', {
-      method: 'POST'
+      method: 'POST',
+      headers: getUserHeaders()
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to claim daily VIP income');
@@ -230,7 +271,8 @@ export const api = {
 
   async claimDailyTicketProfit(): Promise<{ success: boolean; message: string; totalCredited: number; totalProfit: number; baseBalance?: number; totalPrincipal?: number; user: User }> {
     const res = await fetch('/api/income/claim-daily-vip', {
-      method: 'POST'
+      method: 'POST',
+      headers: getUserHeaders()
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to claim daily profit');
@@ -239,7 +281,8 @@ export const api = {
 
   async settleTickets(): Promise<{ success: boolean; settled: boolean; user: User; purchases: TicketPurchase[] }> {
     const res = await fetch('/api/tickets/settle', {
-      method: 'POST'
+      method: 'POST',
+      headers: getUserHeaders()
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to settle tickets');
@@ -253,7 +296,9 @@ export const api = {
   },
 
   async getFinance(): Promise<FinanceResponse> {
-    const res = await fetch('/api/finance');
+    const res = await fetch('/api/finance', {
+      headers: getUserHeaders()
+    });
     if (!res.ok) throw new Error('Failed to fetch finance data');
     return res.json();
   },
@@ -261,7 +306,7 @@ export const api = {
   async deposit(amount: number, network = 'TRC20', txHash?: string): Promise<{ success: boolean; message: string; deposit: DepositRequest; user: User }> {
     const res = await fetch('/api/finance/deposit', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getUserHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ amount, network, txHash })
     });
     const data = await res.json();
@@ -272,7 +317,7 @@ export const api = {
   async withdraw(amount: number, walletAddress: string, network = 'TRC20'): Promise<{ success: boolean; message: string; withdrawal: WithdrawalRequest; user: User }> {
     const res = await fetch('/api/finance/withdraw', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getUserHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ amount, walletAddress, network })
     });
     const data = await res.json();
@@ -281,13 +326,17 @@ export const api = {
   },
 
   async getTeam(): Promise<TeamResponse> {
-    const res = await fetch('/api/team');
+    const res = await fetch('/api/team', {
+      headers: getUserHeaders()
+    });
     if (!res.ok) throw new Error('Failed to fetch team data');
     return res.json();
   },
 
   async getTasks(): Promise<TaskItem[]> {
-    const res = await fetch('/api/tasks');
+    const res = await fetch('/api/tasks', {
+      headers: getUserHeaders()
+    });
     if (!res.ok) throw new Error('Failed to fetch tasks');
     return res.json();
   },
@@ -295,7 +344,7 @@ export const api = {
   async claimTask(taskId: string): Promise<{ success: boolean; message: string; task: TaskItem; user: User }> {
     const res = await fetch('/api/tasks/claim', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getUserHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ taskId })
     });
     const data = await res.json();
@@ -431,7 +480,7 @@ export const api = {
   async updateProfile(profileData: Partial<User>) {
     const res = await fetch('/api/user/profile', {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getUserHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(profileData)
     });
     const data = await res.json();
@@ -442,7 +491,7 @@ export const api = {
   async updateSecurity(securityData: { autoCompound?: boolean }) {
     const res = await fetch('/api/user/security', {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getUserHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(securityData)
     });
     const data = await res.json();
@@ -452,7 +501,8 @@ export const api = {
 
   async claimAttendance(): Promise<{ success: boolean; message: string; rewardAmount: number; attendanceStreak: number; user: User }> {
     const res = await fetch('/api/welfare/attendance', {
-      method: 'POST'
+      method: 'POST',
+      headers: getUserHeaders()
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to claim daily attendance');
@@ -467,6 +517,9 @@ export const api = {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Registration failed');
+    if (data.user?.id) {
+      setMemberUserId(data.user.id);
+    }
     return data;
   },
 
@@ -478,7 +531,14 @@ export const api = {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Login failed');
+    if (data.user?.id) {
+      setMemberUserId(data.user.id);
+    }
     return data;
+  },
+
+  logoutUser() {
+    clearMemberSession();
   },
 
   // VIP Data Protection & Disaster Recovery APIs

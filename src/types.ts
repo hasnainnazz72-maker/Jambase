@@ -26,6 +26,8 @@ export interface User {
   vipLevel: number;
   referralCode: string;
   referredBy?: string;
+  inviterId?: string;
+  password?: string;
   status?: 'active' | 'suspended' | 'frozen';
   validDirectMembersCount: number;
   totalTeamMembersCount: number;
@@ -179,6 +181,8 @@ export interface Transaction {
 export interface AdminMemberSummary {
   totalRegistered: number;
   totalActive: number;
+  totalInactive?: number;
+  recentRegistrations?: number;
   totalSuspended: number;
   totalFrozen: number;
   totalIncomePaused: number;
@@ -267,6 +271,8 @@ export interface TaskItem {
 
 export interface ReferralMember {
   id: string;
+  userId?: string;
+  uplineId?: string;
   username: string;
   email: string;
   avatar: string;

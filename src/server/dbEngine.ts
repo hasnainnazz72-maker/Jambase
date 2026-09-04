@@ -741,11 +741,13 @@ class DatabaseManager {
         if (parsed && parsed.users && typeof parsed.users === 'object') {
           console.log(`[VIP Data Protection] Database loaded successfully from ${DB_FILE}. Found ${Object.keys(parsed.users).length} registered member accounts.`);
 
+          let needsSave = false;
           // Ensure all seed users exist in parsed.users if missing
           const initialSeed = getInitialSeedDatabase();
           for (const [seedId, seedUserObj] of Object.entries(initialSeed.users)) {
             if (!parsed.users[seedId]) {
               parsed.users[seedId] = seedUserObj;
+              needsSave = true;
             }
           }
 
@@ -756,20 +758,29 @@ class DatabaseManager {
               totalBackupsGenerated: 0,
               dbCreatedAt: new Date().toISOString()
             };
+            needsSave = true;
           }
 
           // Ensure default tickets and categories if empty
           if (!parsed.tickets || parsed.tickets.length === 0) {
             parsed.tickets = [...INITIAL_TICKETS];
+            needsSave = true;
           }
           if (!parsed.categories || parsed.categories.length === 0) {
             parsed.categories = [...INITIAL_CATEGORIES];
+            needsSave = true;
           }
           if (!parsed.artists || parsed.artists.length === 0) {
             parsed.artists = [...INITIAL_ARTISTS];
+            needsSave = true;
           }
           if (!parsed.notices || parsed.notices.length === 0) {
             parsed.notices = [...INITIAL_NOTICES];
+            needsSave = true;
+          }
+
+          if (needsSave) {
+            this.writeDatabaseAtomic(parsed);
           }
 
           return parsed;
