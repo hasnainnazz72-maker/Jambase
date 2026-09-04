@@ -89,7 +89,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
               <div className="text-[10px] text-neutral-400 font-medium mt-0.5">Fast Settle</div>
             </div>
             <div className="p-2 rounded-xl bg-black/50 border border-neutral-800 text-center">
-              <div className="text-[#00D26A] text-xs font-black">1.9% - 6.0%</div>
+              <div className="text-[#00D26A] text-xs font-black">1.9% - 5.0%</div>
               <div className="text-[10px] text-neutral-400 font-medium mt-0.5">Ticket Yield</div>
             </div>
             <div className="p-2 rounded-xl bg-black/50 border border-neutral-800 text-center">
@@ -124,7 +124,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
         <div className="overflow-hidden whitespace-nowrap text-neutral-300 font-medium">
           <div className="inline-block animate-marquee">
             <span className="text-[#00D26A] font-bold mr-1">notify:</span>
-            {notices[0]?.title || 'The reward for upgrading to vip2 during festival season is active! Daily yield up to 6.0%.'}
+            {notices[0]?.title || 'The reward for upgrading to VIP during festival season is active! Daily yield up to 5.0%.'}
           </div>
         </div>
       </div>
@@ -288,7 +288,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   </div>
                   <div className="text-right">
                     <span className="text-sm font-extrabold text-[#00D26A]">
-                      ${ticket.price.toFixed(2)}
+                      {ticket.price.toLocaleString()} ETB
                     </span>
                   </div>
                 </div>

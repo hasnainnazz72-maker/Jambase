@@ -19,7 +19,8 @@ import {
   Info,
   X,
   AlertTriangle,
-  ExternalLink
+  ExternalLink,
+  FileText
 } from 'lucide-react';
 import { DepositRequest } from '../../types';
 import { api } from '../../services/api';
@@ -63,7 +64,7 @@ export const RechargeApprovalQueue: React.FC<RechargeApprovalQueueProps> = ({
     try {
       await api.processDeposit(selectedForApproval.id, 'Approve', undefined, approvalNotes);
       onSetActionMsg({
-        text: `✓ Recharge request #${selectedForApproval.id} for $${selectedForApproval.amount.toFixed(2)} USDT has been APPROVED and credited to ${selectedForApproval.username}'s available balance!`
+        text: `✓ Recharge request #${selectedForApproval.id} for ${selectedForApproval.amount.toLocaleString()} ETB has been APPROVED and credited to ${selectedForApproval.username}'s available balance!`
       });
       setSelectedForApproval(null);
       setApprovalNotes('');
@@ -331,16 +332,12 @@ export const RechargeApprovalQueue: React.FC<RechargeApprovalQueueProps> = ({
 
                   <div className="text-right">
                     <span className="text-lg font-black text-white font-mono block">
-                      ${dep.amount.toFixed(2)} <span className="text-xs text-neutral-400">USDT</span>
+                      {dep.amount.toLocaleString()} <span className="text-xs text-neutral-400">ETB</span>
                     </span>
                     <span
-                      className={`inline-block px-2 py-0.2 text-[10px] font-extrabold rounded-md mt-0.5 ${
-                        dep.network === 'BEP20'
-                          ? 'bg-amber-400/15 text-amber-300 border border-amber-400/30'
-                          : 'bg-[#00D26A]/15 text-[#00D26A] border border-[#00D26A]/30'
-                      }`}
+                      className="inline-block px-2 py-0.2 text-[10px] font-extrabold rounded-md mt-0.5 bg-blue-500/15 text-blue-300 border border-blue-500/30"
                     >
-                      {dep.network || 'TRC20'}
+                      {dep.bankName || 'CBE Bank'}
                     </span>
                   </div>
                 </div>
@@ -355,7 +352,7 @@ export const RechargeApprovalQueue: React.FC<RechargeApprovalQueueProps> = ({
                     </div>
                     <div className="text-[11px] font-mono">
                       <span className="text-neutral-400">Available: </span>
-                      <strong className="text-[#00D26A]">${(dep.currentUserBalance ?? 0).toFixed(2)}</strong>
+                      <strong className="text-[#00D26A]">{(dep.currentUserBalance ?? 0).toLocaleString()} ETB</strong>
                     </div>
                   </div>
 
@@ -377,47 +374,49 @@ export const RechargeApprovalQueue: React.FC<RechargeApprovalQueueProps> = ({
                   )}
                 </div>
 
-                {/* Payment Method & Transaction UID / TXID Details */}
+                {/* Payment Method & Bank Transfer Details */}
                 <div className="p-3 rounded-xl bg-neutral-950/80 border border-neutral-800/80 space-y-2.5 text-xs">
-                  {/* TRANSACTION UID / TXID (PROMINENT DISPLAY) */}
+                  {/* TRANSACTION REFERENCE NUMBER */}
                   <div className="space-y-1">
                     <div className="flex items-center justify-between text-[11px]">
                       <span className="text-neutral-400 font-bold flex items-center gap-1 text-amber-300">
                         <Hash size={12} />
-                        <span>Transaction UID / TXID (Hash):</span>
+                        <span>Transaction Reference Number:</span>
                       </span>
                       <button
-                        onClick={() => handleCopy(txDisplay, `tx-${dep.id}`)}
+                        onClick={() => handleCopy(dep.referenceNumber || txDisplay, `tx-${dep.id}`)}
                         className="px-2 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500 text-amber-200 hover:text-black text-[10px] font-bold flex items-center gap-1 transition-colors"
                       >
                         {copiedKey === `tx-${dep.id}` ? <Check size={10} /> : <Copy size={10} />}
-                        <span>{copiedKey === `tx-${dep.id}` ? 'Copied!' : 'Copy UID / TXID'}</span>
+                        <span>{copiedKey === `tx-${dep.id}` ? 'Copied!' : 'Copy Reference'}</span>
                       </button>
                     </div>
                     <div className="p-2 rounded-lg bg-black border border-amber-500/30 font-mono text-[11px] text-amber-200 break-all select-all font-bold">
-                      {txDisplay}
+                      {dep.referenceNumber || txDisplay}
                     </div>
                   </div>
 
-                  {/* Payment Receiving Wallet */}
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="text-neutral-400 font-medium flex items-center gap-1">
-                        <Wallet size={12} />
-                        <span>Deposit Receiving Address ({dep.network}):</span>
+                  {/* Payment Slip Receipt Preview */}
+                  {dep.paymentSlipUrl && (
+                    <div className="space-y-1 pt-1 border-t border-neutral-900">
+                      <span className="text-neutral-400 font-bold text-[11px] flex items-center gap-1 text-blue-300">
+                        <FileText size={12} />
+                        <span>Uploaded Payment Slip Receipt:</span>
                       </span>
-                      <button
-                        onClick={() => handleCopy(dep.walletAddress, `wallet-${dep.id}`)}
-                        className="px-2 py-0.5 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-300 hover:text-white text-[10px] font-bold flex items-center gap-1 transition-colors"
+                      <a
+                        href={dep.paymentSlipUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="block rounded-lg overflow-hidden border border-neutral-800 hover:border-blue-500 transition-colors max-h-36 bg-black flex items-center justify-center p-1"
                       >
-                        {copiedKey === `wallet-${dep.id}` ? <Check size={10} /> : <Copy size={10} />}
-                        <span>{copiedKey === `wallet-${dep.id}` ? 'Copied' : 'Copy'}</span>
-                      </button>
+                        <img
+                          src={dep.paymentSlipUrl}
+                          alt="Payment Slip Receipt"
+                          className="max-h-32 object-contain"
+                        />
+                      </a>
                     </div>
-                    <div className="p-1.5 rounded-lg bg-black/60 border border-neutral-850 font-mono text-[10px] text-neutral-300 break-all select-all">
-                      {dep.walletAddress}
-                    </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* Audit & Outcome info for Approved / Rejected */}
@@ -429,7 +428,7 @@ export const RechargeApprovalQueue: React.FC<RechargeApprovalQueueProps> = ({
                     </div>
                     <p className="text-[11px] text-neutral-400">
                       Approved by <strong className="text-neutral-200">{dep.approvedBy || 'Admin'}</strong> on{' '}
-                      {dep.processedAt ? new Date(dep.processedAt).toLocaleString() : 'Recent'}. Amount +${dep.amount.toFixed(2)} USDT added to Available Balance.
+                      {dep.processedAt ? new Date(dep.processedAt).toLocaleString() : 'Recent'}. Amount +{dep.amount.toLocaleString()} ETB added to Available Balance.
                     </p>
                   </div>
                 )}
@@ -497,23 +496,41 @@ export const RechargeApprovalQueue: React.FC<RechargeApprovalQueueProps> = ({
               </div>
 
               <div className="flex justify-between items-center pb-2 border-b border-neutral-850">
-                <span className="text-neutral-400 font-sans">Payment Network:</span>
+                <span className="text-neutral-400 font-sans">Deposit Bank:</span>
                 <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-[#00D26A] font-bold">
-                  {selectedForApproval.network || 'TRC20'}
+                  {selectedForApproval.bankName || 'Commercial Bank of Ethiopia (CBE)'}
                 </span>
               </div>
 
               <div className="space-y-1 pb-2 border-b border-neutral-850">
-                <span className="text-neutral-400 font-sans block">Submitted TXID / UID:</span>
+                <span className="text-neutral-400 font-sans block">Submitted Reference Number:</span>
                 <div className="p-2 rounded-lg bg-black border border-neutral-800 text-[11px] text-amber-300 break-all select-all font-bold">
-                  {selectedForApproval.txHash || selectedForApproval.txUid || 'N/A'}
+                  {selectedForApproval.referenceNumber || selectedForApproval.txHash || selectedForApproval.txUid || 'N/A'}
                 </div>
               </div>
+
+              {selectedForApproval.paymentSlipUrl && (
+                <div className="space-y-1 pb-2 border-b border-neutral-850">
+                  <span className="text-neutral-400 font-sans block">Uploaded Receipt Slip:</span>
+                  <a
+                    href={selectedForApproval.paymentSlipUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block rounded-lg overflow-hidden border border-neutral-800 max-h-40 bg-black flex items-center justify-center p-1"
+                  >
+                    <img
+                      src={selectedForApproval.paymentSlipUrl}
+                      alt="Payment Slip"
+                      className="max-h-36 object-contain"
+                    />
+                  </a>
+                </div>
+              )}
 
               <div className="flex justify-between items-center pt-1">
                 <span className="font-bold text-neutral-300 font-sans">AMOUNT TO CREDIT:</span>
                 <span className="font-mono font-black text-[#00D26A] text-lg">
-                  +${selectedForApproval.amount.toFixed(2)} USDT
+                  +{selectedForApproval.amount.toLocaleString()} ETB
                 </span>
               </div>
             </div>
@@ -521,7 +538,7 @@ export const RechargeApprovalQueue: React.FC<RechargeApprovalQueueProps> = ({
             <div className="p-3 rounded-2xl bg-[#00D26A]/10 border border-[#00D26A]/30 text-xs text-neutral-300 flex items-start gap-2">
               <Info size={15} className="text-[#00D26A] shrink-0 mt-0.5" />
               <span>
-                Approving will immediately credit <strong className="text-white">+${selectedForApproval.amount.toFixed(2)} USDT</strong> into {selectedForApproval.username}&apos;s Available Balance for trading and ticket purchases.
+                Approving will immediately credit <strong className="text-white">+{selectedForApproval.amount.toLocaleString()} ETB</strong> into {selectedForApproval.username}&apos;s Available Balance for trading and ticket purchases.
               </span>
             </div>
 
@@ -531,7 +548,7 @@ export const RechargeApprovalQueue: React.FC<RechargeApprovalQueueProps> = ({
                 type="text"
                 value={approvalNotes}
                 onChange={(e) => setApprovalNotes(e.target.value)}
-                placeholder="e.g. Verified on TronScan / BscScan"
+                placeholder="e.g. Verified transfer on CBE Portal / Slip confirmed"
                 className="w-full px-3.5 py-2 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-white focus:outline-none focus:border-[#00D26A]"
               />
             </div>
@@ -598,12 +615,12 @@ export const RechargeApprovalQueue: React.FC<RechargeApprovalQueueProps> = ({
               </div>
               <div className="flex justify-between">
                 <span className="text-neutral-400">Amount:</span>
-                <span className="font-mono text-white font-bold">${selectedForRejection.amount.toFixed(2)} USDT</span>
+                <span className="font-mono text-white font-bold">{selectedForRejection.amount.toLocaleString()} ETB</span>
               </div>
               <div className="space-y-1 pt-1 border-t border-neutral-850">
-                <span className="text-neutral-400">Submitted UID / TXID:</span>
+                <span className="text-neutral-400">Submitted Reference:</span>
                 <div className="p-1.5 rounded bg-black font-mono text-[10px] text-neutral-300 break-all">
-                  {selectedForRejection.txHash || selectedForRejection.txUid || 'N/A'}
+                  {selectedForRejection.referenceNumber || selectedForRejection.txHash || selectedForRejection.txUid || 'N/A'}
                 </div>
               </div>
             </div>
@@ -615,10 +632,10 @@ export const RechargeApprovalQueue: React.FC<RechargeApprovalQueueProps> = ({
                 onChange={(e) => setRejectReason(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-white focus:outline-none focus:border-red-500"
               >
-                <option value="Payment verification unconfirmed / Invalid TXID or UID">Payment verification unconfirmed / Invalid TXID or UID</option>
-                <option value="Transaction hash not found on blockchain explorer">Transaction hash not found on blockchain explorer</option>
-                <option value="Deposit amount mismatch with blockchain transaction">Deposit amount mismatch with blockchain transaction</option>
-                <option value="Incorrect recipient address used by sender">Incorrect recipient address used by sender</option>
+                <option value="Payment verification unconfirmed / Invalid reference number">Payment verification unconfirmed / Invalid reference number</option>
+                <option value="Transaction reference not found in CBE bank records">Transaction reference not found in CBE bank records</option>
+                <option value="Deposit amount mismatch with bank transfer slip">Deposit amount mismatch with bank transfer slip</option>
+                <option value="Payment slip receipt unreadable or invalid">Payment slip receipt unreadable or invalid</option>
                 <option value="Duplicate recharge submission">Duplicate recharge submission</option>
                 <option value="Other administrative discrepancy">Other administrative discrepancy</option>
               </select>

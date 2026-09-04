@@ -48,14 +48,14 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   const handleBuy = async () => {
     setError(null);
 
-    // ACTION-TRIGGERED NOTIFICATION: Account below minimum $30
-    if (currentBalance < 30 && (user?.totalAssets || 0) < 30) {
-      setError('Insufficient Balance — Your available balance is below $30. Please recharge your account to purchase tickets.');
+    // ACTION-TRIGGERED NOTIFICATION: Account below minimum 500 ETB
+    if (currentBalance < 500 && (user?.totalAssets || 0) < 500) {
+      setError('Insufficient Balance — Your available balance is below 500 ETB. Please recharge your account to purchase tickets.');
       return;
     }
 
     if (currentBalance < totalPrice) {
-      setError(`Insufficient available balance ($${currentBalance.toFixed(2)}). Please recharge $${(totalPrice - currentBalance).toFixed(2)} to complete this purchase.`);
+      setError(`Insufficient available balance (${currentBalance.toLocaleString()} ETB). Please recharge ${(totalPrice - currentBalance).toLocaleString()} ETB to complete this purchase.`);
       return;
     }
 
@@ -83,7 +83,7 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     }
   };
 
-  const vipDailyRate = user?.vipLevel === 1 ? 0.019 : user?.vipLevel === 2 ? 0.025 : user?.vipLevel === 3 ? 0.03 : user?.vipLevel === 4 ? 0.04 : user?.vipLevel === 5 ? 0.05 : 0.06;
+  const vipDailyRate = user?.vipLevel === 1 ? 0.019 : user?.vipLevel === 2 ? 0.022 : user?.vipLevel === 3 ? 0.03 : user?.vipLevel === 4 ? 0.04 : 0.05;
   // STRICT RULE: Profit calculated strictly on the ticket investment amount
   const estimatedProfit = Number((totalPrice * vipDailyRate).toFixed(2));
   const remainingBalanceAfterBuy = Number(Math.max(0, currentBalance - totalPrice).toFixed(2));
@@ -197,7 +197,7 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
         <div className="mt-4 p-3.5 rounded-2xl bg-[#0d0e12] border border-neutral-800 space-y-2 text-xs">
           <div className="flex justify-between text-neutral-400">
             <span>Ticket Price</span>
-            <span className="font-semibold text-neutral-200">${unitPrice.toFixed(2)}</span>
+            <span className="font-semibold text-neutral-200">{unitPrice.toLocaleString()} ETB</span>
           </div>
           <div className="flex justify-between text-neutral-400">
             <span>Quantity Selected</span>
@@ -206,21 +206,21 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
           <div className="flex justify-between text-neutral-400">
             <span>VIP Rate (Your Level: VIP {user?.vipLevel || 1})</span>
             <span className="font-bold text-[#00D26A]">
-              +{((user?.vipLevel === 1 ? 1.9 : user?.vipLevel === 2 ? 2.5 : user?.vipLevel === 3 ? 3.0 : user?.vipLevel === 4 ? 4.0 : user?.vipLevel === 5 ? 5.0 : 6.0)).toFixed(1)}% (on ${totalPrice.toFixed(2)})
+              +{((user?.vipLevel === 1 ? 1.9 : user?.vipLevel === 2 ? 2.2 : user?.vipLevel === 3 ? 3.0 : user?.vipLevel === 4 ? 4.0 : 5.0)).toFixed(1)}% (on {totalPrice.toLocaleString()} ETB)
             </span>
           </div>
           <div className="flex justify-between text-neutral-400">
             <span>VIP Profit on this Ticket</span>
-            <span className="font-bold text-[#00D26A]">+${estimatedProfit.toFixed(2)} USDT</span>
+            <span className="font-bold text-[#00D26A]">+{estimatedProfit.toLocaleString()} ETB</span>
           </div>
 
           <div className="p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-800/40 text-[11px] text-emerald-300 space-y-1">
             <span className="font-bold block text-[#00D26A]">⚡ 1-Minute Fast Settle Rule:</span>
             <p>
-              In exactly <strong>1 minute</strong>, both your <strong>Investment (${totalPrice.toFixed(2)})</strong> and <strong>Ticket Profit (+${estimatedProfit.toFixed(2)} USDT)</strong> will automatically settle and return directly to your Available Balance!
+              In exactly <strong>1 minute</strong>, both your <strong>Investment ({totalPrice.toLocaleString()} ETB)</strong> and <strong>Ticket Profit (+{estimatedProfit.toLocaleString()} ETB)</strong> will automatically settle and return directly to your Available Balance!
             </p>
             <p className="text-emerald-400">
-              Your remaining <strong>${remainingBalanceAfterBuy.toFixed(2)}</strong> balance remains fully usable to buy more tickets (e.g. $10, $20, $50, $100) anytime without daily limits.
+              Your remaining <strong>{remainingBalanceAfterBuy.toLocaleString()} ETB</strong> balance remains fully usable to buy more tickets (from 500 ETB to 10,000 ETB) anytime without daily limits.
             </p>
           </div>
 
@@ -228,13 +228,13 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
             <div>
               <span className="text-sm font-bold text-white block">Order Total</span>
               <span className="text-[11px] text-neutral-400">
-                Remaining Balance: <strong className="text-[#00D26A]">${remainingBalanceAfterBuy.toFixed(2)}</strong>
+                Remaining Balance: <strong className="text-[#00D26A]">{remainingBalanceAfterBuy.toLocaleString()} ETB</strong>
               </span>
             </div>
             <div className="text-right">
-              <span className="text-xl font-extrabold text-[#00D26A]">${totalPrice.toFixed(2)}</span>
+              <span className="text-xl font-extrabold text-[#00D26A]">{totalPrice.toLocaleString()} ETB</span>
               <p className="text-[10px] text-neutral-500">
-                Available: ${currentBalance.toFixed(2)}
+                Available: {currentBalance.toLocaleString()} ETB
               </p>
             </div>
           </div>
@@ -247,7 +247,7 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
               <AlertCircle size={17} className="shrink-0 text-red-400 mt-0.5" />
               <span className="font-semibold leading-relaxed">{error}</span>
             </div>
-            {onNavigateTab && currentBalance < 30 && (
+            {onNavigateTab && currentBalance < 500 && (
               <div className="pt-1 flex justify-end">
                 <button
                   type="button"
@@ -280,7 +280,7 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
             className={`w-full py-3.5 rounded-xl font-extrabold text-sm tracking-wide transition-all shadow-lg flex items-center justify-center gap-2 ${
               loading || success
                 ? 'bg-neutral-700 text-neutral-400 cursor-not-allowed'
-                : currentBalance < 30
+                : currentBalance < 500
                 ? 'bg-amber-500 hover:bg-amber-400 text-black shadow-amber-500/20 active:scale-[0.98]'
                 : !hasEnoughBalance
                 ? 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700 cursor-pointer'
@@ -292,11 +292,11 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
               ? 'Processing Secure Order...'
               : success
               ? 'Purchase Completed!'
-              : currentBalance < 30
-              ? 'Buy Ticket • $30 Min Balance'
+              : currentBalance < 500
+              ? 'Buy Ticket • 500 ETB Min Balance'
               : !hasEnoughBalance
               ? 'Insufficient Balance (Recharge)'
-              : `Purchase Now • $${totalPrice.toFixed(2)}`}
+              : `Purchase Now • ${totalPrice.toLocaleString()} ETB`}
           </button>
         </div>
       </div>

@@ -54,7 +54,7 @@ export const MembershipLevelModal: React.FC<MembershipLevelModalProps> = ({
           <div className="p-4 rounded-2xl bg-neutral-900 border border-neutral-800 space-y-2 text-xs">
             <div className="flex justify-between items-center">
               <span className="text-neutral-400">Personal Balance:</span>
-              <span className="font-extrabold text-[#00D26A]">${user?.balance.toFixed(2) || '0.00'}</span>
+              <span className="font-extrabold text-[#00D26A]">{(user?.balance || 0).toLocaleString()} ETB</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-neutral-400">Valid Direct Investors:</span>
@@ -102,11 +102,13 @@ export const MembershipLevelModal: React.FC<MembershipLevelModalProps> = ({
                   <div className="mt-2 text-[11px] text-neutral-400 space-y-1">
                     <div className="flex justify-between">
                       <span>Qualifying Balance:</span>
-                      <span className="text-neutral-200 font-semibold">${tier.minBalance} - ${tier.maxBalance}</span>
+                      <span className="text-neutral-200 font-semibold">{tier.minBalance.toLocaleString()} – {tier.maxBalance.toLocaleString()} ETB</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Required Direct Members:</span>
-                      <span className="text-neutral-200 font-semibold">{tier.minDirectMembers} members (≥$30)</span>
+                      <span className="text-neutral-200 font-semibold">
+                        {tier.minDirectMembers === 0 ? 'None required' : `${tier.minDirectMembers} valid members (≥2,000 ETB)`}
+                      </span>
                     </div>
                   </div>
                 </div>

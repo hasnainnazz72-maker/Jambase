@@ -71,10 +71,10 @@ export const DepositHistoryModal: React.FC<DepositHistoryModalProps> = ({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="font-extrabold text-[#00D26A] text-sm">
-                      +${dep.amount.toFixed(2)} USDT
+                      +{dep.amount.toLocaleString()} ETB
                     </span>
                     <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-neutral-800 text-neutral-400">
-                      {dep.network}
+                      {dep.bankName || 'CBE Bank'}
                     </span>
                   </div>
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#00D26A]/15 text-[#00D26A] border border-[#00D26A]/30 flex items-center gap-1">
@@ -82,11 +82,11 @@ export const DepositHistoryModal: React.FC<DepositHistoryModalProps> = ({
                   </span>
                 </div>
 
-                {dep.txHash && (
+                {(dep.referenceNumber || dep.txHash) && (
                   <div className="p-2 rounded-xl bg-black/60 border border-neutral-800/80 flex items-center justify-between text-[10px] font-mono text-neutral-400">
-                    <span className="truncate max-w-[240px]">Hash: {dep.txHash}</span>
+                    <span className="truncate max-w-[240px]">Ref: {dep.referenceNumber || dep.txHash}</span>
                     <button
-                      onClick={() => handleCopy(dep.txHash!, dep.id)}
+                      onClick={() => handleCopy((dep.referenceNumber || dep.txHash)!, dep.id)}
                       className="text-neutral-400 hover:text-white shrink-0 ml-1"
                     >
                       {copiedId === dep.id ? <Check size={11} className="text-[#00D26A]" /> : <Copy size={11} />}

@@ -92,7 +92,7 @@ export const TaskView: React.FC<TaskViewProps> = ({ tasks = [], user, onRefresh 
       });
       setFeedback({
         type: 'success',
-        message: res.message || `Successfully claimed $${task.rewardAmount} USDT reward!`
+        message: res.message || `Successfully claimed ${task.rewardAmount} ETB reward!`
       });
       onRefresh();
     } catch (err: any) {
@@ -191,7 +191,7 @@ export const TaskView: React.FC<TaskViewProps> = ({ tasks = [], user, onRefresh 
                       {task.title}
                     </h4>
                     <p className="text-[11px] text-neutral-400 mt-0.5">
-                      Reward: <strong className="text-[#00D26A] font-extrabold">+${task.rewardAmount} USDT</strong>
+                      Reward: <strong className="text-[#00D26A] font-extrabold">+{task.rewardAmount} ETB</strong>
                     </p>
 
                     {/* Progress indicator */}

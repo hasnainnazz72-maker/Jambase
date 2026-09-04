@@ -110,7 +110,7 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
         origin: { y: 0.6 }
       });
       setClaimMsg({
-        text: res.message || `Successfully claimed $${res.totalProfit.toFixed(2)} USDT profit!`
+        text: res.message || `Successfully claimed ${res.totalProfit.toLocaleString()} ETB profit!`
       });
       onRefresh();
     } catch (err: any) {
@@ -182,7 +182,7 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
             <span>Daily Compounding Rules:</span>
           </div>
           <ul className="text-[11px] text-neutral-300 space-y-1 list-disc list-inside leading-relaxed">
-            <li>Profit is calculated strictly on your <strong>Available Balance (${availableBalance.toFixed(2)})</strong>.</li>
+            <li>Profit is calculated strictly on your <strong>Available Balance ({availableBalance.toLocaleString()} ETB)</strong>.</li>
             <li>Earned once every 24 hours — cycle resets daily at <strong>00:00:00 UTC</strong>.</li>
             <li>As your balance grows every day, your daily profit compounds automatically!</li>
           </ul>
@@ -199,12 +199,12 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <span className="text-[11px] text-neutral-400 block">Available Balance:</span>
-                  <span className="text-base font-extrabold text-white font-mono">${availableBalance.toFixed(2)} USDT</span>
+                  <span className="text-base font-extrabold text-white font-mono">{availableBalance.toLocaleString()} ETB</span>
                 </div>
                 <div>
                   <span className="text-[11px] text-neutral-400 block">VIP {user?.vipLevel || 1} Daily Yield:</span>
                   <span className="text-base font-extrabold text-[#00D26A] font-mono">
-                    +${expectedDailyProfit.toFixed(2)} USDT <span className="text-xs text-emerald-400">({(rate * 100).toFixed(1)}%)</span>
+                    +{expectedDailyProfit.toLocaleString()} ETB <span className="text-xs text-emerald-400">({(rate * 100).toFixed(1)}%)</span>
                   </span>
                 </div>
               </div>
@@ -442,13 +442,13 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
               <div>
                 <span className="text-[10px] text-neutral-400 block">Today's VIP Yield:</span>
                 <span className="font-extrabold text-[#00D26A]">
-                  +${(user?.todayVipProfit ?? user?.todayTicketIncome ?? 0).toFixed(2)} USDT
+                  +{(user?.todayVipProfit ?? user?.todayTicketIncome ?? 0).toLocaleString()} ETB
                 </span>
               </div>
               <div>
                 <span className="text-[10px] text-neutral-400 block">Total VIP Profit:</span>
                 <span className="font-extrabold text-white">
-                  ${(user?.totalVipProfit ?? 54.50).toFixed(2)} USDT
+                  {(user?.totalVipProfit ?? 0).toLocaleString()} ETB
                 </span>
               </div>
             </div>
@@ -477,13 +477,13 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
               <div>
                 <span className="text-[10px] text-neutral-400 block">Today's Rebates:</span>
                 <span className="font-extrabold text-amber-400">
-                  +${(user?.todayTeamCommission ?? 0).toFixed(2)} USDT
+                  +{(user?.todayTeamCommission ?? 0).toLocaleString()} ETB
                 </span>
               </div>
               <div>
                 <span className="text-[10px] text-neutral-400 block">Total Commission:</span>
                 <span className="font-extrabold text-white">
-                  ${(user?.totalTeamCommission ?? 30.00).toFixed(2)} USDT
+                  {(user?.totalTeamCommission ?? 0).toLocaleString()} ETB
                 </span>
               </div>
             </div>
@@ -505,7 +505,7 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
             </div>
           </div>
           <span className="text-sm font-extrabold text-[#00D26A]">
-            ${(user?.totalEarnedIncome ?? summary?.totalIncome ?? 84.50).toFixed(2)} USDT
+            {(user?.totalEarnedIncome ?? summary?.totalIncome ?? 0).toLocaleString()} ETB
           </span>
         </div>
       </div>
@@ -596,18 +596,18 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
                         />
                       </div>
                       <div className="flex justify-between text-[9px] text-neutral-400">
-                        <span>Principal: ${pur.totalAmount.toFixed(2)}</span>
-                        <span className="text-[#00D26A]">Yield: +${(pur.profitAmount || 0).toFixed(2)} USDT</span>
-                        <span className="text-white font-bold">Total Credit: ${(pur.totalAmount + (pur.profitAmount || 0)).toFixed(2)}</span>
+                        <span>Principal: {pur.totalAmount.toLocaleString()} ETB</span>
+                        <span className="text-[#00D26A]">Yield: +{(pur.profitAmount || 0).toLocaleString()} ETB</span>
+                        <span className="text-white font-bold">Total Credit: {(pur.totalAmount + (pur.profitAmount || 0)).toLocaleString()} ETB</span>
                       </div>
                     </div>
                   ) : pur.status === 'completed' ? (
                     <div className="p-2 rounded-xl bg-emerald-950/30 border border-emerald-800/30 flex items-center justify-between text-[10px] text-emerald-300">
                       <span className="flex items-center gap-1">
                         <CheckCircle2 size={12} className="text-[#00D26A]" />
-                        <span>Investment (${pur.totalAmount.toFixed(2)}) + Profit (+${(pur.profitAmount || 0).toFixed(2)}) credited to Balance</span>
+                        <span>Investment ({pur.totalAmount.toLocaleString()} ETB) + Profit (+{(pur.profitAmount || 0).toLocaleString()} ETB) credited to Balance</span>
                       </span>
-                      <span className="font-bold text-white">${(pur.totalAmount + (pur.profitAmount || 0)).toFixed(2)} USDT</span>
+                      <span className="font-bold text-white">{(pur.totalAmount + (pur.profitAmount || 0)).toLocaleString()} ETB</span>
                     </div>
                   ) : null}
                 </div>
@@ -624,7 +624,7 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
               <div key={rec.id} className="p-2.5 rounded-xl bg-neutral-900/70 border border-neutral-800 text-[11px]">
                 <div className="flex justify-between items-center text-neutral-300">
                   <span className="font-semibold text-white">{rec.ticketName}</span>
-                  <span className="font-extrabold text-[#00D26A]">+{rec.incomeAmount.toFixed(2)} USDT</span>
+                  <span className="font-extrabold text-[#00D26A]">+{rec.incomeAmount.toLocaleString()} ETB</span>
                 </div>
                 <div className="mt-1 flex justify-between text-neutral-500 text-[10px]">
                   <span>TX: {rec.transactionId}</span>

@@ -19,7 +19,8 @@ import {
   RefreshCw,
   Info,
   X,
-  AlertTriangle
+  AlertTriangle,
+  Building2
 } from 'lucide-react';
 import { WithdrawalRequest } from '../../types';
 import { api } from '../../services/api';
@@ -63,7 +64,7 @@ export const WithdrawalApprovalQueue: React.FC<WithdrawalApprovalQueueProps> = (
     try {
       await api.processWithdrawal(selectedForApproval.id, 'Complete', undefined, approvalNotes);
       onSetActionMsg({
-        text: `✓ Withdrawal #${selectedForApproval.id} for $${selectedForApproval.amount.toFixed(2)} USDT has been APPROVED and finalized!`
+        text: `✓ Withdrawal #${selectedForApproval.id} for ${selectedForApproval.amount.toLocaleString()} ETB has been APPROVED and finalized!`
       });
       setSelectedForApproval(null);
       setApprovalNotes('');
@@ -82,7 +83,7 @@ export const WithdrawalApprovalQueue: React.FC<WithdrawalApprovalQueueProps> = (
     try {
       await api.processWithdrawal(selectedForRejection.id, 'Reject', rejectReason, rejectNotes);
       onSetActionMsg({
-        text: `Withdrawal #${selectedForRejection.id} rejected. Reserved funds ($${selectedForRejection.amount.toFixed(2)} USDT) have been refunded to member's Available Balance.`
+        text: `Withdrawal #${selectedForRejection.id} rejected. Reserved funds (${selectedForRejection.amount.toLocaleString()} ETB) have been refunded to member's Available Balance.`
       });
       setSelectedForRejection(null);
       setRejectReason('Payment verification unconfirmed / Security check required');
@@ -285,7 +286,7 @@ export const WithdrawalApprovalQueue: React.FC<WithdrawalApprovalQueueProps> = (
                       <span>{wd.status}</span>
                     </span>
                     <div className="text-lg font-black text-white tracking-tight">
-                      ${wd.amount.toFixed(2)} <span className="text-xs font-bold text-neutral-400">USDT</span>
+                      {wd.amount.toLocaleString()} <span className="text-xs font-bold text-neutral-400">ETB</span>
                     </div>
                   </div>
                 </div>
@@ -310,7 +311,7 @@ export const WithdrawalApprovalQueue: React.FC<WithdrawalApprovalQueueProps> = (
                     <span className="text-[10px] text-neutral-400 font-sans block flex items-center gap-1">
                       <DollarSign size={10} className="text-[#00D26A]" /> Avail. Balance
                     </span>
-                    <span className="text-emerald-400 font-bold block">${userBalAtReq.toFixed(2)} USDT</span>
+                    <span className="text-emerald-400 font-bold block">{userBalAtReq.toLocaleString()} ETB</span>
                   </div>
 
                   {wd.userEmail && (
@@ -332,29 +333,24 @@ export const WithdrawalApprovalQueue: React.FC<WithdrawalApprovalQueueProps> = (
                   )}
                 </div>
 
-                {/* FULL UNTRUNCATED WALLET ADDRESS SECTION */}
+                {/* FULL UNTRUNCATED BANK ACCOUNT SECTION */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-bold text-neutral-300 flex items-center gap-1.5">
-                      <Wallet size={14} className="text-[#00D26A]" />
-                      <span>Destination Wallet Address</span>
+                      <Building2 size={14} className="text-[#00D26A]" />
+                      <span>Destination Bank Account (CBE)</span>
                     </span>
-                    <span
-                      className={`px-2 py-0.5 rounded-md text-[10px] font-bold font-mono ${
-                        wd.network === 'BEP20'
-                          ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'
-                          : 'bg-emerald-500/20 text-[#00D26A] border border-emerald-500/30'
-                      }`}
-                    >
-                      Network: {wd.network || 'TRC20'}
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold font-mono bg-emerald-500/20 text-[#00D26A] border border-emerald-500/30">
+                      {wd.bankName || 'Commercial Bank of Ethiopia'}
                     </span>
                   </div>
 
-                  {/* Complete, fully visible, non-truncated wallet address box with 1-tap copy */}
+                  {/* Complete, fully visible bank account details with 1-tap copy */}
                   <div className="relative group bg-[#090b10] border border-emerald-500/30 hover:border-emerald-500/60 transition-colors p-3 rounded-xl">
                     <div className="flex items-start justify-between gap-2">
                       <div className="font-mono text-xs text-white font-semibold break-all leading-relaxed select-all">
-                        {wd.walletAddress}
+                        {wd.accountHolder && <div className="text-[11px] text-amber-300 mb-0.5">Holder: {wd.accountHolder}</div>}
+                        Account: {wd.accountNumber || wd.walletAddress}
                       </div>
 
                       <button
@@ -386,16 +382,16 @@ export const WithdrawalApprovalQueue: React.FC<WithdrawalApprovalQueueProps> = (
                 <div className="grid grid-cols-3 gap-2 bg-black/40 p-3 rounded-xl border border-neutral-850 text-xs">
                   <div>
                     <span className="text-[10px] text-neutral-400 block font-medium">Gross Amount</span>
-                    <span className="font-mono font-bold text-white">${wd.amount.toFixed(2)}</span>
+                    <span className="font-mono font-bold text-white">{wd.amount.toLocaleString()} ETB</span>
                   </div>
                   <div>
-                    <span className="text-[10px] text-neutral-400 block font-medium">Platform Fee (5%)</span>
-                    <span className="font-mono font-bold text-red-400">-${(wd.fee || wd.amount * 0.05).toFixed(2)}</span>
+                    <span className="text-[10px] text-neutral-400 block font-medium">Platform Fee (7%)</span>
+                    <span className="font-mono font-bold text-red-400">-{(wd.fee || wd.amount * 0.07).toLocaleString()} ETB</span>
                   </div>
                   <div>
                     <span className="text-[10px] text-emerald-400 block font-bold">Net Member Payout</span>
                     <span className="font-mono font-black text-[#00D26A] text-sm">
-                      ${(wd.netAmount || wd.amount - (wd.fee || wd.amount * 0.05)).toFixed(2)}
+                      {(wd.netAmount || wd.amount - (wd.fee || wd.amount * 0.07)).toLocaleString()} ETB
                     </span>
                   </div>
                 </div>
@@ -482,7 +478,7 @@ export const WithdrawalApprovalQueue: React.FC<WithdrawalApprovalQueueProps> = (
                 </div>
                 <div>
                   <h3 className="text-base font-extrabold text-white tracking-wide">CONFIRM WITHDRAWAL PAYOUT</h3>
-                  <p className="text-[11px] text-neutral-400">Verify destination address before dispatching USDT funds</p>
+                  <p className="text-[11px] text-neutral-400">Verify destination bank and account details before dispatching ETB funds</p>
                 </div>
               </div>
 
@@ -512,39 +508,46 @@ export const WithdrawalApprovalQueue: React.FC<WithdrawalApprovalQueueProps> = (
 
               <div className="flex justify-between items-center pb-2 border-b border-neutral-850">
                 <span className="text-neutral-400">Withdrawal Amount (Gross):</span>
-                <span className="font-mono font-bold text-white text-sm">${selectedForApproval.amount.toFixed(2)} USDT</span>
+                <span className="font-mono font-bold text-white text-sm">{selectedForApproval.amount.toLocaleString()} ETB</span>
               </div>
 
               <div className="flex justify-between items-center pb-2 border-b border-neutral-850">
-                <span className="text-neutral-400">Blockchain Network:</span>
+                <span className="text-neutral-400">Payout Bank:</span>
                 <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-[#00D26A] font-bold font-mono text-[11px]">
-                  {selectedForApproval.network || 'TRC20'}
+                  {selectedForApproval.bankName || 'Commercial Bank of Ethiopia'}
                 </span>
               </div>
 
               <div className="flex justify-between items-center pb-2 border-b border-neutral-850">
-                <span className="text-neutral-400">Platform Service Fee (5%):</span>
+                <span className="text-neutral-400">Account Holder:</span>
+                <span className="font-bold text-white">
+                  {selectedForApproval.accountHolder || selectedForApproval.username}
+                </span>
+              </div>
+
+              <div className="flex justify-between items-center pb-2 border-b border-neutral-850">
+                <span className="text-neutral-400">Platform Service Fee (7%):</span>
                 <span className="font-mono font-bold text-red-400">
-                  -${(selectedForApproval.fee || selectedForApproval.amount * 0.05).toFixed(2)} USDT
+                  -{(selectedForApproval.fee || selectedForApproval.amount * 0.07).toLocaleString()} ETB
                 </span>
               </div>
 
               <div className="flex justify-between items-center pt-1 bg-emerald-950/30 p-2.5 rounded-xl border border-emerald-500/30">
                 <span className="font-bold text-emerald-300">NET MEMBER PAYOUT:</span>
                 <span className="font-mono font-black text-[#00D26A] text-base">
-                  ${(selectedForApproval.netAmount || selectedForApproval.amount - (selectedForApproval.fee || selectedForApproval.amount * 0.05)).toFixed(2)} USDT
+                  {(selectedForApproval.netAmount || selectedForApproval.amount - (selectedForApproval.fee || selectedForApproval.amount * 0.07)).toLocaleString()} ETB
                 </span>
               </div>
             </div>
 
-            {/* FULL UNTRUNCATED WALLET ADDRESS VERIFICATION */}
+            {/* FULL UNTRUNCATED WALLET / ACCOUNT NUMBER VERIFICATION */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-bold text-white flex items-center gap-1.5">
-                  <Wallet size={14} className="text-[#00D26A]" /> FULL Destination Wallet Address:
+                  <Building2 size={14} className="text-[#00D26A]" /> Destination Bank Account Number:
                 </span>
                 <button
-                  onClick={() => handleCopy(selectedForApproval.walletAddress, 'modal-wallet')}
+                  onClick={() => handleCopy(selectedForApproval.accountNumber || selectedForApproval.walletAddress, 'modal-wallet')}
                   className="text-xs text-neutral-400 hover:text-white flex items-center gap-1"
                 >
                   {copiedKey === 'modal-wallet' ? (
@@ -558,8 +561,8 @@ export const WithdrawalApprovalQueue: React.FC<WithdrawalApprovalQueueProps> = (
                 </button>
               </div>
 
-              <div className="p-3.5 rounded-xl bg-black border-2 border-[#00D26A]/60 text-white font-mono text-xs break-all select-all font-semibold leading-relaxed">
-                {selectedForApproval.walletAddress}
+              <div className="p-3.5 rounded-xl bg-black border-2 border-[#00D26A]/60 text-white font-mono text-sm break-all select-all font-semibold leading-relaxed">
+                {selectedForApproval.accountNumber || selectedForApproval.walletAddress}
               </div>
             </div>
 
@@ -568,7 +571,7 @@ export const WithdrawalApprovalQueue: React.FC<WithdrawalApprovalQueueProps> = (
               <label className="text-neutral-400 block font-semibold">Admin Verification Note (Optional):</label>
               <input
                 type="text"
-                placeholder="e.g. Verified on TronScan / Payment batch #42"
+                placeholder="e.g. Verified transfer via CBE mobile banking / Ref #12345"
                 value={approvalNotes}
                 onChange={(e) => setApprovalNotes(e.target.value)}
                 className="w-full px-3 py-2 bg-black border border-neutral-800 rounded-xl text-white text-xs placeholder-neutral-500 focus:outline-none focus:border-[#00D26A]"
@@ -579,7 +582,7 @@ export const WithdrawalApprovalQueue: React.FC<WithdrawalApprovalQueueProps> = (
             <div className="p-3 rounded-xl bg-amber-950/40 border border-amber-500/40 text-xs text-amber-300 flex items-start gap-2">
               <AlertTriangle size={16} className="shrink-0 mt-0.5 text-amber-400" />
               <span>
-                By confirming, the frozen balance of <strong>${selectedForApproval.amount.toFixed(2)} USDT</strong> will be finalized and marked as completed in the member ledger.
+                By confirming, the frozen balance of <strong>{selectedForApproval.amount.toLocaleString()} ETB</strong> will be finalized and marked as completed in the member ledger.
               </span>
             </div>
 
@@ -646,7 +649,7 @@ export const WithdrawalApprovalQueue: React.FC<WithdrawalApprovalQueueProps> = (
               <div className="flex justify-between">
                 <span className="text-neutral-400">Amount to Refund:</span>
                 <span className="font-mono font-black text-emerald-400 text-sm">
-                  +${selectedForRejection.amount.toFixed(2)} USDT
+                  +{selectedForRejection.amount.toLocaleString()} ETB
                 </span>
               </div>
             </div>

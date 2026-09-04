@@ -64,6 +64,7 @@ export interface User {
   dailyTicketSpent?: number; // Total ticket amount purchased on current UTC day e.g. 10.00 -> 30.00
   createdAt: string;
   isAdmin?: boolean;
+  customVipOverride?: boolean;
 }
 
 export interface Ticket {
@@ -220,8 +221,11 @@ export interface WithdrawalRequest {
   amount: number;
   fee: number; // 5% service fee
   netAmount: number;
-  walletAddress: string;
-  network: string; // 'TRC20' | 'BEP20'
+  bankName?: string;
+  accountHolder?: string;
+  accountNumber?: string;
+  walletAddress?: string;
+  network?: string;
   status: 'Pending' | 'Approved' | 'Completed' | 'Rejected' | 'Cancelled';
   createdAt: string;
   processedAt?: string;
@@ -242,8 +246,13 @@ export interface DepositRequest {
   userBalanceAtRequest?: number;
   currentUserBalance?: number;
   amount: number;
-  network: string; // 'TRC20' | 'BEP20'
-  walletAddress: string;
+  bankName?: string;
+  accountHolder?: string;
+  accountNumber?: string;
+  paymentSlipUrl?: string;
+  referenceNumber?: string;
+  network?: string;
+  walletAddress?: string;
   txHash?: string;
   txUid?: string;
   status: 'Pending' | 'Approved' | 'Completed' | 'Rejected' | 'Cancelled';

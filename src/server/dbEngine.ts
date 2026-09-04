@@ -310,11 +310,11 @@ const getInitialSeedDatabase = (): PlatformDatabaseSchema => {
       userId: PRIMARY_USER_ID,
       type: 'deposit',
       category: 'deposit',
-      amount: 500,
+      amount: 5000,
       status: 'completed',
-      title: 'USDT Deposit (TRC20)',
-      description: 'Recharge credited successfully',
-      txHash: '0x8f72a4901b00e84b810ff...23c8',
+      title: 'CBE Bank Deposit',
+      description: 'Recharge credited successfully via Commercial Bank of Ethiopia',
+      txHash: 'CBE-TX-90184201',
       createdAt: new Date(Date.now() - 20 * 86400000).toISOString()
     },
     {
@@ -322,10 +322,10 @@ const getInitialSeedDatabase = (): PlatformDatabaseSchema => {
       userId: PRIMARY_USER_ID,
       type: 'ticket_purchase',
       category: 'ticket_purchase',
-      amount: 30,
+      amount: 1500,
       status: 'completed',
       title: 'Purchased 3x At Home with Chloe Flower',
-      description: 'Order #tkt-1 executed at $10.00 each',
+      description: 'Order #tkt-1 executed at 500 ETB each',
       createdAt: new Date(Date.now() - 3 * 86400000).toISOString()
     },
     {
@@ -333,12 +333,12 @@ const getInitialSeedDatabase = (): PlatformDatabaseSchema => {
       userId: PRIMARY_USER_ID,
       type: 'vip_profit',
       category: 'vip_profit',
-      amount: 13.75,
+      amount: 137.5,
       vipLevel: 2,
       appliedRate: 0.025,
       status: 'completed',
       title: 'VIP 2 Profit Yield: At Home with Chloe Flower',
-      description: '+$13.75 USDT VIP 2 yield (2.50%) credited to Available Balance',
+      description: '+137.50 ETB VIP 2 yield (2.50%) credited to Available Balance',
       createdAt: new Date(Date.now() - 24 * 3600000).toISOString()
     },
     {
@@ -346,13 +346,13 @@ const getInitialSeedDatabase = (): PlatformDatabaseSchema => {
       userId: PRIMARY_USER_ID,
       type: 'team_commission',
       category: 'team_commission',
-      amount: 16.00,
+      amount: 320.00,
       commissionTier: 1,
       appliedRate: 0.16,
       sourceMemberName: 'CryptoBeats_Alex',
       status: 'completed',
       title: 'Team Commission: Tier 1 (Direct A - 16%)',
-      description: '+$16.00 USDT commission from CryptoBeats_Alex',
+      description: '+320.00 ETB commission from CryptoBeats_Alex',
       createdAt: new Date(Date.now() - 36 * 3600000).toISOString()
     }
   ];
@@ -362,14 +362,17 @@ const getInitialSeedDatabase = (): PlatformDatabaseSchema => {
       id: 'WD-8819',
       userId: PRIMARY_USER_ID,
       username: 'VIP_StarMusician',
-      amount: 30.0,
-      fee: 4.5,
-      netAmount: 25.5,
-      walletAddress: 'TQn9Y2khEsLJW1ChV8L5H09ZNmC9aJbmSe',
-      network: 'TRC20',
+      amount: 2000.0,
+      fee: 100.0,
+      netAmount: 1900.0,
+      bankName: 'Commercial Bank of Ethiopia',
+      accountHolder: 'Riyad Adem',
+      accountNumber: '1000707299577',
+      walletAddress: '1000707299577',
+      network: 'CBE',
       status: 'Pending',
       createdAt: new Date(Date.now() - 4 * 3600000).toISOString(),
-      txId: 'WD-8819-USDT'
+      txId: 'WD-8819-ETB'
     }
   ];
 
@@ -378,10 +381,12 @@ const getInitialSeedDatabase = (): PlatformDatabaseSchema => {
       id: 'DEP-401',
       userId: PRIMARY_USER_ID,
       username: 'VIP_StarMusician',
-      amount: 500.0,
-      network: 'TRC20',
-      walletAddress: 'TQn9Y2khEsLJW1ChV8L5H09ZNmC9aJbmSe',
-      txHash: '0x8f72a4901b00e84b810ff...23c8',
+      amount: 5000.0,
+      network: 'CBE',
+      bankName: 'Commercial Bank of Ethiopia',
+      referenceNumber: 'CBE-DEP-40192',
+      walletAddress: '1000707299577',
+      txHash: 'CBE-DEP-40192',
       status: 'Completed',
       createdAt: new Date(Date.now() - 20 * 86400000).toISOString()
     }
@@ -761,8 +766,9 @@ class DatabaseManager {
             needsSave = true;
           }
 
-          // Ensure default tickets and categories if empty
-          if (!parsed.tickets || parsed.tickets.length === 0) {
+          // Ensure default tickets in ETB (migrating if older USD tickets exist)
+          if (!parsed.tickets || parsed.tickets.length === 0 || parsed.tickets.some(t => t.price < 500 || !t.id.startsWith('tkt-etb'))) {
+            console.log('[VIP Migration] Migrating platform tickets to ETB-only catalog (500 to 10,000 ETB)...');
             parsed.tickets = [...INITIAL_TICKETS];
             needsSave = true;
           }
@@ -774,9 +780,27 @@ class DatabaseManager {
             parsed.artists = [...INITIAL_ARTISTS];
             needsSave = true;
           }
-          if (!parsed.notices || parsed.notices.length === 0) {
+          if (!parsed.notices || parsed.notices.length === 0 || parsed.notices.some(n => n.content.includes('$') || n.title.includes('$'))) {
             parsed.notices = [...INITIAL_NOTICES];
             needsSave = true;
+          }
+
+          // Clean up any remaining legacy USD strings in user status
+          if (parsed.users) {
+            for (const u of Object.values(parsed.users)) {
+              if (u.incomePauseReason && u.incomePauseReason.includes('$30')) {
+                u.incomePauseReason = 'Minimum 500 ETB Account Balance Required to Work and Earn VIP Yield';
+                needsSave = true;
+              }
+            }
+          }
+          if (parsed.referrals) {
+            for (const r of parsed.referrals) {
+              if (r.disqualifiedReason && r.disqualifiedReason.includes('$30')) {
+                r.disqualifiedReason = 'Minimum 500 ETB deposit/investment required to qualify as valid member.';
+                needsSave = true;
+              }
+            }
           }
 
           if (needsSave) {

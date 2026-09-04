@@ -123,7 +123,7 @@ export const TeamReportModal: React.FC<TeamReportModalProps> = ({
               <span className="text-[11px] text-neutral-400 font-medium block">Valid Direct Investors</span>
               <div className="mt-1 flex items-baseline gap-1.5">
                 <span className="text-xl font-extrabold text-[#00D26A]">{validDirectCount}</span>
-                <span className="text-[10px] text-[#00D26A]/80 font-bold">qualified (≥$30)</span>
+                <span className="text-[10px] text-[#00D26A]/80 font-bold">qualified (≥2,000 ETB)</span>
               </div>
               <span className="text-[10px] text-neutral-400 mt-1 block">
                 VIP Tier Multiplier Active
@@ -133,8 +133,8 @@ export const TeamReportModal: React.FC<TeamReportModalProps> = ({
             <div className="p-3.5 rounded-2xl bg-[#14161f] border border-neutral-800">
               <span className="text-[11px] text-neutral-400 font-medium block">Total Team Deposit</span>
               <div className="mt-1 flex items-baseline gap-1.5">
-                <span className="text-xl font-extrabold text-white">${totalDeposit.toLocaleString()}</span>
-                <span className="text-[10px] text-neutral-500">USDT</span>
+                <span className="text-xl font-extrabold text-white">{totalDeposit.toLocaleString()}</span>
+                <span className="text-[10px] text-neutral-500">ETB</span>
               </div>
               <span className="text-[10px] text-neutral-400 mt-1 block">
                 Total combined team assets
@@ -175,7 +175,7 @@ export const TeamReportModal: React.FC<TeamReportModalProps> = ({
                 <div>
                   <div className="flex justify-between text-[10px] text-neutral-400 mb-1">
                     <span>Balance Requirement:</span>
-                    <span>${(user?.totalAssets || 0).toFixed(0)} / ${nextTier.minBalance}</span>
+                    <span>{(user?.totalAssets || 0).toLocaleString()} / {nextTier.minBalance.toLocaleString()} ETB</span>
                   </div>
                   <div className="h-1.5 rounded-full bg-neutral-800 overflow-hidden">
                     <div
@@ -188,7 +188,7 @@ export const TeamReportModal: React.FC<TeamReportModalProps> = ({
                 {/* Direct Members Progress */}
                 <div>
                   <div className="flex justify-between text-[10px] text-neutral-400 mb-1">
-                    <span>Valid Direct Members (≥$30):</span>
+                    <span>Valid Direct Members (≥2,000 ETB):</span>
                     <span>{validDirectCount} / {nextTier.minDirectMembers}</span>
                   </div>
                   <div className="h-1.5 rounded-full bg-neutral-800 overflow-hidden">
@@ -292,7 +292,7 @@ export const TeamReportModal: React.FC<TeamReportModalProps> = ({
                         </span>
                       </div>
                       <span className="text-[10px] text-neutral-400 block mt-0.5">
-                        Deposit: <strong className="text-white">${member.totalDeposit.toFixed(2)}</strong> • Balance: ${member.balance.toFixed(2)}
+                        Deposit: <strong className="text-white">{member.totalDeposit.toLocaleString()} ETB</strong> • Balance: {member.balance.toLocaleString()} ETB
                       </span>
                       <span className="text-[9px] text-neutral-500 mt-0.5 block">
                         Joined: {new Date(member.registeredAt).toLocaleDateString()}
@@ -307,10 +307,10 @@ export const TeamReportModal: React.FC<TeamReportModalProps> = ({
                       </span>
                     ) : (
                       <span
-                        title={member.disqualifiedReason || 'Deposit/Investment under $30'}
+                        title={member.disqualifiedReason || 'Deposit/Investment under 2,000 ETB'}
                         className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center gap-1 cursor-help"
                       >
-                        <AlertCircle size={10} /> Under $30
+                        <AlertCircle size={10} /> Under 2,000 ETB
                       </span>
                     )}
                   </div>

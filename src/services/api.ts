@@ -303,22 +303,55 @@ export const api = {
     return res.json();
   },
 
-  async deposit(amount: number, network = 'TRC20', txHash?: string): Promise<{ success: boolean; message: string; deposit: DepositRequest; user: User }> {
+  async deposit(params: {
+    amount: number;
+    referenceNumber: string;
+    paymentSlipUrl: string;
+    bankName?: string;
+    accountHolder?: string;
+    accountNumber?: string;
+  } | number, networkOrRef?: string, txHashOrSlip?: string): Promise<{ success: boolean; message: string; deposit: DepositRequest; user: User }> {
+    let payload: any;
+    if (typeof params === 'object') {
+      payload = params;
+    } else {
+      payload = {
+        amount: params,
+        referenceNumber: networkOrRef || '',
+        paymentSlipUrl: txHashOrSlip || ''
+      };
+    }
     const res = await fetch('/api/finance/deposit', {
       method: 'POST',
       headers: getUserHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ amount, network, txHash })
+      body: JSON.stringify(payload)
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Deposit failed');
     return data;
   },
 
-  async withdraw(amount: number, walletAddress: string, network = 'TRC20'): Promise<{ success: boolean; message: string; withdrawal: WithdrawalRequest; user: User }> {
+  async withdraw(params: {
+    amount: number;
+    bankName: string;
+    accountHolder: string;
+    accountNumber: string;
+  } | number, walletOrBank?: string, networkOrHolder?: string): Promise<{ success: boolean; message: string; withdrawal: WithdrawalRequest; user: User }> {
+    let payload: any;
+    if (typeof params === 'object') {
+      payload = params;
+    } else {
+      payload = {
+        amount: params,
+        bankName: networkOrHolder || 'Commercial Bank of Ethiopia (CBE)',
+        accountHolder: 'Member',
+        accountNumber: walletOrBank || ''
+      };
+    }
     const res = await fetch('/api/finance/withdraw', {
       method: 'POST',
       headers: getUserHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ amount, walletAddress, network })
+      body: JSON.stringify(payload)
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Withdrawal failed');

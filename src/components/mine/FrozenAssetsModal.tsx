@@ -59,12 +59,12 @@ export const FrozenAssetsModal: React.FC<FrozenAssetsModalProps> = ({
             <span className="text-[11px] text-neutral-400 block font-medium">Total Currently Frozen</span>
             <div className="mt-1 flex items-baseline gap-1.5">
               <span className="text-2xl font-extrabold text-amber-300">
-                ${user?.frozenBalance.toFixed(2) || '0.00'}
+                {user?.frozenBalance.toLocaleString() || '0'}
               </span>
-              <span className="text-xs text-neutral-400">USDT</span>
+              <span className="text-xs text-neutral-400">ETB</span>
             </div>
             <p className="text-[11px] text-neutral-400 mt-2 leading-relaxed">
-              Frozen assets remain part of your <strong>Total Assets (${user?.totalAssets.toFixed(2)})</strong> and count towards your VIP Tier calculation and daily income yield generation until finalized.
+              Frozen assets remain part of your <strong>Total Assets ({user?.totalAssets.toLocaleString()} ETB)</strong> and count towards your VIP Tier calculation and daily income yield generation until finalized.
             </p>
           </div>
 
@@ -85,8 +85,8 @@ export const FrozenAssetsModal: React.FC<FrozenAssetsModalProps> = ({
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-neutral-400 text-[11px]">
-                    <span>Hold Amount: <strong className="text-white">${w.amount.toFixed(2)}</strong></span>
-                    <span>Net to Receive: <strong className="text-[#00D26A]">${w.netAmount.toFixed(2)}</strong></span>
+                    <span>Hold Amount: <strong className="text-white">{w.amount.toLocaleString()} ETB</strong></span>
+                    <span>Net to Receive: <strong className="text-[#00D26A]">{w.netAmount.toLocaleString()} ETB</strong></span>
                   </div>
                   <span className="text-[10px] text-neutral-500 block">Submitted: {new Date(w.createdAt).toLocaleString()}</span>
                 </div>

@@ -80,12 +80,12 @@ export const WelfareCenterModal: React.FC<WelfareCenterModalProps> = ({
                 <span className="text-xs font-bold text-white">Daily Attendance Reward</span>
               </div>
               <span className="px-2 py-0.5 rounded-full bg-[#00D26A]/15 text-[#00D26A] text-[11px] font-black">
-                +$0.10 USDT / Day
+                +10.00 ETB / Day
               </span>
             </div>
 
             <p className="text-[11px] text-neutral-400 leading-relaxed">
-              Check in daily to claim your guaranteed <strong>$0.10 USDT</strong> attendance credit directly to your Available Balance.
+              Check in daily to claim your guaranteed <strong>10.00 ETB</strong> attendance credit directly to your Available Balance.
             </p>
 
             {/* Streak Counter */}
@@ -107,14 +107,14 @@ export const WelfareCenterModal: React.FC<WelfareCenterModalProps> = ({
               {alreadyClaimedToday ? (
                 <>
                   <CheckCircle2 size={16} className="text-[#00D26A]" />
-                  <span>Claimed for Today ($0.10)</span>
+                  <span>Claimed for Today (10.00 ETB)</span>
                 </>
               ) : loading ? (
                 <span>Processing...</span>
               ) : (
                 <>
                   <Sparkles size={16} />
-                  <span>Claim Today's $0.10 USDT</span>
+                  <span>Claim Today's 10.00 ETB</span>
                 </>
               )}
             </button>

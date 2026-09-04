@@ -99,11 +99,11 @@ export const SupportModal: React.FC<SupportModalProps> = ({
     },
     {
       q: 'What makes a direct member "Valid"?',
-      a: 'A direct member qualifies as a valid investor once they register via your invitation link, verify their account, and hold a minimum deposit/balance of at least $30.00.'
+      a: 'A direct member qualifies as a valid investor once they register via your invitation link, verify their account, and hold a minimum deposit/balance of at least 2,000 ETB.'
     },
     {
       q: 'What are the withdrawal limits and fees?',
-      a: 'The minimum withdrawal is $10.00 USDT (TRC20). Standard platform network service fee is 5%. Funds are processed rapidly following administrative security audit.'
+      a: 'The minimum withdrawal is 500 ETB via Commercial Bank of Ethiopia (CBE). Standard platform service fee is 5%. Funds are processed rapidly following administrative audit.'
     }
   ];
 

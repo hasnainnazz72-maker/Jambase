@@ -78,7 +78,7 @@ export const IncomeHistoryModal: React.FC<IncomeHistoryModalProps> = ({
               <div>
                 <span className="text-[11px] text-neutral-400 block font-medium">Total Earned Income</span>
                 <span className="text-2xl font-extrabold text-[#00D26A]">
-                  ${(user?.totalEarnedIncome ?? 84.50).toFixed(2)}
+                  {(user?.totalEarnedIncome ?? 84.50).toLocaleString()} ETB
                 </span>
               </div>
               <div className="text-right">
@@ -93,13 +93,13 @@ export const IncomeHistoryModal: React.FC<IncomeHistoryModalProps> = ({
               <div className="p-2.5 rounded-xl bg-black/40 border border-neutral-800">
                 <span className="text-[10px] text-neutral-400 block">VIP Profit Ledger:</span>
                 <span className="font-extrabold text-[#00D26A]">
-                  ${(user?.totalVipProfit ?? vipProfitTotal ?? 54.50).toFixed(2)} USDT
+                  {(user?.totalVipProfit ?? vipProfitTotal ?? 54.50).toLocaleString()} ETB
                 </span>
               </div>
               <div className="p-2.5 rounded-xl bg-black/40 border border-neutral-800">
                 <span className="text-[10px] text-neutral-400 block">Team Commission Ledger:</span>
                 <span className="font-extrabold text-amber-400">
-                  ${(user?.totalTeamCommission ?? teamCommissionTotal ?? 30.00).toFixed(2)} USDT
+                  {(user?.totalTeamCommission ?? teamCommissionTotal ?? 30.00).toLocaleString()} ETB
                 </span>
               </div>
             </div>
@@ -160,7 +160,7 @@ export const IncomeHistoryModal: React.FC<IncomeHistoryModalProps> = ({
                         </span>
                       </div>
                       <span className={`text-base font-extrabold ${isCommission ? 'text-amber-400' : 'text-[#00D26A]'}`}>
-                        +${record.incomeAmount.toFixed(2)}
+                        +{record.incomeAmount.toLocaleString()} ETB
                       </span>
                     </div>
 
@@ -172,10 +172,10 @@ export const IncomeHistoryModal: React.FC<IncomeHistoryModalProps> = ({
 
                     <div className="grid grid-cols-2 gap-2 text-[11px] text-neutral-400 pt-2 border-t border-neutral-800/80">
                       <div>
-                        Previous Balance: <strong className="text-neutral-300">${record.previousBalance.toFixed(2)}</strong>
+                        Previous Balance: <strong className="text-neutral-300">{record.previousBalance.toLocaleString()} ETB</strong>
                       </div>
                       <div>
-                        New Balance: <strong className="text-[#00D26A]">${record.newBalance.toFixed(2)}</strong>
+                        New Balance: <strong className="text-[#00D26A]">{record.newBalance.toLocaleString()} ETB</strong>
                       </div>
                     </div>
 

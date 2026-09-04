@@ -201,11 +201,12 @@ export const AccountSettingsModal: React.FC<AccountModalProps> = ({
               </div>
 
               <div>
-                <label className="text-neutral-400 font-semibold block mb-1">USDT TRC20 Wallet Address</label>
+                <label className="text-neutral-400 font-semibold block mb-1">CBE Bank Account Number / Details</label>
                 <input
                   type="text"
                   value={walletAddress}
                   onChange={(e) => setWalletAddress(e.target.value)}
+                  placeholder="e.g. 1000707299577"
                   className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white font-mono text-[11px] focus:outline-none focus:border-[#00D26A]"
                 />
               </div>

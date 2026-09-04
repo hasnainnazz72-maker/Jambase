@@ -100,10 +100,10 @@ export const WithdrawalHistoryModal: React.FC<WithdrawalHistoryModalProps> = ({
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="font-extrabold text-white text-sm">
-                          ${wd.amount.toFixed(2)} USDT
+                          {wd.amount.toLocaleString()} ETB
                         </span>
                         <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-neutral-800 text-neutral-400">
-                          {wd.network}
+                          {wd.bankName || wd.network || 'CBE'}
                         </span>
                       </div>
                       <span
@@ -124,19 +124,19 @@ export const WithdrawalHistoryModal: React.FC<WithdrawalHistoryModalProps> = ({
 
                     <div className="grid grid-cols-2 gap-2 text-[11px] text-neutral-400 pt-1 border-t border-neutral-800/80">
                       <div>
-                        Platform Fee (15%): <strong className="text-neutral-200">${wd.fee.toFixed(2)}</strong>
+                        Platform Fee (7%): <strong className="text-neutral-200">{wd.fee.toLocaleString()} ETB</strong>
                       </div>
                       <div>
-                        Net Payout: <strong className="text-[#00D26A] font-bold">${wd.netAmount.toFixed(2)}</strong>
+                        Net Payout: <strong className="text-[#00D26A] font-bold">{wd.netAmount.toLocaleString()} ETB</strong>
                       </div>
                     </div>
 
                     <div className="p-2 rounded-xl bg-black/60 border border-neutral-800/80 flex items-center justify-between text-[10px] font-mono text-neutral-400">
-                      <span className="truncate max-w-[240px]">Addr: {wd.walletAddress}</span>
+                      <span className="truncate max-w-[240px]">Account: {wd.accountNumber || wd.walletAddress}</span>
                       <button
-                        onClick={() => handleCopy(wd.walletAddress, wd.id)}
+                        onClick={() => handleCopy(wd.accountNumber || wd.walletAddress, wd.id)}
                         className="text-neutral-400 hover:text-white shrink-0 ml-1"
-                        title="Copy Address"
+                        title="Copy Account Number"
                       >
                         {copiedId === wd.id ? <Check size={11} className="text-[#00D26A]" /> : <Copy size={11} />}
                       </button>
