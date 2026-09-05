@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "lastUpdated": "2026-09-05T07:57:59.714Z",
+  "lastUpdated": "2026-09-05T08:07:48.908Z",
   "users": {
     "usr-main-777": {
       "id": "usr-main-777",
@@ -690,6 +690,20 @@
   ],
   "transactions": [
     {
+      "id": "TXN-DEP-1788595668891",
+      "userId": "usr-main-777",
+      "type": "deposit",
+      "category": "deposit",
+      "amount": 5000,
+      "previousBalance": 559.5,
+      "newBalance": 559.5,
+      "status": "pending",
+      "title": "CBE Bank Recharge Request",
+      "description": "Recharge request of 5,000 ETB submitted via CBE Bank (Ref: CBE-TXN-REF-932980). Pending manual Admin review and verification.",
+      "txHash": "CBE-TXN-REF-932980",
+      "createdAt": "2026-09-05T08:07:48.907Z"
+    },
+    {
       "id": "TXN-DEP-1788594308476",
       "userId": "usr-main-777",
       "type": "deposit",
@@ -779,6 +793,27 @@
     }
   ],
   "deposits": [
+    {
+      "id": "DEP-668891",
+      "userId": "usr-main-777",
+      "username": "VIP_StarMusician",
+      "userEmail": "star@jambase.vip",
+      "userPhone": "+1 (555) 892-4410",
+      "userBalanceAtRequest": 559.5,
+      "currentUserBalance": 559.5,
+      "amount": 5000,
+      "network": "CBE Bank Transfer",
+      "bankName": "Commercial Bank of Ethiopia (CBE)",
+      "accountHolder": "JAMBASE ENTERTAINMENT PLC",
+      "accountNumber": "1000345678901",
+      "referenceNumber": "CBE-TXN-REF-932980",
+      "paymentSlipUrl": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=",
+      "txHash": "CBE-TXN-REF-932980",
+      "txUid": "CBE-TXN-REF-932980",
+      "walletAddress": "CBE-TXN-REF-932980",
+      "status": "Pending",
+      "createdAt": "2026-09-05T08:07:48.891Z"
+    },
     {
       "id": "DEP-308476",
       "userId": "usr-main-777",

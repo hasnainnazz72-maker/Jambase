@@ -19,8 +19,8 @@ export const TaskView: React.FC<TaskViewProps> = ({ tasks = [], user, onRefresh 
     {
       id: 'task-invite-5',
       title: 'Invite 5 valid A-level direct members',
-      description: 'Invite 5 valid A-level direct members to claim $15 reward',
-      rewardAmount: 15,
+      description: 'Invite 5 valid A-level direct members to claim 3,000 ETB reward',
+      rewardAmount: 3000,
       rewardType: 'balance',
       progress: Math.min(5, user?.validDirectMembersCount || 0),
       maxProgress: 5,
@@ -32,8 +32,8 @@ export const TaskView: React.FC<TaskViewProps> = ({ tasks = [], user, onRefresh 
     {
       id: 'task-activate-10',
       title: 'Activate 10 valid A-level direct members',
-      description: 'Activate 10 valid A-level direct members to claim $30 reward',
-      rewardAmount: 30,
+      description: 'Activate 10 valid A-level direct members to claim 6,000 ETB reward',
+      rewardAmount: 6000,
       rewardType: 'balance',
       progress: Math.min(10, user?.validDirectMembersCount || 0),
       maxProgress: 10,
@@ -45,8 +45,8 @@ export const TaskView: React.FC<TaskViewProps> = ({ tasks = [], user, onRefresh 
     {
       id: 'task-activate-20',
       title: 'Activate 20 valid A-level direct members',
-      description: 'Activate 20 valid A-level direct members to claim $100 reward',
-      rewardAmount: 100,
+      description: 'Activate 20 valid A-level direct members to claim 20,000 ETB reward',
+      rewardAmount: 20000,
       rewardType: 'balance',
       progress: Math.min(20, user?.validDirectMembersCount || 0),
       maxProgress: 20,
@@ -58,8 +58,8 @@ export const TaskView: React.FC<TaskViewProps> = ({ tasks = [], user, onRefresh 
     {
       id: 'task-activate-50',
       title: 'Activate 50 valid direct members',
-      description: 'Activate 50 valid direct members to claim $500 reward',
-      rewardAmount: 500,
+      description: 'Activate 50 valid direct members to claim 100,000 ETB reward',
+      rewardAmount: 100000,
       rewardType: 'balance',
       progress: Math.min(50, user?.validDirectMembersCount || 0),
       maxProgress: 50,
@@ -92,7 +92,7 @@ export const TaskView: React.FC<TaskViewProps> = ({ tasks = [], user, onRefresh 
       });
       setFeedback({
         type: 'success',
-        message: res.message || `Successfully claimed ${task.rewardAmount} ETB reward!`
+        message: res.message || `Successfully claimed ${task.rewardAmount.toLocaleString()} ETB reward!`
       });
       onRefresh();
     } catch (err: any) {
@@ -191,7 +191,7 @@ export const TaskView: React.FC<TaskViewProps> = ({ tasks = [], user, onRefresh 
                       {task.title}
                     </h4>
                     <p className="text-[11px] text-neutral-400 mt-0.5">
-                      Reward: <strong className="text-[#00D26A] font-extrabold">+{task.rewardAmount} ETB</strong>
+                      Reward: <strong className="text-[#00D26A] font-extrabold">+{task.rewardAmount.toLocaleString()} ETB</strong>
                     </p>
 
                     {/* Progress indicator */}
@@ -239,7 +239,7 @@ export const TaskView: React.FC<TaskViewProps> = ({ tasks = [], user, onRefresh 
                       ) : (
                         <>
                           <Gift size={14} />
-                          <span>Claim ${task.rewardAmount}</span>
+                          <span>Claim {task.rewardAmount.toLocaleString()} ETB</span>
                         </>
                       )}
                     </button>
@@ -249,7 +249,7 @@ export const TaskView: React.FC<TaskViewProps> = ({ tasks = [], user, onRefresh 
                       id={`btn-locked-${task.id}`}
                       className="px-3.5 py-2 rounded-xl bg-neutral-900 border border-neutral-800 text-neutral-400 text-xs font-semibold hover:border-neutral-700 transition-colors"
                     >
-                      <span>Claim ${task.rewardAmount}</span>
+                      <span>Claim {task.rewardAmount.toLocaleString()} ETB</span>
                     </button>
                   )}
                 </div>

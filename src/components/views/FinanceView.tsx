@@ -75,6 +75,11 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
       return;
     }
 
+    if (file.size > 64 * 1024 * 1024) {
+      setDepositMsg({ text: 'The selected image file is too large (exceeds 64MB limit). Please select a compressed image or smaller photo.', isError: true });
+      return;
+    }
+
     setSlipFileName(file.name);
     setDepositMsg(null);
 

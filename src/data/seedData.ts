@@ -330,8 +330,8 @@ export const INITIAL_TASKS: TaskItem[] = [
   {
     id: 'task-invite-5',
     title: 'Invite 5 valid A-level direct members',
-    description: 'Invite 5 valid A-level direct members to claim 200 ETB reward',
-    rewardAmount: 200.0,
+    description: 'Invite 5 valid A-level direct members to claim 3,000 ETB reward',
+    rewardAmount: 3000.0,
     rewardType: 'balance',
     progress: 0,
     maxProgress: 5,
@@ -343,8 +343,8 @@ export const INITIAL_TASKS: TaskItem[] = [
   {
     id: 'task-activate-10',
     title: 'Activate 10 valid A-level direct members',
-    description: 'Activate 10 valid A-level direct members to claim 500 ETB reward',
-    rewardAmount: 500.0,
+    description: 'Activate 10 valid A-level direct members to claim 6,000 ETB reward',
+    rewardAmount: 6000.0,
     rewardType: 'balance',
     progress: 0,
     maxProgress: 10,
@@ -356,8 +356,8 @@ export const INITIAL_TASKS: TaskItem[] = [
   {
     id: 'task-activate-20',
     title: 'Activate 20 valid A-level direct members',
-    description: 'Activate 20 valid A-level direct members to claim 1,500 ETB reward',
-    rewardAmount: 1500.0,
+    description: 'Activate 20 valid A-level direct members to claim 20,000 ETB reward',
+    rewardAmount: 20000.0,
     rewardType: 'balance',
     progress: 0,
     maxProgress: 20,
@@ -369,8 +369,8 @@ export const INITIAL_TASKS: TaskItem[] = [
   {
     id: 'task-activate-50',
     title: 'Activate 50 valid direct members',
-    description: 'Activate 50 valid direct members to claim 5,000 ETB reward',
-    rewardAmount: 5000.0,
+    description: 'Activate 50 valid direct members to claim 100,000 ETB reward',
+    rewardAmount: 100000.0,
     rewardType: 'balance',
     progress: 0,
     maxProgress: 50,

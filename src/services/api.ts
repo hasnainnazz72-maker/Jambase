@@ -153,6 +153,9 @@ async function safeJson<T = any>(res: Response, defaultErrMsg = 'Request failed'
     data = JSON.parse(text);
   } catch {
     if (!res.ok) {
+      if (res.status === 413) {
+        throw new Error('Payment slip image exceeds maximum allowed limit (64MB). Please select a compressed image or smaller photo.');
+      }
       throw new Error(`Server returned HTTP ${res.status}: ${res.statusText || 'Error'}`);
     }
     throw new Error('Server returned an invalid non-JSON response');

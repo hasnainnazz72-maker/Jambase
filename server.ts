@@ -26,8 +26,24 @@ import {
 const app = express();
 const PORT = 3000;
 
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(express.json({ limit: '64mb' }));
+app.use(express.urlencoded({ extended: true, limit: '64mb' }));
+
+// Immediate Body Parser / Payload Too Large error trap
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  if (err && (err.type === 'entity.too.large' || err.status === 413 || err.statusCode === 413)) {
+    console.warn(`[Express] Request Entity Too Large on ${req.method} ${req.path}:`, err.message);
+    res.setHeader('Content-Type', 'application/json');
+    return res.status(413).json({
+      success: false,
+      error: 'Request entity too large. The uploaded payment slip exceeds the maximum allowed limit (64MB). Please select a compressed image or receipt photo.'
+    });
+  }
+  if (err) {
+    return next(err);
+  }
+  next();
+});
 
 // ==========================================
 // PERSISTENT DATABASE ENGINE (Server Authoritative & Protected)
@@ -1280,8 +1296,8 @@ app.get('/api/tasks', (req, res) => {
     {
       id: 'task-invite-5',
       title: 'Invite 5 valid A-level direct members',
-      description: 'Invite 5 valid A-level direct members to claim $15 reward',
-      rewardAmount: 15.0,
+      description: 'Invite 5 valid A-level direct members to claim 3,000 ETB reward',
+      rewardAmount: 3000,
       rewardType: 'balance',
       progress: Math.min(5, validDirectCount),
       maxProgress: 5,
@@ -1293,8 +1309,8 @@ app.get('/api/tasks', (req, res) => {
     {
       id: 'task-activate-10',
       title: 'Activate 10 valid A-level direct members',
-      description: 'Activate 10 valid A-level direct members to claim $30 reward',
-      rewardAmount: 30.0,
+      description: 'Activate 10 valid A-level direct members to claim 6,000 ETB reward',
+      rewardAmount: 6000,
       rewardType: 'balance',
       progress: Math.min(10, validDirectCount),
       maxProgress: 10,
@@ -1306,8 +1322,8 @@ app.get('/api/tasks', (req, res) => {
     {
       id: 'task-activate-20',
       title: 'Activate 20 valid A-level direct members',
-      description: 'Activate 20 valid A-level direct members to claim $100 reward',
-      rewardAmount: 100.0,
+      description: 'Activate 20 valid A-level direct members to claim 20,000 ETB reward',
+      rewardAmount: 20000,
       rewardType: 'balance',
       progress: Math.min(20, validDirectCount),
       maxProgress: 20,
@@ -1319,8 +1335,8 @@ app.get('/api/tasks', (req, res) => {
     {
       id: 'task-activate-50',
       title: 'Activate 50 valid direct members',
-      description: 'Activate 50 valid direct members to claim $500 reward',
-      rewardAmount: 500.0,
+      description: 'Activate 50 valid direct members to claim 100,000 ETB reward',
+      rewardAmount: 100000,
       rewardType: 'balance',
       progress: Math.min(50, validDirectCount),
       maxProgress: 50,
@@ -1334,7 +1350,7 @@ app.get('/api/tasks', (req, res) => {
   res.json(dynamicTasks);
 });
 
-// POST Task Claim - Claim $15 / $30 / $100 / $500 reward when condition is completed
+// POST Task Claim - Claim 3,000 / 6,000 / 20,000 / 100,000 ETB reward when condition is completed
 app.post('/api/tasks/claim', (req, res) => {
   const { taskId } = req.body;
   const targetId = resolveUserId(req);
@@ -1358,19 +1374,19 @@ app.post('/api/tasks/claim', (req, res) => {
 
   if (taskId === 'task-invite-5') {
     requiredMembers = 5;
-    rewardAmount = 15;
+    rewardAmount = 3000;
     taskTitle = 'Invite 5 valid A-level direct members';
   } else if (taskId === 'task-activate-10') {
     requiredMembers = 10;
-    rewardAmount = 30;
+    rewardAmount = 6000;
     taskTitle = 'Activate 10 valid A-level direct members';
   } else if (taskId === 'task-activate-20') {
     requiredMembers = 20;
-    rewardAmount = 100;
+    rewardAmount = 20000;
     taskTitle = 'Activate 20 valid A-level direct members';
   } else if (taskId === 'task-activate-50') {
     requiredMembers = 50;
-    rewardAmount = 500;
+    rewardAmount = 100000;
     taskTitle = 'Activate 50 valid direct members';
   } else {
     return res.status(400).json({ error: 'Invalid task ID' });
@@ -1395,7 +1411,7 @@ app.post('/api/tasks/claim', (req, res) => {
     amount: rewardAmount,
     status: 'completed',
     title: `Task Reward: ${taskTitle}`,
-    description: `Claimed +$${rewardAmount.toFixed(2)} USDT directly to available balance`,
+    description: `Claimed +${rewardAmount.toLocaleString()} ETB directly to available balance`,
     createdAt: new Date().toISOString()
   });
 
@@ -1413,7 +1429,7 @@ app.post('/api/tasks/claim', (req, res) => {
     timestamp: new Date().toISOString(),
     status: 'credited',
     transactionId: `TXN-TASK-${Date.now()}`,
-    notes: `Task Milestone Reward: ${taskTitle} (+${rewardAmount.toFixed(2)} ETB)`
+    notes: `Task Milestone Reward: ${taskTitle} (+${rewardAmount.toLocaleString()} ETB)`
   });
 
   recalculateUserState(user.id);
@@ -1421,7 +1437,7 @@ app.post('/api/tasks/claim', (req, res) => {
 
   res.json({
     success: true,
-    message: `Congratulations! Successfully claimed ${rewardAmount.toFixed(2)} ETB reward for ${taskTitle}!`,
+    message: `Congratulations! Successfully claimed ${rewardAmount.toLocaleString()} ETB reward for ${taskTitle}!`,
     rewardAmount,
     user
   });
@@ -2761,11 +2777,13 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   if (res.headersSent) {
     return next(err);
   }
-  const statusCode = err.status || err.statusCode || (err.type === 'entity.too.large' ? 413 : 500);
-  const errorMessage = err.type === 'entity.too.large'
-    ? 'Payment slip image file exceeds 50MB limit. Please compress or select a smaller image.'
+  const isTooLarge = err.type === 'entity.too.large' || err.status === 413 || err.statusCode === 413 || (err.message && err.message.toLowerCase().includes('too large'));
+  const statusCode = isTooLarge ? 413 : (err.status || err.statusCode || 500);
+  const errorMessage = isTooLarge
+    ? 'Request entity too large. The uploaded payment slip exceeds the maximum allowed limit (64MB). Please select a compressed image or receipt photo.'
     : (err.message || 'Server error occurred');
 
+  res.setHeader('Content-Type', 'application/json');
   return res.status(statusCode).json({
     success: false,
     error: errorMessage
