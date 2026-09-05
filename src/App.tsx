@@ -12,6 +12,7 @@ import { NotificationModal } from './components/NotificationModal';
 import { SupportModal } from './components/mine/SupportModals';
 import { LanguageSelectorModal } from './components/LanguageSelectorModal';
 import { AdminPortal } from './components/admin/AdminPortal';
+import { AuthModal } from './components/auth/AuthModal';
 import {
   TabType,
   User,
@@ -54,6 +55,58 @@ export default function App() {
   const [showCustomerServiceModal, setShowCustomerServiceModal] = useState(false);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Authentication & Referral Flow state
+  const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
+  const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('register');
+  const [lockedReferralCode, setLockedReferralCode] = useState<string>('');
+  const [isReferralLocked, setIsReferralLocked] = useState<boolean>(false);
+
+  // Automatic Referral Link and URL routing detection
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // Detect referral query parameter from window.location.search or hash
+    let refParam: string | null = null;
+    const searchParams = new URLSearchParams(window.location.search);
+    refParam = searchParams.get('ref') || searchParams.get('invite') || searchParams.get('r');
+
+    if (!refParam && window.location.hash) {
+      const qIdx = window.location.hash.indexOf('?');
+      if (qIdx !== -1) {
+        const hashParams = new URLSearchParams(window.location.hash.substring(qIdx + 1));
+        refParam = hashParams.get('ref') || hashParams.get('invite') || hashParams.get('r');
+      }
+    }
+
+    const pathname = window.location.pathname.toLowerCase();
+    const hash = window.location.hash.toLowerCase();
+    const isExplicitRegister = pathname === '/register' || hash.startsWith('#/register') || hash === '#register';
+
+    if (refParam && refParam.trim()) {
+      const cleanRef = refParam.trim().toUpperCase();
+      try {
+        localStorage.setItem('jambase_locked_referral', cleanRef);
+      } catch (e) {}
+      setLockedReferralCode(cleanRef);
+      setIsReferralLocked(true);
+      setAuthModalMode('register');
+      setShowAuthModal(true);
+    } else {
+      let savedRef = '';
+      try {
+        savedRef = localStorage.getItem('jambase_locked_referral') || '';
+      } catch (e) {}
+      if (savedRef && savedRef.trim()) {
+        setLockedReferralCode(savedRef.trim().toUpperCase());
+        setIsReferralLocked(true);
+      }
+      if (isExplicitRegister) {
+        setAuthModalMode('register');
+        setShowAuthModal(true);
+      }
+    }
+  }, []);
 
   // Sync URL route changes (e.g. /admin vs /)
   useEffect(() => {
@@ -226,6 +279,10 @@ export default function App() {
               notices={notices}
               onRefresh={loadAllData}
               onNavigateTab={(tab) => setCurrentTab(tab)}
+              onOpenAuthModal={(mode?: 'login' | 'register') => {
+                setAuthModalMode(mode || 'register');
+                setShowAuthModal(true);
+              }}
             />
           )}
         </main>
@@ -273,6 +330,22 @@ export default function App() {
         <LanguageSelectorModal
           isOpen={showLanguageModal}
           onClose={() => setShowLanguageModal(false)}
+        />
+
+        {/* Global Authentication & Referral Modal */}
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          onSuccess={(authenticatedUser) => {
+            setUser(authenticatedUser);
+            setShowAuthModal(false);
+            showToast(`Welcome ${authenticatedUser.username}! Successfully authenticated.`);
+            setCurrentTab('mine');
+            loadAllData();
+          }}
+          initialMode={authModalMode}
+          initialReferralCode={lockedReferralCode}
+          isReferralLocked={isReferralLocked}
         />
       </div>
     </div>

@@ -32,6 +32,7 @@ interface MineViewProps {
   notices: PlatformNotice[];
   onRefresh: () => void;
   onNavigateTab: (tab: any) => void;
+  onOpenAuthModal?: (mode?: 'login' | 'register') => void;
 }
 
 export const MineView: React.FC<MineViewProps> = ({
@@ -42,7 +43,8 @@ export const MineView: React.FC<MineViewProps> = ({
   vipTiers = VIP_TIERS,
   notices,
   onRefresh,
-  onNavigateTab
+  onNavigateTab,
+  onOpenAuthModal
 }) => {
   const { t, currentLanguageOption } = useLanguage();
 
@@ -270,7 +272,13 @@ export const MineView: React.FC<MineViewProps> = ({
       {/* 8. SIGN OUT BUTTON (Matching Screenshot centered clean white button) */}
       <div className="pt-6 pb-2 text-center">
         <button
-          onClick={() => setShowAuthModal(true)}
+          onClick={() => {
+            if (onOpenAuthModal) {
+              onOpenAuthModal('login');
+            } else {
+              setShowAuthModal(true);
+            }
+          }}
           className="text-sm font-bold text-neutral-300 hover:text-white transition-colors py-2 px-6 rounded-xl hover:bg-neutral-900"
         >
           {t('mine.logout', 'Sign out')}

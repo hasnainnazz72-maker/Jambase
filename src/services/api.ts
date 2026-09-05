@@ -146,6 +146,23 @@ const getAdminHeaders = (extra: Record<string, string> = {}) => {
   return headers;
 };
 
+async function safeJson<T = any>(res: Response, defaultErrMsg = 'Request failed'): Promise<T> {
+  const text = await res.text();
+  let data: any;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    if (!res.ok) {
+      throw new Error(`Server returned HTTP ${res.status}: ${res.statusText || 'Error'}`);
+    }
+    throw new Error('Server returned an invalid non-JSON response');
+  }
+  if (!res.ok) {
+    throw new Error(data.error || data.message || defaultErrMsg);
+  }
+  return data as T;
+}
+
 export const api = {
   // Admin Auth APIs
   async adminLogin(credentials: { username: string; password: string }): Promise<{ success: boolean; token: string; message: string; admin: any }> {
@@ -326,9 +343,19 @@ export const api = {
       headers: getUserHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(payload)
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Deposit failed');
-    return data;
+    return await safeJson(res, 'Deposit failed');
+  },
+
+  async uploadPaymentSlip(dataUrl: string, filename?: string): Promise<{ success: boolean; url: string; message: string }> {
+    const res = await fetch('/api/upload/payment-slip', {
+      method: 'POST',
+      headers: getUserHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({
+        dataUrl,
+        filename: filename || 'payment_slip.jpg'
+      })
+    });
+    return await safeJson(res, 'Payment slip upload failed');
   },
 
   async withdraw(params: {

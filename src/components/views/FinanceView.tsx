@@ -65,7 +65,7 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
-  // Handle Payment Slip Upload (both file selection & base64 conversion)
+  // Handle Payment Slip Upload (with automatic high-res optimization for fast, error-free upload)
   const handleSlipFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -76,10 +76,49 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
     }
 
     setSlipFileName(file.name);
+    setDepositMsg(null);
+
     const reader = new FileReader();
     reader.onload = (event) => {
-      const result = event.target?.result as string;
-      setPaymentSlipUrl(result);
+      const rawResult = event.target?.result as string;
+      if (!rawResult) return;
+
+      // Optimize image for rapid, fail-safe transfer (maximum 1280px dimension, high-definition JPEG)
+      const img = new Image();
+      img.onload = () => {
+        const MAX_DIM = 1280;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > MAX_DIM || height > MAX_DIM) {
+          if (width > height) {
+            height = Math.round((height * MAX_DIM) / width);
+            width = MAX_DIM;
+          } else {
+            width = Math.round((width * MAX_DIM) / height);
+            height = MAX_DIM;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          setPaymentSlipUrl(optimizedDataUrl);
+        } else {
+          setPaymentSlipUrl(rawResult);
+        }
+      };
+      img.onerror = () => {
+        setPaymentSlipUrl(rawResult);
+      };
+      img.src = rawResult;
+    };
+    reader.onerror = () => {
+      setDepositMsg({ text: 'Failed to read image file. Please try again or select another image.', isError: true });
     };
     reader.readAsDataURL(file);
   };

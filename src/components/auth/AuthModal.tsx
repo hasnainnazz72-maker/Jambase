@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Lock, Phone, User as UserIcon, RefreshCw, ShieldCheck, ChevronDown, Search, AlertCircle } from 'lucide-react';
+import { X, Lock, Phone, User as UserIcon, RefreshCw, ShieldCheck, ChevronDown, Search, AlertCircle, Users, Check } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { COUNTRY_CODES, CountryCode } from '../../data/countryCodes';
 import { api } from '../../services/api';
@@ -11,13 +11,17 @@ interface AuthModalProps {
   onClose: () => void;
   onSuccess: (user: User) => void;
   initialMode?: 'login' | 'register';
+  initialReferralCode?: string;
+  isReferralLocked?: boolean;
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({
   isOpen,
   onClose,
   onSuccess,
-  initialMode = 'register'
+  initialMode = 'register',
+  initialReferralCode = '',
+  isReferralLocked = false
 }) => {
   const { t } = useLanguage();
   const [mode, setMode] = useState<'login' | 'register'>(initialMode);
@@ -39,6 +43,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Compute locked referral code from props or persistent storage
+  const storedLockedRef = (typeof window !== 'undefined' ? localStorage.getItem('jambase_locked_referral') : null) || '';
+  const effectiveLockedCode = (initialReferralCode || storedLockedRef || '').trim().toUpperCase();
+  const isCodeLocked = Boolean(isReferralLocked || effectiveLockedCode);
+
+  useEffect(() => {
+    if (effectiveLockedCode) {
+      setReferralCode(effectiveLockedCode);
+      if (initialMode === 'register' || isReferralLocked) {
+        setMode('register');
+      }
+    }
+  }, [effectiveLockedCode, initialMode, isReferralLocked, isOpen]);
 
   // Generate random 4-character alphanumeric captcha
   const generateCaptcha = () => {
@@ -147,12 +165,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
       setLoading(true);
       try {
+        const boundReferralCode = (isCodeLocked && effectiveLockedCode)
+          ? effectiveLockedCode
+          : (referralCode.trim().toUpperCase() || undefined);
+
         const res = await api.registerUser({
           username: username.trim(),
           countryCode: selectedCountry.dial_code,
           phone: phone.trim(),
           password,
-          referralCode: referralCode.trim() || undefined
+          referralCode: boundReferralCode
         });
 
         confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
@@ -238,6 +260,24 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               Sign In
             </button>
           </div>
+
+          {/* Locked Sponsor Invitation Banner */}
+          {mode === 'register' && isCodeLocked && (
+            <div className="mt-3.5 p-2.5 rounded-2xl bg-[#00D26A]/10 border border-[#00D26A]/35 flex items-center gap-2.5 animate-in fade-in">
+              <div className="w-7 h-7 rounded-xl bg-[#00D26A]/20 text-[#00D26A] flex items-center justify-center shrink-0">
+                <Lock size={14} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[11px] font-bold text-white flex items-center gap-1.5">
+                  <span>Referral Registration</span>
+                  <span className="text-[9px] bg-[#00D26A] text-black font-extrabold px-1.5 py-0.5 rounded font-mono">BOUND</span>
+                </div>
+                <div className="text-[10px] text-neutral-300 truncate">
+                  Inviter Code: <span className="text-[#00D26A] font-mono font-extrabold">{effectiveLockedCode}</span> (Locked & Bound)
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Form Body */}
@@ -338,16 +378,50 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           {/* Referral Code (Registration Mode) */}
           {mode === 'register' && (
             <div>
-              <label className="text-[11px] font-semibold text-neutral-300 mb-1 block">
-                {t('auth.invitationCode', 'Invitation / Referral Code (Optional)')}
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. JAM888"
-                value={referralCode}
-                onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white font-mono font-bold focus:outline-none focus:border-[#00D26A]"
-              />
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-[11px] font-semibold text-neutral-300 flex items-center gap-1.5">
+                  <Users size={12} className="text-[#00D26A]" />
+                  <span>{t('auth.invitationCode', 'Invitation / Referral Code')}</span>
+                  {!isCodeLocked && <span className="text-neutral-500 text-[10px] font-normal">(Optional)</span>}
+                </label>
+                {isCodeLocked && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-[#00D26A] bg-[#00D26A]/15 px-2 py-0.5 rounded-md border border-[#00D26A]/35">
+                    <Lock size={10} className="text-[#00D26A]" /> Locked to Inviter
+                  </span>
+                )}
+              </div>
+
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="e.g. JAM888"
+                  value={isCodeLocked && effectiveLockedCode ? effectiveLockedCode : referralCode}
+                  readOnly={isCodeLocked}
+                  disabled={false}
+                  onChange={(e) => {
+                    if (!isCodeLocked) {
+                      setReferralCode(e.target.value.toUpperCase());
+                    }
+                  }}
+                  className={`w-full px-3.5 py-2.5 rounded-xl font-mono font-bold transition-all focus:outline-none ${
+                    isCodeLocked
+                      ? 'bg-[#0f1d14] border-2 border-[#00D26A]/70 text-[#00D26A] cursor-not-allowed select-none pr-24 shadow-inner'
+                      : 'bg-neutral-900 border border-neutral-800 text-white focus:border-[#00D26A]'
+                  }`}
+                />
+                {isCodeLocked && (
+                  <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[10px] font-black text-[#00D26A] bg-black/75 px-2.5 py-1 rounded-lg border border-[#00D26A]/40">
+                    <Lock size={11} />
+                    <span>Locked</span>
+                  </div>
+                )}
+              </div>
+              {isCodeLocked && (
+                <p className="text-[10px] text-[#00D26A]/90 mt-1 font-medium flex items-center gap-1">
+                  <ShieldCheck size={12} className="shrink-0 text-[#00D26A]" />
+                  Pre-filled & bound from referral link. Assigned directly to inviter's team.
+                </p>
+              )}
             </div>
           )}
 

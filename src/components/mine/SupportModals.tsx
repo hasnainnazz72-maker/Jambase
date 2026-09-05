@@ -103,7 +103,7 @@ export const SupportModal: React.FC<SupportModalProps> = ({
     },
     {
       q: 'What are the withdrawal limits and fees?',
-      a: 'The minimum withdrawal is 500 ETB via Commercial Bank of Ethiopia (CBE). Standard platform service fee is 5%. Funds are processed rapidly following administrative audit.'
+      a: 'The minimum withdrawal is 500 ETB via Commercial Bank of Ethiopia (CBE). Standard platform service fee is 7%. Funds are processed rapidly following administrative audit.'
     }
   ];
 

@@ -26,7 +26,8 @@ import {
 const app = express();
 const PORT = 3000;
 
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // ==========================================
 // PERSISTENT DATABASE ENGINE (Server Authoritative & Protected)
@@ -353,6 +354,69 @@ function resolveUserId(req: express.Request): string {
 }
 
 /**
+ * Returns all direct and indirect referrals for a given user,
+ * keeping status synced with registered member accounts and ensuring
+ * any user registered with this user's referral code/inviterId is included.
+ */
+function getReferralsForUser(user: User): ReferralMember[] {
+  const result: ReferralMember[] = [];
+  const seenUsernames = new Set<string>();
+
+  // 1. Check existing referrals array where uplineId or userId matches, or seed referrals for PRIMARY_USER_ID
+  for (const r of referrals) {
+    const isOwner = (r as any).uplineId === user.id ||
+      (r as any).userId === user.id ||
+      (!(r as any).uplineId && !(r as any).userId && user.id === PRIMARY_USER_ID);
+
+    if (isOwner) {
+      // Synchronize live balance & deposit with real registered account if it exists
+      const matchUser = Object.values(users).find(u => u.username.toLowerCase() === r.username.toLowerCase());
+      if (matchUser) {
+        r.balance = matchUser.balance || 0;
+        r.totalDeposit = (matchUser as any).totalDeposit !== undefined ? (matchUser as any).totalDeposit : r.totalDeposit;
+        if (r.balance >= 2000 || r.totalDeposit >= 2000) {
+          r.isValid = true;
+          r.disqualifiedReason = undefined;
+        }
+      }
+      result.push(r);
+      seenUsernames.add(r.username.toLowerCase());
+    }
+  }
+
+  // 2. Also inspect all registered accounts in database that have inviterId === user.id or referredBy === user.referralCode
+  for (const regUser of Object.values(users)) {
+    if (regUser.id === user.id) continue;
+    const isDirect = (regUser.inviterId && regUser.inviterId === user.id) ||
+      (user.referralCode && regUser.referredBy && regUser.referredBy.trim().toUpperCase() === user.referralCode.trim().toUpperCase());
+
+    if (isDirect && !seenUsernames.has(regUser.username.toLowerCase())) {
+      const isQual = (regUser.balance >= 2000 || ((regUser as any).totalDeposit || 0) >= 2000);
+      const newRef: ReferralMember = {
+        id: `ref-${regUser.id}`,
+        userId: user.id,
+        uplineId: user.id,
+        username: regUser.username,
+        email: regUser.email || `${regUser.username.toLowerCase()}@jambase.vip`,
+        avatar: regUser.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&auto=format&fit=crop&q=80',
+        registeredAt: regUser.createdAt || new Date().toISOString(),
+        totalDeposit: (regUser as any).totalDeposit || 0,
+        totalPurchases: (regUser as any).recordExpenditure || 0,
+        balance: regUser.balance || 0,
+        isValid: isQual,
+        disqualifiedReason: isQual ? undefined : 'Pending initial recharge of 2,000 ETB+',
+        level: 1
+      };
+      referrals.push(newRef);
+      result.push(newRef);
+      seenUsernames.add(regUser.username.toLowerCase());
+    }
+  }
+
+  return result;
+}
+
+/**
  * Recalculate user's VIP level, valid direct members count, daily ticket balance cycle, and income pause state
  * VIP 1: 500–4,999.99 ETB, 0 direct members, 1.9%
  * VIP 2: 5,000–19,999.99 ETB, min 3 direct members, 2.5%
@@ -415,9 +479,12 @@ function recalculateUserState(userId: string = PRIMARY_USER_ID) {
     user.dailyTicketSpent = 0;
   }
 
-  // Calculate valid direct members (must have minimum 2,000 ETB deposit/balance, which is VIP 1 qualifying threshold)
-  const validDirectMembers = referrals.filter(r => (r.userId === user.id || (!r.userId && user.id === PRIMARY_USER_ID)) && r.level === 1 && r.isValid && (r.totalDeposit >= 2000 || r.balance >= 2000)).length;
+  // Calculate valid direct members and total team metrics from real referral relationships
+  const userReferrals = getReferralsForUser(user);
+  const validDirectMembers = userReferrals.filter(r => (r.userId === user.id || (!r.userId && user.id === PRIMARY_USER_ID)) && r.level === 1 && r.isValid && (r.totalDeposit >= 2000 || r.balance >= 2000)).length;
   user.validDirectMembersCount = validDirectMembers;
+  user.totalTeamMembersCount = userReferrals.length;
+  user.totalTeamDeposit = userReferrals.reduce((sum, r) => sum + (r.totalDeposit || 0), 0);
 
   user.totalAssets = Number((user.balance + (user.frozenBalance || 0)).toFixed(2));
 
@@ -983,6 +1050,35 @@ app.get('/api/finance', (req, res) => {
   });
 });
 
+// POST Upload Payment Slip Endpoint
+// Supports Base64 image dataUrl, always returns valid JSON
+app.post(['/api/upload', '/api/finance/upload', '/api/upload/payment-slip'], (req, res) => {
+  try {
+    const { file, image, dataUrl, paymentSlip, filename } = req.body || {};
+    const slipData = file || image || dataUrl || paymentSlip;
+
+    if (!slipData || typeof slipData !== 'string') {
+      return res.status(400).json({
+        success: false,
+        error: 'No valid image data or file provided'
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Payment slip uploaded successfully',
+      url: slipData,
+      paymentSlipUrl: slipData,
+      filename: filename || 'cbe_payment_slip.jpg'
+    });
+  } catch (err: any) {
+    return res.status(500).json({
+      success: false,
+      error: err.message || 'Error processing payment slip upload'
+    });
+  }
+});
+
 // POST Create Deposit / Recharge Request (Strictly Pending until Admin Manual Approval)
 // ETB-Only Ethiopian CBE Bank Transfer
 app.post('/api/finance/deposit', (req, res) => {
@@ -1152,7 +1248,7 @@ app.get('/api/team', (req, res) => {
   const user = recalculateUserState(targetId);
   if (!user) return res.status(404).json({ error: 'User not found' });
   
-  const userReferrals = referrals.filter(r => (r as any).uplineId === user.id || (!(r as any).uplineId && user.id === PRIMARY_USER_ID));
+  const userReferrals = getReferralsForUser(user);
   res.json({
     user,
     referrals: userReferrals,
@@ -1176,7 +1272,7 @@ app.get('/api/tasks', (req, res) => {
   const targetId = resolveUserId(req);
   const user = recalculateUserState(targetId);
   if (!user) return res.status(404).json({ error: 'User not found' });
-  const userReferrals = referrals.filter(r => (r as any).uplineId === user.id || (!(r as any).uplineId && user.id === PRIMARY_USER_ID));
+  const userReferrals = getReferralsForUser(user);
   const validDirectCount = userReferrals.filter(r => r.level === 1 && r.isValid).length;
   const claimedIds = user.claimedTaskIds || [];
 
@@ -1253,7 +1349,7 @@ app.post('/api/tasks/claim', (req, res) => {
     return res.status(400).json({ error: 'This task reward has already been claimed!' });
   }
 
-  const userReferrals = referrals.filter(r => (r as any).uplineId === user.id || (!(r as any).uplineId && user.id === PRIMARY_USER_ID));
+  const userReferrals = getReferralsForUser(user);
   const validDirectCount = userReferrals.filter(r => r.level === 1 && r.isValid).length;
 
   let rewardAmount = 0;
@@ -1398,12 +1494,18 @@ app.post('/api/auth/register', (req, res) => {
 
   // Check inviter if referralCode provided
   let uplineId: string | undefined = undefined;
+  let inviterUser: User | undefined = undefined;
   if (referralCode && referralCode.trim()) {
-    const inviter = Object.values(users).find(
-      u => u.referralCode && u.referralCode.toLowerCase() === referralCode.trim().toLowerCase()
+    const cleanRef = referralCode.trim().toUpperCase();
+    inviterUser = Object.values(users).find(
+      u => u.referralCode && u.referralCode.trim().toUpperCase() === cleanRef
     );
-    if (inviter) {
-      uplineId = inviter.id;
+    if (inviterUser) {
+      uplineId = inviterUser.id;
+    } else {
+      return res.status(400).json({
+        error: `Invalid Invitation / Referral Code "${cleanRef}". Please verify the code provided by your sponsor.`
+      });
     }
   }
 
@@ -1421,13 +1523,13 @@ app.post('/api/auth/register', (req, res) => {
     totalAssets: 0.0,
     vipLevel: 1,
     referralCode: `JB${Math.floor(100000 + Math.random() * 900000)}`,
-    referredBy: referralCode ? referralCode.trim() : undefined,
+    referredBy: inviterUser ? inviterUser.referralCode : (referralCode ? referralCode.trim().toUpperCase() : undefined),
     inviterId: uplineId,
     validDirectMembersCount: 0,
     totalTeamMembersCount: 0,
     totalTeamDeposit: 0.0,
     isIncomePaused: true,
-    incomePauseReason: 'Minimum $30.00 Account Balance Required to Work and Earn VIP Yield',
+    incomePauseReason: 'Minimum 500 ETB Account Balance Required to Work and Buy Tickets',
     autoCompound: true,
     totalEarnedIncome: 0.0,
     todayTicketIncome: 0.0,
@@ -1442,10 +1544,11 @@ app.post('/api/auth/register', (req, res) => {
 
   users[cleanUserId] = newUser;
 
-  // If referred by another user, add to referrals list for the upline
-  if (uplineId && users[uplineId]) {
-    referrals.push({
-      id: `ref-${Date.now().toString(36)}-${crypto.randomBytes(2).toString('hex')}`,
+  // If referred by another user, immediately attach to upline's team and multi-tier hierarchy
+  if (uplineId && inviterUser) {
+    // 1. Direct Level 1 Referral for the inviter
+    const directRef: ReferralMember = {
+      id: `ref-${cleanUserId}`,
       userId: uplineId,
       uplineId: uplineId,
       username: newUser.username,
@@ -1456,21 +1559,62 @@ app.post('/api/auth/register', (req, res) => {
       totalPurchases: 0,
       balance: 0,
       isValid: false,
-      disqualifiedReason: 'Pending initial deposit of $30+',
+      disqualifiedReason: 'Pending initial recharge of 2,000 ETB+',
       level: 1
-    } as any);
+    };
+    referrals.push(directRef);
+
+    // 2. Sub-tier Level 2 (upline of inviter)
+    if (inviterUser.inviterId && users[inviterUser.inviterId]) {
+      const lvl2User = users[inviterUser.inviterId];
+      referrals.push({
+        id: `ref-lvl2-${cleanUserId}`,
+        userId: lvl2User.id,
+        uplineId: lvl2User.id,
+        username: newUser.username,
+        email: newUser.email,
+        avatar: newUser.avatar,
+        registeredAt: newUser.createdAt,
+        totalDeposit: 0,
+        totalPurchases: 0,
+        balance: 0,
+        isValid: false,
+        disqualifiedReason: 'Pending initial recharge of 2,000 ETB+',
+        level: 2
+      });
+      recalculateUserState(lvl2User.id);
+
+      // 3. Sub-tier Level 3 (upline of level 2)
+      if (lvl2User.inviterId && users[lvl2User.inviterId]) {
+        const lvl3User = users[lvl2User.inviterId];
+        referrals.push({
+          id: `ref-lvl3-${cleanUserId}`,
+          userId: lvl3User.id,
+          uplineId: lvl3User.id,
+          username: newUser.username,
+          email: newUser.email,
+          avatar: newUser.avatar,
+          registeredAt: newUser.createdAt,
+          totalDeposit: 0,
+          totalPurchases: 0,
+          balance: 0,
+          isValid: false,
+          disqualifiedReason: 'Pending initial recharge of 2,000 ETB+',
+          level: 3
+        });
+        recalculateUserState(lvl3User.id);
+      }
+    }
+
+    recalculateUserState(uplineId);
   }
 
   recalculateUserState(cleanUserId);
-  if (uplineId) {
-    recalculateUserState(uplineId);
-  }
-  
-  persistDb(`New Member Registered: ${cleanUsername} (ID: ${cleanUserId})`, true);
+  persistDb(`New Member Registered: ${cleanUsername} (ID: ${cleanUserId}, Inviter: ${newUser.referredBy || 'Direct'})`, true);
 
   res.json({
     success: true,
-    message: 'Account registered successfully! Welcome to JAMBASE. Please deposit at least $30 to activate your account and start earning VIP yields.',
+    message: 'Account registered successfully! Welcome to JAMBASE. Please recharge at least 2,000 ETB to activate your VIP level and start earning yields.',
     user: users[cleanUserId],
     token: `jwt-${cleanUserId}-${Date.now()}`
   });
@@ -1830,7 +1974,7 @@ app.get('/api/admin/members/:id', requireAdminAuth, (req, res) => {
   const userPurchases = purchases.filter(p => p.userId === user.id);
   const userWithdrawals = withdrawals.filter(w => w.userId === user.id || w.username === user.username);
   const userDeposits = deposits.filter(d => d.userId === user.id || d.username === user.username);
-  const userReferrals = referrals.filter(r => r.id === user.id || (user.referralCode && r.username.includes(user.referralCode)));
+  const userReferrals = getReferralsForUser(user);
 
   res.json({
     success: true,
@@ -2599,6 +2743,33 @@ app.put('/api/user/security', (req, res) => {
 
   persistDb(`User Security Updated: ${user.username}`);
   res.json({ success: true, message: 'Security preferences updated', user });
+});
+
+// ==========================================
+// API 404 & GLOBAL JSON ERROR HANDLER
+// Prevents API routes from ever falling through to HTML SPA fallback
+// ==========================================
+app.all('/api/*', (req, res) => {
+  res.status(404).json({
+    success: false,
+    error: `API route not found: ${req.method} ${req.path}`
+  });
+});
+
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('Global API Error caught:', err);
+  if (res.headersSent) {
+    return next(err);
+  }
+  const statusCode = err.status || err.statusCode || (err.type === 'entity.too.large' ? 413 : 500);
+  const errorMessage = err.type === 'entity.too.large'
+    ? 'Payment slip image file exceeds 50MB limit. Please compress or select a smaller image.'
+    : (err.message || 'Server error occurred');
+
+  return res.status(statusCode).json({
+    success: false,
+    error: errorMessage
+  });
 });
 
 // ==========================================

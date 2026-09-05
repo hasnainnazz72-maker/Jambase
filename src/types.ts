@@ -219,7 +219,7 @@ export interface WithdrawalRequest {
   userBalanceAtRequest?: number;
   currentUserBalance?: number;
   amount: number;
-  fee: number; // 5% service fee
+  fee: number; // 7% service fee
   netAmount: number;
   bankName?: string;
   accountHolder?: string;
