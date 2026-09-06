@@ -134,7 +134,7 @@ export const RechargeApprovalQueue: React.FC<RechargeApprovalQueueProps> = ({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-neutral-850">
           <div>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-[#00D26A]/20 flex items-center justify-center border border-[#00D26A]/40 text-[#00D26A]">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#DC2626]/20 to-[#B91C1C]/10 flex items-center justify-center border border-[#DC2626]/40 text-[#FDE047]">
                 <ArrowDownLeft size={18} />
               </div>
               <div>
@@ -197,12 +197,12 @@ export const RechargeApprovalQueue: React.FC<RechargeApprovalQueueProps> = ({
             onClick={() => setFilterStatus('Approved')}
             className={`p-2.5 rounded-xl cursor-pointer transition-all border ${
               filterStatus === 'Approved'
-                ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-200'
-                : 'bg-neutral-900/50 border-neutral-850 text-neutral-400 hover:text-emerald-300'
+                ? 'bg-[#DC2626]/20 border-[#DC2626]/50 text-[#FDE047]'
+                : 'bg-neutral-900/50 border-neutral-850 text-neutral-400 hover:text-[#E5A93C]'
             }`}
           >
             <span className="text-[10px] uppercase tracking-wider font-semibold block">Approved / Credited</span>
-            <span className="text-sm font-black text-[#00D26A] font-mono mt-0.5">{approvedCount}</span>
+            <span className="text-sm font-black text-[#E5A93C] font-mono mt-0.5">{approvedCount}</span>
           </div>
 
           <div
@@ -231,7 +231,7 @@ export const RechargeApprovalQueue: React.FC<RechargeApprovalQueueProps> = ({
                   ? st === 'Pending'
                     ? 'bg-amber-400 text-black shadow-md shadow-amber-500/20'
                     : st === 'Approved'
-                    ? 'bg-[#00D26A] text-black shadow-md shadow-[#00D26A]/20'
+                    ? 'bg-gradient-to-r from-[#DC2626] to-[#B91C1C] text-[#FDE047] shadow-md shadow-[#DC2626]/20'
                     : st === 'Rejected'
                     ? 'bg-red-500 text-white shadow-md shadow-red-500/20'
                     : 'bg-white text-black'
@@ -250,7 +250,7 @@ export const RechargeApprovalQueue: React.FC<RechargeApprovalQueueProps> = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search Member, ID, TXID / UID..."
-            className="w-full pl-8 pr-7 py-1.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-[#00D26A]"
+            className="w-full pl-8 pr-7 py-1.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-[#E5A93C]"
           />
           {searchQuery && (
             <button
@@ -310,12 +310,12 @@ export const RechargeApprovalQueue: React.FC<RechargeApprovalQueueProps> = ({
                         className="text-neutral-500 hover:text-neutral-300"
                         title="Copy Request ID"
                       >
-                        {copiedKey === `id-${dep.id}` ? <Check size={11} className="text-[#00D26A]" /> : <Copy size={11} />}
+                        {copiedKey === `id-${dep.id}` ? <Check size={11} className="text-[#E5A93C]" /> : <Copy size={11} />}
                       </button>
                       <span
                         className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold flex items-center gap-1 ${
                           isApproved
-                            ? 'bg-emerald-500/20 text-[#00D26A] border border-emerald-500/30'
+                            ? 'bg-[#DC2626]/20 text-[#FDE047] border border-[#DC2626]/40'
                             : isPending
                             ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
                             : 'bg-red-500/20 text-red-300 border border-red-500/30'
@@ -346,13 +346,13 @@ export const RechargeApprovalQueue: React.FC<RechargeApprovalQueueProps> = ({
                 <div className="p-2.5 rounded-xl bg-black/40 border border-neutral-850 space-y-1.5 text-xs">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5 text-neutral-200">
-                      <User size={13} className="text-[#00D26A]" />
+                      <User size={13} className="text-[#E5A93C]" />
                       <strong className="text-white text-xs">{dep.username}</strong>
                       <span className="text-[10px] font-mono text-neutral-400">({dep.userId})</span>
                     </div>
                     <div className="text-[11px] font-mono">
                       <span className="text-neutral-400">Available: </span>
-                      <strong className="text-[#00D26A]">{(dep.currentUserBalance ?? 0).toLocaleString()} ETB</strong>
+                      <strong className="text-[#E5A93C]">{(dep.currentUserBalance ?? 0).toLocaleString()} ETB</strong>
                     </div>
                   </div>
 
@@ -450,7 +450,7 @@ export const RechargeApprovalQueue: React.FC<RechargeApprovalQueueProps> = ({
                   <div className="flex items-center gap-2 pt-1">
                     <button
                       onClick={() => setSelectedForApproval(dep)}
-                      className="flex-1 py-2.5 rounded-xl bg-[#00D26A] hover:bg-[#00e875] text-black font-extrabold text-xs shadow-md shadow-[#00D26A]/20 transition-all flex items-center justify-center gap-1.5 active:scale-[0.98]"
+                      className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-[#DC2626] to-[#EF4444] hover:from-[#EF4444] hover:to-[#DC2626] text-white font-extrabold text-xs shadow-md shadow-[#DC2626]/20 transition-all flex items-center justify-center gap-1.5 active:scale-[0.98] border border-[#E5A93C]/40"
                     >
                       <CheckCircle2 size={14} />
                       <span>Review & Approve</span>
@@ -476,7 +476,7 @@ export const RechargeApprovalQueue: React.FC<RechargeApprovalQueueProps> = ({
           <div className="w-full max-w-md bg-[#11131a] border border-neutral-750 rounded-3xl p-5 space-y-4 shadow-2xl animate-in fade-in duration-200">
             <div className="flex items-center justify-between pb-3 border-b border-neutral-800">
               <div className="flex items-center gap-2 text-white font-extrabold text-sm">
-                <div className="w-7 h-7 rounded-xl bg-[#00D26A]/20 flex items-center justify-center text-[#00D26A] border border-[#00D26A]/40">
+                <div className="w-7 h-7 rounded-xl bg-[#DC2626]/20 flex items-center justify-center text-[#FDE047] border border-[#DC2626]/40">
                   <ShieldCheck size={16} />
                 </div>
                 <span>Confirm Recharge Approval</span>
@@ -497,7 +497,7 @@ export const RechargeApprovalQueue: React.FC<RechargeApprovalQueueProps> = ({
 
               <div className="flex justify-between items-center pb-2 border-b border-neutral-850">
                 <span className="text-neutral-400 font-sans">Deposit Bank:</span>
-                <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-[#00D26A] font-bold">
+                <span className="px-2 py-0.5 rounded bg-[#DC2626]/20 text-[#FDE047] font-bold border border-[#DC2626]/30">
                   {selectedForApproval.bankName || 'Commercial Bank of Ethiopia (CBE)'}
                 </span>
               </div>
@@ -529,14 +529,14 @@ export const RechargeApprovalQueue: React.FC<RechargeApprovalQueueProps> = ({
 
               <div className="flex justify-between items-center pt-1">
                 <span className="font-bold text-neutral-300 font-sans">AMOUNT TO CREDIT:</span>
-                <span className="font-mono font-black text-[#00D26A] text-lg">
+                <span className="font-mono font-black text-[#E5A93C] text-lg">
                   +{selectedForApproval.amount.toLocaleString()} ETB
                 </span>
               </div>
             </div>
 
-            <div className="p-3 rounded-2xl bg-[#00D26A]/10 border border-[#00D26A]/30 text-xs text-neutral-300 flex items-start gap-2">
-              <Info size={15} className="text-[#00D26A] shrink-0 mt-0.5" />
+            <div className="p-3 rounded-2xl bg-[#DC2626]/10 border border-[#DC2626]/30 text-xs text-neutral-300 flex items-start gap-2">
+              <Info size={15} className="text-[#E5A93C] shrink-0 mt-0.5" />
               <span>
                 Approving will immediately credit <strong className="text-white">+{selectedForApproval.amount.toLocaleString()} ETB</strong> into {selectedForApproval.username}&apos;s Available Balance for trading and ticket purchases.
               </span>
@@ -549,7 +549,7 @@ export const RechargeApprovalQueue: React.FC<RechargeApprovalQueueProps> = ({
                 value={approvalNotes}
                 onChange={(e) => setApprovalNotes(e.target.value)}
                 placeholder="e.g. Verified transfer on CBE Portal / Slip confirmed"
-                className="w-full px-3.5 py-2 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-white focus:outline-none focus:border-[#00D26A]"
+                className="w-full px-3.5 py-2 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-white focus:outline-none focus:border-[#E5A93C]"
               />
             </div>
 
@@ -566,7 +566,7 @@ export const RechargeApprovalQueue: React.FC<RechargeApprovalQueueProps> = ({
                 type="button"
                 onClick={handleConfirmApproval}
                 disabled={processingAction}
-                className="flex-1 py-2.5 rounded-xl bg-[#00D26A] hover:bg-[#00e875] text-black font-extrabold text-xs shadow-lg shadow-[#00D26A]/20 transition-all flex items-center justify-center gap-1.5"
+                className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-[#DC2626] to-[#EF4444] hover:from-[#EF4444] hover:to-[#DC2626] text-white font-extrabold text-xs shadow-lg shadow-[#DC2626]/20 transition-all flex items-center justify-center gap-1.5 border border-[#E5A93C]/40"
               >
                 {processingAction ? (
                   <>

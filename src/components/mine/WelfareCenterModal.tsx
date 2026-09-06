@@ -49,9 +49,9 @@ export const WelfareCenterModal: React.FC<WelfareCenterModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="w-full max-w-sm rounded-3xl bg-[#10121a] border border-[#00D26A]/40 overflow-hidden shadow-2xl text-white">
+      <div className="w-full max-w-sm rounded-3xl bg-[#10121a] border border-[#DC2626]/40 overflow-hidden shadow-2xl text-white">
         {/* Header Banner */}
-        <div className="relative p-5 bg-gradient-to-br from-[#0c261b] via-[#0e161f] to-[#0a0c10] border-b border-neutral-800">
+        <div className="relative p-5 bg-gradient-to-br from-[#2a0808] via-[#1a0f12] to-[#0a0c10] border-b border-neutral-800">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 p-1.5 rounded-full bg-black/50 text-neutral-400 hover:text-white"
@@ -60,12 +60,12 @@ export const WelfareCenterModal: React.FC<WelfareCenterModalProps> = ({
           </button>
 
           <div className="flex items-center gap-3">
-            <span className="w-10 h-10 rounded-2xl bg-[#00D26A] text-black flex items-center justify-center font-black shadow-lg shadow-[#00D26A]/30">
+            <span className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#DC2626] to-[#B91C1C] text-[#FDE047] flex items-center justify-center font-black shadow-lg shadow-[#DC2626]/30 border border-[#E5A93C]/40">
               <Gift size={22} />
             </span>
             <div>
               <h3 className="text-base font-black text-white">Welfare Center</h3>
-              <p className="text-[11px] text-[#00D26A] font-semibold">Daily Attendance & Member Privileges</p>
+              <p className="text-[11px] text-[#E5A93C] font-semibold">Daily Attendance & Member Privileges</p>
             </div>
           </div>
         </div>
@@ -76,10 +76,10 @@ export const WelfareCenterModal: React.FC<WelfareCenterModalProps> = ({
           <div className="p-4 rounded-2xl bg-neutral-900/90 border border-neutral-800 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Calendar size={16} className="text-[#00D26A]" />
+                <Calendar size={16} className="text-[#E5A93C]" />
                 <span className="text-xs font-bold text-white">Daily Attendance Reward</span>
               </div>
-              <span className="px-2 py-0.5 rounded-full bg-[#00D26A]/15 text-[#00D26A] text-[11px] font-black">
+              <span className="px-2 py-0.5 rounded-full bg-[#DC2626]/15 text-[#FDE047] border border-[#DC2626]/30 text-[11px] font-black">
                 +10.00 ETB / Day
               </span>
             </div>
@@ -91,7 +91,7 @@ export const WelfareCenterModal: React.FC<WelfareCenterModalProps> = ({
             {/* Streak Counter */}
             <div className="flex items-center justify-between p-2.5 rounded-xl bg-black/60 border border-neutral-800/80">
               <span className="text-[11px] text-neutral-400">Current Check-in Streak:</span>
-              <span className="text-xs font-black text-[#00D26A]">{streak} Consecutive Days</span>
+              <span className="text-xs font-black text-[#E5A93C]">{streak} Consecutive Days</span>
             </div>
 
             {/* Claim Action Button */}
@@ -101,12 +101,12 @@ export const WelfareCenterModal: React.FC<WelfareCenterModalProps> = ({
               className={`w-full py-3 rounded-xl font-extrabold text-xs shadow-lg transition-all flex items-center justify-center gap-2 ${
                 alreadyClaimedToday
                   ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed border border-neutral-700/50'
-                  : 'bg-[#00D26A] hover:bg-[#00e875] text-black shadow-[#00D26A]/30 active:scale-98'
+                  : 'bg-gradient-to-r from-[#DC2626] to-[#B91C1C] hover:from-[#EF4444] hover:to-[#DC2626] text-white shadow-[#DC2626]/30 active:scale-98 border border-[#E5A93C]/40'
               }`}
             >
               {alreadyClaimedToday ? (
                 <>
-                  <CheckCircle2 size={16} className="text-[#00D26A]" />
+                  <CheckCircle2 size={16} className="text-[#E5A93C]" />
                   <span>Claimed for Today (10.00 ETB)</span>
                 </>
               ) : loading ? (
@@ -126,7 +126,7 @@ export const WelfareCenterModal: React.FC<WelfareCenterModalProps> = ({
               className={`p-3 rounded-xl text-xs flex items-center gap-2 ${
                 msg.isError
                   ? 'bg-red-500/15 text-red-300 border border-red-500/30'
-                  : 'bg-[#00D26A]/15 text-[#00D26A] border border-[#00D26A]/30'
+                  : 'bg-[#DC2626]/15 text-[#FDE047] border border-[#DC2626]/30'
               }`}
             >
               {msg.isError ? <AlertCircle size={15} /> : <CheckCircle2 size={15} />}
@@ -137,13 +137,13 @@ export const WelfareCenterModal: React.FC<WelfareCenterModalProps> = ({
           {/* Rules & Policy Note */}
           <div className="p-3 rounded-2xl bg-black/40 border border-neutral-800/80 space-y-1.5 text-[11px] text-neutral-400">
             <div className="flex items-center gap-1.5 font-bold text-neutral-300">
-              <Shield size={13} className="text-[#00D26A]" />
+              <Shield size={13} className="text-[#E5A93C]" />
               <span>Welfare Regulations</span>
             </div>
             <ul className="list-disc pl-4 space-y-1 text-neutral-400">
               <li>1 check-in available every 24 hours per verified account.</li>
-              <li>Attendance rewards add +$0.10 instantly to withdrawable balance.</li>
-              <li>All primary daily income is derived from active concert ticket holdings.</li>
+              <li>Attendance rewards add +10.00 ETB instantly to withdrawable balance.</li>
+              <li>All primary daily income is derived from daily Grab orders.</li>
             </ul>
           </div>
         </div>

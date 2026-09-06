@@ -232,7 +232,7 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
             onClick={() => setActiveSubTab(tab.id as any)}
             className={`py-2 rounded-xl transition-all ${
               activeSubTab === tab.id
-                ? 'bg-[#00D26A] text-black shadow-md'
+                ? 'bg-gradient-to-r from-[#DC2626] to-[#B91C1C] text-white shadow-md border border-[#E5A93C]/40'
                 : 'text-neutral-400 hover:text-neutral-200'
             }`}
           >
@@ -245,13 +245,13 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
       {activeSubTab === 'overview' && (
         <div className="space-y-4">
           {/* Main Wallet Card */}
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#121b16] via-[#10141a] to-[#0d0e12] border border-[#00D26A]/30 p-5 shadow-2xl shadow-black/80">
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#2a0808] via-[#1a0f12] to-[#0d0e12] border border-[#DC2626]/30 p-5 shadow-2xl shadow-black/80">
             <div className="flex items-center justify-between text-neutral-400 text-xs">
               <div className="flex items-center gap-1.5">
-                <Wallet size={15} className="text-[#00D26A]" />
+                <Wallet size={15} className="text-[#E5A93C]" />
                 <span className="font-semibold text-neutral-300">Total Assets (ETB)</span>
               </div>
-              <span className="px-2 py-0.5 rounded-full bg-[#00D26A]/15 text-[#00D26A] text-[10px] font-extrabold border border-[#00D26A]/30">
+              <span className="px-2 py-0.5 rounded-full bg-[#DC2626]/15 text-[#FDE047] text-[10px] font-extrabold border border-[#DC2626]/30">
                 VIP {user?.vipLevel || 1}
               </span>
             </div>
@@ -260,14 +260,14 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
               <span className="text-3xl font-extrabold tracking-tight text-white">
                 {user ? user.totalAssets.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
               </span>
-              <span className="text-sm text-[#00D26A] font-bold">ETB</span>
+              <span className="text-sm text-[#E5A93C] font-bold">ETB</span>
             </div>
 
             {/* Balances Grid */}
             <div className="mt-4 pt-4 border-t border-neutral-800/80 grid grid-cols-2 gap-3">
               <div className="p-3 rounded-2xl bg-neutral-900/60 border border-neutral-800">
                 <span className="text-[11px] text-neutral-400 block">Available Balance</span>
-                <span className="text-base font-extrabold text-[#00D26A] mt-0.5 block">
+                <span className="text-base font-extrabold text-[#E5A93C] mt-0.5 block">
                   {user ? user.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'} ETB
                 </span>
               </div>
@@ -283,7 +283,7 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
             <div className="mt-4 grid grid-cols-2 gap-3">
               <button
                 onClick={() => setActiveSubTab('deposit')}
-                className="py-3 rounded-xl bg-[#00D26A] hover:bg-[#00e875] text-black font-extrabold text-xs flex items-center justify-center gap-2 shadow-lg shadow-[#00D26A]/20 transition-transform active:scale-95"
+                className="py-3 rounded-xl bg-gradient-to-r from-[#DC2626] to-[#B91C1C] hover:from-[#EF4444] hover:to-[#DC2626] text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-lg shadow-[#DC2626]/20 transition-transform active:scale-95 border border-[#E5A93C]/40"
               >
                 <ArrowDownLeft size={16} /> Recharge (CBE)
               </button>
@@ -332,7 +332,7 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
               <h3 className="text-xs font-extrabold uppercase tracking-wider text-neutral-300">Recent Activity</h3>
               <button
                 onClick={() => setActiveSubTab('history')}
-                className="text-xs text-[#00D26A] font-semibold hover:underline"
+                className="text-xs text-[#E5A93C] font-semibold hover:underline"
               >
                 View All
               </button>
@@ -344,7 +344,7 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
                     <span className="font-semibold text-white block truncate">{tx.title}</span>
                     <span className="text-[10px] text-neutral-500">{new Date(tx.createdAt).toLocaleDateString()}</span>
                   </div>
-                  <span className={`font-extrabold ${tx.type === 'deposit' || tx.type === 'daily_income' || tx.type === 'task_reward' ? 'text-[#00D26A]' : 'text-neutral-300'}`}>
+                  <span className={`font-extrabold ${tx.type === 'deposit' || tx.type === 'daily_income' || tx.type === 'task_reward' ? 'text-[#E5A93C]' : 'text-neutral-300'}`}>
                     {tx.type === 'deposit' || tx.type === 'daily_income' || tx.type === 'task_reward' ? '+' : '-'}{tx.amount.toLocaleString()} ETB
                   </span>
                 </div>
@@ -384,14 +384,14 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
             <div className="flex items-center justify-between pt-1 border-t border-neutral-800/80">
               <div>
                 <span className="text-[10px] uppercase tracking-wider font-semibold text-neutral-400 block">Account Holder</span>
-                <p className="text-xs font-extrabold text-[#00D26A]">{CBE_BANK_INFO.accountHolder}</p>
+                <p className="text-xs font-extrabold text-[#E5A93C]">{CBE_BANK_INFO.accountHolder}</p>
               </div>
               <button
                 type="button"
                 onClick={() => handleCopy(CBE_BANK_INFO.accountHolder, 'holder')}
                 className="px-2.5 py-1 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-[10px] font-bold flex items-center gap-1 transition-colors"
               >
-                {copiedKey === 'holder' ? <Check size={12} className="text-[#00D26A]" /> : <Copy size={12} />}
+                {copiedKey === 'holder' ? <Check size={12} className="text-[#E5A93C]" /> : <Copy size={12} />}
                 <span>{copiedKey === 'holder' ? 'Copied' : 'Copy Name'}</span>
               </button>
             </div>
@@ -405,7 +405,7 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
               <button
                 type="button"
                 onClick={() => handleCopy(CBE_BANK_INFO.accountNumber, 'acc-num')}
-                className="px-3 py-1.5 rounded-lg bg-[#00D26A] hover:bg-[#00e875] text-black text-[11px] font-extrabold flex items-center gap-1 shadow-sm transition-transform active:scale-95"
+                className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#DC2626] to-[#B91C1C] hover:from-[#EF4444] hover:to-[#DC2626] text-white text-[11px] font-extrabold flex items-center gap-1 shadow-sm transition-transform active:scale-95 border border-[#E5A93C]/40"
               >
                 {copiedKey === 'acc-num' ? <Check size={12} /> : <Copy size={12} />}
                 <span>{copiedKey === 'acc-num' ? 'Copied' : 'Copy Number'}</span>
@@ -424,7 +424,7 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
                   onClick={() => setDepositAmount(amt)}
                   className={`py-2 rounded-xl text-xs font-bold transition-all ${
                     depositAmount === amt
-                      ? 'bg-[#00D26A] text-black shadow-md shadow-[#00D26A]/20'
+                      ? 'bg-gradient-to-r from-[#DC2626] to-[#B91C1C] text-white shadow-md border border-[#E5A93C]/40'
                       : 'bg-neutral-900 border border-neutral-800 text-neutral-300 hover:border-neutral-700'
                   }`}
                 >
@@ -445,7 +445,7 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
                 step="100"
                 value={depositAmount}
                 onChange={(e) => setDepositAmount(e.target.value)}
-                className="w-full pl-12 pr-4 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white text-sm font-bold focus:outline-none focus:border-[#00D26A]"
+                className="w-full pl-12 pr-4 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white text-sm font-bold focus:outline-none focus:border-[#E5A93C]"
               />
             </div>
             <span className="text-[10px] text-neutral-400 mt-1 block">Minimum deposit is 2,000 ETB</span>
@@ -462,7 +462,7 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
               value={referenceNumber}
               onChange={(e) => setReferenceNumber(e.target.value)}
               placeholder="e.g. CBE123456789 or Bank Confirmation Ref"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-white placeholder-neutral-500 font-mono focus:outline-none focus:border-[#00D26A]"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-white placeholder-neutral-500 font-mono focus:outline-none focus:border-[#E5A93C]"
             />
             <p className="text-[11px] text-neutral-400 mt-1">
               Enter the transaction reference or receipt number from your CBE transfer.
@@ -490,7 +490,7 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
                   htmlFor="slip-upload-input"
                   className="flex flex-col items-center justify-center cursor-pointer py-3 text-center"
                 >
-                  <UploadCloud size={32} className="text-[#00D26A] mb-2" />
+                  <UploadCloud size={32} className="text-[#E5A93C] mb-2" />
                   <span className="text-xs font-bold text-white">Click to upload payment receipt</span>
                   <span className="text-[11px] text-neutral-400 mt-0.5">Supports PNG, JPG, JPEG (Max 5MB)</span>
                 </label>
@@ -532,7 +532,7 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
           {depositMsg && (
             <div
               className={`p-3 rounded-xl text-xs flex items-center gap-2 ${
-                depositMsg.isError ? 'bg-red-500/15 text-red-300 border border-red-500/30' : 'bg-[#00D26A]/15 text-[#00D26A] border border-[#00D26A]/30'
+                depositMsg.isError ? 'bg-red-500/15 text-red-300 border border-red-500/30' : 'bg-[#DC2626]/15 text-[#FDE047] border border-[#DC2626]/30'
               }`}
             >
               {depositMsg.isError ? <AlertTriangle size={15} /> : <CheckCircle2 size={15} />}
@@ -545,7 +545,7 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
             id="confirm-deposit-btn"
             onClick={handleExecuteDeposit}
             disabled={depositLoading}
-            className="w-full py-3.5 rounded-xl bg-[#00D26A] hover:bg-[#00e875] text-black font-extrabold text-sm shadow-lg shadow-[#00D26A]/20 transition-all active:scale-[0.98] disabled:opacity-50"
+            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#DC2626] to-[#B91C1C] hover:from-[#EF4444] hover:to-[#DC2626] text-white font-extrabold text-sm shadow-lg shadow-[#DC2626]/20 transition-all active:scale-[0.98] disabled:opacity-50 border border-[#E5A93C]/40"
           >
             {depositLoading ? 'Submitting Recharge Request...' : `Submit Recharge Request (${Number(depositAmount || 0).toLocaleString()} ETB)`}
           </button>
@@ -558,7 +558,7 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-extrabold text-white">Withdraw Funds (ETB)</h3>
             <span className="text-xs font-bold text-neutral-400">
-              Available: <span className="text-[#00D26A]">{user ? user.balance.toLocaleString() : '0'} ETB</span>
+              Available: <span className="text-[#E5A93C]">{user ? user.balance.toLocaleString() : '0'} ETB</span>
             </span>
           </div>
 
@@ -568,7 +568,7 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
             <select
               value={withdrawBankName}
               onChange={(e) => setWithdrawBankName(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-white font-semibold focus:outline-none focus:border-[#00D26A]"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-white font-semibold focus:outline-none focus:border-[#E5A93C]"
             >
               <option value="Commercial Bank of Ethiopia (CBE)">Commercial Bank of Ethiopia (CBE)</option>
               <option value="Awash Bank">Awash Bank</option>
@@ -587,7 +587,7 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
               value={withdrawAccountHolder}
               onChange={(e) => setWithdrawAccountHolder(e.target.value)}
               placeholder="e.g. Abebe Bikila"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-white placeholder-neutral-500 font-semibold focus:outline-none focus:border-[#00D26A]"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-white placeholder-neutral-500 font-semibold focus:outline-none focus:border-[#E5A93C]"
             />
           </div>
 
@@ -599,7 +599,7 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
               value={withdrawAccountNumber}
               onChange={(e) => setWithdrawAccountNumber(e.target.value)}
               placeholder="e.g. 1000123456789"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-white placeholder-neutral-500 font-mono focus:outline-none focus:border-[#00D26A]"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-white placeholder-neutral-500 font-mono focus:outline-none focus:border-[#E5A93C]"
             />
           </div>
 
@@ -614,7 +614,7 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
                   onClick={() => setWithdrawAmount(amt)}
                   className={`py-1.5 rounded-xl text-xs font-bold transition-all ${
                     withdrawAmount === amt
-                      ? 'bg-[#00D26A] text-black shadow-md shadow-[#00D26A]/20'
+                      ? 'bg-gradient-to-r from-[#DC2626] to-[#B91C1C] text-white shadow-md border border-[#E5A93C]/40'
                       : 'bg-neutral-900 border border-neutral-800 text-neutral-300 hover:border-neutral-700'
                   }`}
                 >
@@ -635,12 +635,12 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
                 step="50"
                 value={withdrawAmount}
                 onChange={(e) => setWithdrawAmount(e.target.value)}
-                className="w-full pl-12 pr-16 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white text-sm font-bold focus:outline-none focus:border-[#00D26A]"
+                className="w-full pl-12 pr-16 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white text-sm font-bold focus:outline-none focus:border-[#E5A93C]"
               />
               <button
                 type="button"
                 onClick={() => setWithdrawAmount(String(Math.floor(user?.balance || 0)))}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-extrabold text-[#00D26A] hover:underline"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-extrabold text-[#E5A93C] hover:underline"
               >
                 MAX
               </button>
@@ -659,7 +659,7 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
             </div>
             <div className="pt-2 border-t border-neutral-800 flex justify-between font-bold">
               <span className="text-white">Net Payout Transferred</span>
-              <span className="text-base text-[#00D26A]">{calcWdNet.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ETB</span>
+              <span className="text-base text-[#E5A93C]">{calcWdNet.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ETB</span>
             </div>
           </div>
 
@@ -670,7 +670,7 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
               <div>
                 <span className="font-extrabold block">Warning: Income Pause Trigger</span>
                 <p className="mt-0.5 text-neutral-400">
-                  After this withdrawal, your remaining balance will be {Math.max(0, remainingIfWd).toLocaleString()} ETB. If your balance drops below 500 ETB, daily VIP ticket tasks will pause until your account is topped up.
+                  After this withdrawal, your remaining balance will be {Math.max(0, remainingIfWd).toLocaleString()} ETB. If your balance drops below 500 ETB, daily Grab tasks will pause until your account is topped up.
                 </p>
               </div>
             </div>
@@ -679,7 +679,7 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
           {withdrawMsg && (
             <div
               className={`p-3 rounded-xl text-xs flex items-center gap-2 ${
-                withdrawMsg.isError ? 'bg-red-500/15 text-red-300 border border-red-500/30' : 'bg-[#00D26A]/15 text-[#00D26A] border border-[#00D26A]/30'
+                withdrawMsg.isError ? 'bg-red-500/15 text-red-300 border border-red-500/30' : 'bg-[#DC2626]/15 text-[#FDE047] border border-[#DC2626]/30'
               }`}
             >
               {withdrawMsg.isError ? <XCircle size={15} /> : <CheckCircle2 size={15} />}
@@ -692,7 +692,7 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
             id="confirm-withdraw-btn"
             onClick={handleExecuteWithdrawal}
             disabled={withdrawLoading || !user || user.balance < (parseFloat(withdrawAmount) || 0)}
-            className="w-full py-3.5 rounded-xl bg-neutral-800 hover:bg-[#00D26A] hover:text-black text-white font-extrabold text-sm transition-all disabled:opacity-40 shadow-lg"
+            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#DC2626] to-[#B91C1C] hover:from-[#EF4444] hover:to-[#DC2626] text-white font-extrabold text-sm transition-all disabled:opacity-40 shadow-lg shadow-[#DC2626]/20 border border-[#E5A93C]/40"
           >
             {withdrawLoading ? 'Freezing Funds & Creating Request...' : 'Submit Withdrawal Request'}
           </button>
@@ -708,10 +708,10 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
                 key={filter}
                 onClick={() => setHistoryFilter(filter)}
                 className={`flex-1 py-1 rounded-lg capitalize transition-colors ${
-                  historyFilter === filter ? 'bg-[#00D26A] text-black font-bold' : 'text-neutral-400'
+                  historyFilter === filter ? 'bg-gradient-to-r from-[#DC2626] to-[#B91C1C] text-white font-bold border border-[#E5A93C]/40' : 'text-neutral-400'
                 }`}
               >
-                {filter}
+                {filter === 'tickets' ? 'Orders' : filter}
               </button>
             ))}
           </div>
@@ -735,7 +735,7 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
                       <span
                         className={`text-[9px] px-1.5 py-0.5 rounded font-extrabold uppercase ${
                           tx.status === 'completed'
-                            ? 'bg-[#00D26A]/15 text-[#00D26A]'
+                            ? 'bg-[#DC2626]/15 text-[#FDE047] border border-[#DC2626]/30'
                             : tx.status === 'pending'
                             ? 'bg-amber-500/15 text-amber-300'
                             : 'bg-red-500/15 text-red-400'
@@ -753,7 +753,7 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
                     <span
                       className={`text-sm font-extrabold ${
                         tx.type === 'deposit' || tx.type === 'daily_income' || tx.type === 'task_reward'
-                          ? 'text-[#00D26A]'
+                          ? 'text-[#E5A93C]'
                           : 'text-neutral-200'
                       }`}
                     >

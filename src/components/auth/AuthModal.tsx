@@ -79,14 +79,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     // Canvas background
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-    grad.addColorStop(0, '#101712');
-    grad.addColorStop(1, '#0e2619');
+    grad.addColorStop(0, '#2a0808');
+    grad.addColorStop(1, '#1a0f12');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Random background noise lines
     for (let i = 0; i < 4; i++) {
-      ctx.strokeStyle = `rgba(0, 210, 106, ${0.15 + Math.random() * 0.25})`;
+      ctx.strokeStyle = `rgba(229, 169, 60, ${0.15 + Math.random() * 0.25})`;
       ctx.lineWidth = 1 + Math.random();
       ctx.beginPath();
       ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
@@ -106,7 +106,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     ctx.font = 'bold 22px "Courier New", monospace';
     ctx.textBaseline = 'middle';
 
-    const colors = ['#00D26A', '#ffffff', '#34d399', '#a7f3d0', '#6ee7b7'];
+    const colors = ['#EF4444', '#E5A93C', '#F59E0B', '#FCA5A5', '#FDE047'];
     for (let i = 0; i < captchaCode.length; i++) {
       ctx.save();
       const x = 20 + i * 22;
@@ -211,9 +211,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="w-full max-w-sm max-h-[90vh] rounded-3xl bg-[#10121a] border border-[#00D26A]/40 overflow-hidden shadow-2xl text-white flex flex-col relative">
+      <div className="w-full max-w-sm max-h-[90vh] rounded-3xl bg-[#160c0e] border border-[#DC2626]/40 overflow-hidden shadow-2xl text-white flex flex-col relative">
         {/* Header */}
-        <div className="relative p-5 bg-gradient-to-br from-[#0c261b] via-[#0e161f] to-[#0a0c10] border-b border-neutral-800 shrink-0">
+        <div className="relative p-5 bg-gradient-to-br from-[#2a0e11] via-[#1a0c0f] to-[#0a0708] border-b border-[#3d181c] shrink-0">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 p-1.5 rounded-full bg-black/50 text-neutral-400 hover:text-white"
@@ -222,14 +222,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </button>
 
           <div className="flex items-center gap-3">
-            <span className="w-10 h-10 rounded-2xl bg-[#00D26A] text-black flex items-center justify-center font-black shadow-lg shadow-[#00D26A]/30">
+            <span className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#DC2626] to-[#EF4444] text-[#FDE047] flex items-center justify-center font-black shadow-lg shadow-[#DC2626]/30 border border-[#E5A93C]/40">
               <ShieldCheck size={22} />
             </span>
             <div>
               <h3 className="text-base font-black text-white">
-                {mode === 'register' ? t('auth.register', 'Create JAMBASE Account') : t('auth.login', 'Account Login')}
+                {mode === 'register' ? t('auth.register', 'Create HBO JAMBASE MUSIC Account') : t('auth.login', 'Account Login')}
               </h3>
-              <p className="text-[11px] text-[#00D26A] font-semibold">
+              <p className="text-[11px] text-[#E5A93C] font-semibold">
                 {mode === 'register' ? 'Global Concert Ticketing & Assets' : 'Access your VIP investment portfolio'}
               </p>
             </div>
@@ -243,7 +243,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 setErrorMsg(null);
               }}
               className={`py-2 rounded-xl text-xs font-black transition-all ${
-                mode === 'register' ? 'bg-[#00D26A] text-black shadow-md shadow-[#00D26A]/20' : 'text-neutral-400 hover:text-white'
+                mode === 'register' ? 'bg-gradient-to-r from-[#DC2626] to-[#B91C1C] text-white shadow-md shadow-[#DC2626]/30 border border-[#E5A93C]/40' : 'text-neutral-400 hover:text-white'
               }`}
             >
               Register
@@ -254,7 +254,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 setErrorMsg(null);
               }}
               className={`py-2 rounded-xl text-xs font-black transition-all ${
-                mode === 'login' ? 'bg-[#00D26A] text-black shadow-md shadow-[#00D26A]/20' : 'text-neutral-400 hover:text-white'
+                mode === 'login' ? 'bg-gradient-to-r from-[#DC2626] to-[#B91C1C] text-white shadow-md shadow-[#DC2626]/30 border border-[#E5A93C]/40' : 'text-neutral-400 hover:text-white'
               }`}
             >
               Sign In
@@ -263,17 +263,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
           {/* Locked Sponsor Invitation Banner */}
           {mode === 'register' && isCodeLocked && (
-            <div className="mt-3.5 p-2.5 rounded-2xl bg-[#00D26A]/10 border border-[#00D26A]/35 flex items-center gap-2.5 animate-in fade-in">
-              <div className="w-7 h-7 rounded-xl bg-[#00D26A]/20 text-[#00D26A] flex items-center justify-center shrink-0">
+            <div className="mt-3.5 p-2.5 rounded-2xl bg-[#DC2626]/10 border border-[#DC2626]/35 flex items-center gap-2.5 animate-in fade-in">
+              <div className="w-7 h-7 rounded-xl bg-[#DC2626]/20 text-[#E5A93C] flex items-center justify-center shrink-0">
                 <Lock size={14} />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-[11px] font-bold text-white flex items-center gap-1.5">
                   <span>Referral Registration</span>
-                  <span className="text-[9px] bg-[#00D26A] text-black font-extrabold px-1.5 py-0.5 rounded font-mono">BOUND</span>
+                  <span className="text-[9px] bg-[#E5A93C] text-black font-extrabold px-1.5 py-0.5 rounded font-mono">BOUND</span>
                 </div>
                 <div className="text-[10px] text-neutral-300 truncate">
-                  Inviter Code: <span className="text-[#00D26A] font-mono font-extrabold">{effectiveLockedCode}</span> (Locked & Bound)
+                  Inviter Code: <span className="text-[#E5A93C] font-mono font-extrabold">{effectiveLockedCode}</span> (Locked & Bound)
                 </div>
               </div>
             </div>
@@ -301,7 +301,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 placeholder="e.g. music_investor99"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white font-medium focus:outline-none focus:border-[#00D26A]"
+                className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white font-medium focus:outline-none focus:border-[#E5A93C]"
               />
             </div>
           </div>
@@ -332,7 +332,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     placeholder={t('auth.phone', 'Mobile number')}
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white font-medium focus:outline-none focus:border-[#00D26A]"
+                    className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white font-medium focus:outline-none focus:border-[#E5A93C]"
                   />
                 </div>
               </div>
@@ -351,7 +351,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white font-medium focus:outline-none focus:border-[#00D26A]"
+                className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white font-medium focus:outline-none focus:border-[#E5A93C]"
               />
             </div>
           </div>
@@ -369,7 +369,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   placeholder="••••••••"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white font-medium focus:outline-none focus:border-[#00D26A]"
+                  className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white font-medium focus:outline-none focus:border-[#E5A93C]"
                 />
               </div>
             </div>
@@ -380,13 +380,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="text-[11px] font-semibold text-neutral-300 flex items-center gap-1.5">
-                  <Users size={12} className="text-[#00D26A]" />
+                  <Users size={12} className="text-[#E5A93C]" />
                   <span>{t('auth.invitationCode', 'Invitation / Referral Code')}</span>
                   {!isCodeLocked && <span className="text-neutral-500 text-[10px] font-normal">(Optional)</span>}
                 </label>
                 {isCodeLocked && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-[#00D26A] bg-[#00D26A]/15 px-2 py-0.5 rounded-md border border-[#00D26A]/35">
-                    <Lock size={10} className="text-[#00D26A]" /> Locked to Inviter
+                  <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-[#E5A93C] bg-[#E5A93C]/15 px-2 py-0.5 rounded-md border border-[#E5A93C]/35">
+                    <Lock size={10} className="text-[#E5A93C]" /> Locked to Inviter
                   </span>
                 )}
               </div>
@@ -405,20 +405,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   }}
                   className={`w-full px-3.5 py-2.5 rounded-xl font-mono font-bold transition-all focus:outline-none ${
                     isCodeLocked
-                      ? 'bg-[#0f1d14] border-2 border-[#00D26A]/70 text-[#00D26A] cursor-not-allowed select-none pr-24 shadow-inner'
-                      : 'bg-neutral-900 border border-neutral-800 text-white focus:border-[#00D26A]'
+                      ? 'bg-[#1f0e10] border-2 border-[#DC2626]/70 text-[#E5A93C] cursor-not-allowed select-none pr-24 shadow-inner'
+                      : 'bg-neutral-900 border border-neutral-800 text-white focus:border-[#E5A93C]'
                   }`}
                 />
                 {isCodeLocked && (
-                  <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[10px] font-black text-[#00D26A] bg-black/75 px-2.5 py-1 rounded-lg border border-[#00D26A]/40">
+                  <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[10px] font-black text-[#E5A93C] bg-black/75 px-2.5 py-1 rounded-lg border border-[#E5A93C]/40">
                     <Lock size={11} />
                     <span>Locked</span>
                   </div>
                 )}
               </div>
               {isCodeLocked && (
-                <p className="text-[10px] text-[#00D26A]/90 mt-1 font-medium flex items-center gap-1">
-                  <ShieldCheck size={12} className="shrink-0 text-[#00D26A]" />
+                <p className="text-[10px] text-[#E5A93C]/90 mt-1 font-medium flex items-center gap-1">
+                  <ShieldCheck size={12} className="shrink-0 text-[#E5A93C]" />
                   Pre-filled & bound from referral link. Assigned directly to inviter's team.
                 </p>
               )}
@@ -445,7 +445,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 <button
                   type="button"
                   onClick={generateCaptcha}
-                  className="p-2.5 rounded-xl bg-neutral-900 border border-neutral-800 hover:border-[#00D26A] text-neutral-300 hover:text-[#00D26A] transition-colors"
+                  className="p-2.5 rounded-xl bg-neutral-900 border border-neutral-800 hover:border-[#DC2626] text-neutral-300 hover:text-[#E5A93C] transition-colors"
                   title="Generate New Captcha"
                 >
                   <RefreshCw size={16} />
@@ -458,7 +458,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   placeholder={t('auth.enterCaptcha', 'Code')}
                   value={captchaInput}
                   onChange={(e) => setCaptchaInput(e.target.value)}
-                  className="flex-1 px-3 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white font-mono font-black text-center uppercase tracking-widest focus:outline-none focus:border-[#00D26A]"
+                  className="flex-1 px-3 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white font-mono font-black text-center uppercase tracking-widest focus:outline-none focus:border-[#E5A93C]"
                 />
               </div>
             </div>
@@ -468,7 +468,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           <button
             type="submit"
             disabled={loading}
-            className="w-full mt-2 py-3 rounded-xl bg-[#00D26A] hover:bg-[#00e875] text-black font-black text-xs shadow-lg shadow-[#00D26A]/30 transition-transform active:scale-98"
+            className="w-full mt-2 py-3 rounded-xl bg-gradient-to-r from-[#DC2626] to-[#B91C1C] hover:from-[#EF4444] hover:to-[#DC2626] text-white font-black text-xs shadow-lg shadow-[#DC2626]/30 transition-transform active:scale-98 border border-[#E5A93C]/40"
           >
             {loading
               ? 'Processing...'
@@ -480,7 +480,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
         {/* Country Picker Sub-Modal */}
         {showCountryPicker && (
-          <div className="absolute inset-0 z-20 bg-[#10121a] flex flex-col p-4 animate-in slide-in-from-bottom duration-200">
+          <div className="absolute inset-0 z-20 bg-[#160c0e] flex flex-col p-4 animate-in slide-in-from-bottom duration-200">
             <div className="flex items-center justify-between pb-3 border-b border-neutral-800">
               <h4 className="text-sm font-extrabold text-white">
                 {t('auth.countryCode', 'Select Country Calling Code')}
@@ -501,7 +501,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 placeholder={t('auth.searchCountry', 'Search country name or code (+1, +44, +90, etc.)...')}
                 value={countrySearch}
                 onChange={(e) => setCountrySearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-white focus:outline-none focus:border-[#00D26A]"
+                className="w-full pl-9 pr-3 py-2 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-white focus:outline-none focus:border-[#E5A93C]"
               />
             </div>
 
@@ -515,7 +515,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     setShowCountryPicker(false);
                   }}
                   className={`p-2.5 rounded-xl flex items-center justify-between hover:bg-neutral-900 cursor-pointer ${
-                    selectedCountry.code === country.code ? 'bg-[#00D26A]/10 text-[#00D26A]' : 'text-neutral-200'
+                    selectedCountry.code === country.code ? 'bg-[#DC2626]/15 text-[#E5A93C]' : 'text-neutral-200'
                   }`}
                 >
                   <div className="flex items-center gap-2.5">

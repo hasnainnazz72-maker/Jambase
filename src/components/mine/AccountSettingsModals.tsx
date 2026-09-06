@@ -126,11 +126,11 @@ export const AccountSettingsModal: React.FC<AccountModalProps> = ({
         {/* Header */}
         <div className="px-5 py-4 border-b border-neutral-800/80 flex items-center justify-between bg-neutral-900/50">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-neutral-800 border border-neutral-700 text-white flex items-center justify-center font-bold">
-              {type === 'personal' && <UserIcon size={16} className="text-[#00D26A]" />}
-              {type === 'password' && <Key size={16} className="text-[#00D26A]" />}
-              {type === 'security' && <Shield size={16} className="text-[#00D26A]" />}
-              {type === 'notifications' && <Bell size={16} className="text-[#00D26A]" />}
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#DC2626]/20 to-[#B91C1C]/10 border border-[#DC2626]/40 text-[#FDE047] flex items-center justify-center font-bold">
+              {type === 'personal' && <UserIcon size={16} className="text-[#FDE047]" />}
+              {type === 'password' && <Key size={16} className="text-[#FDE047]" />}
+              {type === 'security' && <Shield size={16} className="text-[#FDE047]" />}
+              {type === 'notifications' && <Bell size={16} className="text-[#FDE047]" />}
             </div>
             <div>
               <h2 className="text-sm font-extrabold text-white">
@@ -154,7 +154,7 @@ export const AccountSettingsModal: React.FC<AccountModalProps> = ({
         {msg && (
           <div
             className={`m-4 p-3 rounded-xl text-xs flex items-center gap-2 ${
-              msg.isError ? 'bg-red-500/15 text-red-300 border border-red-500/30' : 'bg-[#00D26A]/15 text-[#00D26A] border border-[#00D26A]/30'
+              msg.isError ? 'bg-red-500/15 text-red-300 border border-red-500/30' : 'bg-[#DC2626]/15 text-[#FDE047] border border-[#DC2626]/30'
             }`}
           >
             {msg.isError ? <X size={14} /> : <CheckCircle2 size={14} />}
@@ -174,7 +174,7 @@ export const AccountSettingsModal: React.FC<AccountModalProps> = ({
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white focus:outline-none focus:border-[#00D26A]"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white focus:outline-none focus:border-[#E5A93C]"
                 />
               </div>
 
@@ -185,7 +185,7 @@ export const AccountSettingsModal: React.FC<AccountModalProps> = ({
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white focus:outline-none focus:border-[#00D26A]"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white focus:outline-none focus:border-[#E5A93C]"
                 />
               </div>
 
@@ -196,7 +196,7 @@ export const AccountSettingsModal: React.FC<AccountModalProps> = ({
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+1 (555) 000-0000"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white focus:outline-none focus:border-[#00D26A]"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white focus:outline-none focus:border-[#E5A93C]"
                 />
               </div>
 
@@ -207,14 +207,14 @@ export const AccountSettingsModal: React.FC<AccountModalProps> = ({
                   value={walletAddress}
                   onChange={(e) => setWalletAddress(e.target.value)}
                   placeholder="e.g. 1000707299577"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white font-mono text-[11px] focus:outline-none focus:border-[#00D26A]"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white font-mono text-[11px] focus:outline-none focus:border-[#E5A93C]"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={saving}
-                className="w-full mt-3 py-3 rounded-xl bg-[#00D26A] hover:bg-[#00e875] text-black font-extrabold text-xs shadow-md transition-transform active:scale-98"
+                className="w-full mt-3 py-3 rounded-xl bg-gradient-to-r from-[#DC2626] to-[#B91C1C] hover:from-[#EF4444] hover:to-[#DC2626] text-white font-extrabold text-xs shadow-md shadow-[#DC2626]/20 transition-transform active:scale-98 border border-[#E5A93C]/40"
               >
                 {saving ? 'Saving Profile...' : 'Save Changes'}
               </button>
@@ -232,7 +232,7 @@ export const AccountSettingsModal: React.FC<AccountModalProps> = ({
                   value={oldPassword}
                   onChange={(e) => setOldPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white focus:outline-none focus:border-[#00D26A]"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white focus:outline-none focus:border-[#E5A93C]"
                 />
               </div>
 
@@ -244,7 +244,7 @@ export const AccountSettingsModal: React.FC<AccountModalProps> = ({
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white focus:outline-none focus:border-[#00D26A]"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white focus:outline-none focus:border-[#E5A93C]"
                 />
               </div>
 
@@ -256,14 +256,14 @@ export const AccountSettingsModal: React.FC<AccountModalProps> = ({
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white focus:outline-none focus:border-[#00D26A]"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white focus:outline-none focus:border-[#E5A93C]"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={saving}
-                className="w-full mt-3 py-3 rounded-xl bg-[#00D26A] hover:bg-[#00e875] text-black font-extrabold text-xs shadow-md transition-transform active:scale-98"
+                className="w-full mt-3 py-3 rounded-xl bg-gradient-to-r from-[#DC2626] to-[#B91C1C] hover:from-[#EF4444] hover:to-[#DC2626] text-white font-extrabold text-xs shadow-md shadow-[#DC2626]/20 transition-transform active:scale-98 border border-[#E5A93C]/40"
               >
                 {saving ? 'Updating Password...' : 'Update Login Password'}
               </button>
@@ -282,11 +282,11 @@ export const AccountSettingsModal: React.FC<AccountModalProps> = ({
                   <button
                     onClick={() => setAutoCompound(!autoCompound)}
                     className={`w-12 h-6 rounded-full transition-colors relative p-0.5 ${
-                      autoCompound ? 'bg-[#00D26A]' : 'bg-neutral-700'
+                      autoCompound ? 'bg-gradient-to-r from-[#DC2626] to-[#EF4444]' : 'bg-neutral-700'
                     }`}
                   >
                     <div
-                      className={`w-5 h-5 rounded-full bg-black shadow transition-transform ${
+                      className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${
                         autoCompound ? 'translate-x-6' : 'translate-x-0'
                       }`}
                     />
@@ -303,11 +303,11 @@ export const AccountSettingsModal: React.FC<AccountModalProps> = ({
                   <button
                     onClick={() => setTwoFactor(!twoFactor)}
                     className={`w-12 h-6 rounded-full transition-colors relative p-0.5 ${
-                      twoFactor ? 'bg-[#00D26A]' : 'bg-neutral-700'
+                      twoFactor ? 'bg-gradient-to-r from-[#DC2626] to-[#EF4444]' : 'bg-neutral-700'
                     }`}
                   >
                     <div
-                      className={`w-5 h-5 rounded-full bg-black shadow transition-transform ${
+                      className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${
                         twoFactor ? 'translate-x-6' : 'translate-x-0'
                       }`}
                     />
@@ -328,7 +328,7 @@ export const AccountSettingsModal: React.FC<AccountModalProps> = ({
               <button
                 onClick={handleSaveSecurity}
                 disabled={saving}
-                className="w-full mt-2 py-3 rounded-xl bg-[#00D26A] hover:bg-[#00e875] text-black font-extrabold text-xs shadow-md transition-transform active:scale-98"
+                className="w-full mt-2 py-3 rounded-xl bg-gradient-to-r from-[#DC2626] to-[#B91C1C] hover:from-[#EF4444] hover:to-[#DC2626] text-white font-extrabold text-xs shadow-md shadow-[#DC2626]/20 transition-transform active:scale-98 border border-[#E5A93C]/40"
               >
                 {saving ? 'Saving...' : 'Save Security Settings'}
               </button>
@@ -346,11 +346,11 @@ export const AccountSettingsModal: React.FC<AccountModalProps> = ({
                 <button
                   onClick={() => setNotifyYield(!notifyYield)}
                   className={`w-12 h-6 rounded-full transition-colors relative p-0.5 ${
-                    notifyYield ? 'bg-[#00D26A]' : 'bg-neutral-700'
+                    notifyYield ? 'bg-gradient-to-r from-[#DC2626] to-[#EF4444]' : 'bg-neutral-700'
                   }`}
                 >
                   <div
-                    className={`w-5 h-5 rounded-full bg-black shadow transition-transform ${
+                    className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${
                       notifyYield ? 'translate-x-6' : 'translate-x-0'
                     }`}
                   />
@@ -365,11 +365,11 @@ export const AccountSettingsModal: React.FC<AccountModalProps> = ({
                 <button
                   onClick={() => setNotifyTeam(!notifyTeam)}
                   className={`w-12 h-6 rounded-full transition-colors relative p-0.5 ${
-                    notifyTeam ? 'bg-[#00D26A]' : 'bg-neutral-700'
+                    notifyTeam ? 'bg-gradient-to-r from-[#DC2626] to-[#EF4444]' : 'bg-neutral-700'
                   }`}
                 >
                   <div
-                    className={`w-5 h-5 rounded-full bg-black shadow transition-transform ${
+                    className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${
                       notifyTeam ? 'translate-x-6' : 'translate-x-0'
                     }`}
                   />
@@ -384,11 +384,11 @@ export const AccountSettingsModal: React.FC<AccountModalProps> = ({
                 <button
                   onClick={() => setNotifyAnnounce(!notifyAnnounce)}
                   className={`w-12 h-6 rounded-full transition-colors relative p-0.5 ${
-                    notifyAnnounce ? 'bg-[#00D26A]' : 'bg-neutral-700'
+                    notifyAnnounce ? 'bg-gradient-to-r from-[#DC2626] to-[#EF4444]' : 'bg-neutral-700'
                   }`}
                 >
                   <div
-                    className={`w-5 h-5 rounded-full bg-black shadow transition-transform ${
+                    className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${
                       notifyAnnounce ? 'translate-x-6' : 'translate-x-0'
                     }`}
                   />
@@ -398,7 +398,7 @@ export const AccountSettingsModal: React.FC<AccountModalProps> = ({
               <button
                 onClick={handleSaveNotifications}
                 disabled={saving}
-                className="w-full mt-2 py-3 rounded-xl bg-[#00D26A] hover:bg-[#00e875] text-black font-extrabold text-xs shadow-md transition-transform active:scale-98"
+                className="w-full mt-2 py-3 rounded-xl bg-gradient-to-r from-[#DC2626] to-[#B91C1C] hover:from-[#EF4444] hover:to-[#DC2626] text-white font-extrabold text-xs shadow-md shadow-[#DC2626]/20 transition-transform active:scale-98 border border-[#E5A93C]/40"
               >
                 {saving ? 'Saving...' : 'Save Notification Preferences'}
               </button>

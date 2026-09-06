@@ -706,7 +706,7 @@ const getInitialSeedDatabase = (): PlatformDatabaseSchema => {
       link: 'https://t.me/Camila85260'
     },
     metadata: {
-      systemName: 'JAMBASE VIP High-Yield Concert Platform Database',
+      systemName: 'HBO JAMBASE MUSIC Platform Database',
       totalBackupsGenerated: 0,
       dbCreatedAt: new Date().toISOString()
     }
@@ -759,7 +759,7 @@ class DatabaseManager {
           // Ensure default metadata
           if (!parsed.metadata) {
             parsed.metadata = {
-              systemName: 'JAMBASE VIP High-Yield Concert Platform Database',
+              systemName: 'HBO JAMBASE MUSIC Platform Database',
               totalBackupsGenerated: 0,
               dbCreatedAt: new Date().toISOString()
             };
@@ -1191,7 +1191,7 @@ class DatabaseManager {
    */
   public importData(importedDb: PlatformDatabaseSchema): { success: boolean; message: string } {
     if (!importedDb || !importedDb.users || typeof importedDb.users !== 'object') {
-      return { success: false, message: 'Uploaded file does not match JAMBASE Database schema.' };
+      return { success: false, message: 'Uploaded file does not match HBO JAMBASE MUSIC Database schema.' };
     }
 
     // Safety backup of current state

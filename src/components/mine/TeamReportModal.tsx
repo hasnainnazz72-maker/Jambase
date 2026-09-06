@@ -88,7 +88,7 @@ export const TeamReportModal: React.FC<TeamReportModalProps> = ({
         {/* Header */}
         <div className="px-5 py-4 border-b border-neutral-800/80 flex items-center justify-between bg-neutral-900/50">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-[#00D26A]/20 border border-[#00D26A]/40 text-[#00D26A] flex items-center justify-center font-bold">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#DC2626]/20 to-[#B91C1C]/10 border border-[#DC2626]/40 text-[#FDE047] flex items-center justify-center font-bold">
               <Users size={16} />
             </div>
             <div>
@@ -122,8 +122,8 @@ export const TeamReportModal: React.FC<TeamReportModalProps> = ({
             <div className="p-3.5 rounded-2xl bg-[#14161f] border border-neutral-800">
               <span className="text-[11px] text-neutral-400 font-medium block">Valid Direct Investors</span>
               <div className="mt-1 flex items-baseline gap-1.5">
-                <span className="text-xl font-extrabold text-[#00D26A]">{validDirectCount}</span>
-                <span className="text-[10px] text-[#00D26A]/80 font-bold">qualified (≥2,000 ETB)</span>
+                <span className="text-xl font-extrabold text-[#E5A93C]">{validDirectCount}</span>
+                <span className="text-[10px] text-[#E5A93C]/80 font-bold">qualified (≥2,000 ETB)</span>
               </div>
               <span className="text-[10px] text-neutral-400 mt-1 block">
                 VIP Tier Multiplier Active
@@ -144,7 +144,7 @@ export const TeamReportModal: React.FC<TeamReportModalProps> = ({
             <div className="p-3.5 rounded-2xl bg-[#14161f] border border-neutral-800">
               <span className="text-[11px] text-neutral-400 font-medium block">Multi-Tier Rebates</span>
               <div className="mt-1 flex items-baseline gap-1">
-                <span className="text-sm font-extrabold text-[#00D26A]">16%</span>
+                <span className="text-sm font-extrabold text-[#E5A93C]">16%</span>
                 <span className="text-[10px] text-neutral-500">/ 8% / 4%</span>
               </div>
               <span className="text-[10px] text-neutral-400 mt-1 block">
@@ -154,12 +154,12 @@ export const TeamReportModal: React.FC<TeamReportModalProps> = ({
           </div>
 
           {/* VIP Qualification Progress Box */}
-          <div className="p-4 rounded-2xl bg-gradient-to-br from-[#121c17] to-[#0e1218] border border-[#00D26A]/30 space-y-2.5">
+          <div className="p-4 rounded-2xl bg-gradient-to-br from-[#1a0f0f] to-[#141014] border border-[#DC2626]/40 space-y-2.5">
             <div className="flex items-center justify-between text-xs">
               <span className="font-extrabold text-white flex items-center gap-1.5">
-                <Crown size={14} className="text-[#00D26A]" /> VIP Qualification Status
+                <Crown size={14} className="text-[#E5A93C]" /> VIP Qualification Status
               </span>
-              <span className="px-2 py-0.5 rounded-full bg-[#00D26A] text-black text-[10px] font-black uppercase">
+              <span className="px-2 py-0.5 rounded-full bg-gradient-to-r from-[#DC2626] to-[#B91C1C] text-[#FDE047] text-[10px] font-black uppercase border border-[#E5A93C]/30">
                 VIP {currentLevel} ACTIVE
               </span>
             </div>
@@ -167,8 +167,8 @@ export const TeamReportModal: React.FC<TeamReportModalProps> = ({
             {nextTier ? (
               <div className="space-y-2 pt-1">
                 <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-neutral-400">Next Target: <strong className="text-emerald-400 font-bold">{nextTier.name}</strong></span>
-                  <span className="text-[#00D26A] font-bold">{(nextTier.dailyRate * 100).toFixed(1)}% Daily Rate</span>
+                  <span className="text-neutral-400">Next Target: <strong className="text-amber-400 font-bold">{nextTier.name}</strong></span>
+                  <span className="text-[#E5A93C] font-bold">{(nextTier.dailyRate * 100).toFixed(1)}% Daily Rate</span>
                 </div>
 
                 {/* Balance Progress */}
@@ -179,7 +179,7 @@ export const TeamReportModal: React.FC<TeamReportModalProps> = ({
                   </div>
                   <div className="h-1.5 rounded-full bg-neutral-800 overflow-hidden">
                     <div
-                      className="h-full bg-[#00D26A] rounded-full"
+                      className="h-full bg-gradient-to-r from-[#DC2626] to-[#E5A93C] rounded-full"
                       style={{ width: `${Math.min(100, ((user?.totalAssets || 0) / nextTier.minBalance) * 100)}%` }}
                     />
                   </div>
@@ -193,14 +193,14 @@ export const TeamReportModal: React.FC<TeamReportModalProps> = ({
                   </div>
                   <div className="h-1.5 rounded-full bg-neutral-800 overflow-hidden">
                     <div
-                      className="h-full bg-emerald-400 rounded-full"
+                      className="h-full bg-[#E5A93C] rounded-full"
                       style={{ width: `${Math.min(100, (validDirectCount / (nextTier.minDirectMembers || 1)) * 100)}%` }}
                     />
                   </div>
                 </div>
               </div>
             ) : (
-              <p className="text-xs text-[#00D26A] font-bold">You have attained the maximum VIP 6 Royal Diamond Tier!</p>
+              <p className="text-xs text-[#E5A93C] font-bold">You have attained the maximum VIP 6 Royal Diamond Tier!</p>
             )}
           </div>
 
@@ -214,7 +214,7 @@ export const TeamReportModal: React.FC<TeamReportModalProps> = ({
               <span className="text-xs font-mono text-neutral-300 truncate flex-1">{referralLink}</span>
               <button
                 onClick={handleCopyLink}
-                className="px-2.5 py-1 rounded-lg bg-[#00D26A] text-black text-xs font-bold shrink-0 flex items-center gap-1"
+                className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-[#DC2626] to-[#B91C1C] text-[#FDE047] text-xs font-bold shrink-0 flex items-center gap-1 border border-[#E5A93C]/30"
               >
                 {copiedLink ? <Check size={12} /> : <Copy size={12} />}
                 {copiedLink ? 'Copied' : 'Copy'}
@@ -243,7 +243,7 @@ export const TeamReportModal: React.FC<TeamReportModalProps> = ({
                   onClick={() => setFilterTier(f.id as any)}
                   className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors ${
                     filterTier === f.id
-                      ? 'bg-[#00D26A] text-black shadow'
+                      ? 'bg-gradient-to-r from-[#DC2626] to-[#B91C1C] text-[#FDE047] font-bold shadow border border-[#E5A93C]/30'
                       : 'bg-neutral-900 text-neutral-400 border border-neutral-800 hover:text-white'
                   }`}
                 >
@@ -260,7 +260,7 @@ export const TeamReportModal: React.FC<TeamReportModalProps> = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by username or email..."
-                className="w-full pl-8 pr-3 py-2 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-[#00D26A]"
+                className="w-full pl-8 pr-3 py-2 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-[#E5A93C]"
               />
             </div>
           </div>
@@ -302,7 +302,7 @@ export const TeamReportModal: React.FC<TeamReportModalProps> = ({
 
                   <div className="text-right shrink-0">
                     {member.isValid ? (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#00D26A]/15 text-[#00D26A] border border-[#00D26A]/30 flex items-center gap-1">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#E5A93C]/15 text-[#E5A93C] border border-[#E5A93C]/30 flex items-center gap-1">
                         <CheckCircle2 size={10} /> Valid
                       </span>
                     ) : (

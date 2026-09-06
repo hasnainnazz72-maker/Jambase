@@ -374,7 +374,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
     return (
       <div className="min-h-screen bg-[#07080a] text-neutral-100 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <RefreshCw className="animate-spin text-[#00D26A]" size={32} />
+          <RefreshCw className="animate-spin text-[#DC2626]" size={32} />
           <span className="text-xs text-neutral-400 font-mono tracking-wider">Verifying Admin Access...</span>
         </div>
       </div>
@@ -384,21 +384,21 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
   // 1. DEDICATED ADMIN LOGIN SCREEN
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-[#07080a] text-neutral-100 flex flex-col justify-center items-center p-4 relative selection:bg-[#00D26A] selection:text-black">
+      <div className="min-h-screen bg-[#07080a] text-neutral-100 flex flex-col justify-center items-center p-4 relative selection:bg-[#DC2626] selection:text-white">
         {/* Background Grid Accent */}
-        <div className="absolute inset-0 bg-[radial-gradient(#00D26A_1px,transparent_1px)] [background-size:24px_24px] opacity-5 pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(#DC2626_1px,transparent_1px)] [background-size:24px_24px] opacity-10 pointer-events-none" />
 
         <div className="w-full max-w-md bg-[#0f1117] border border-neutral-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative z-10">
           {/* Header & Logo */}
           <div className="text-center space-y-3 mb-6">
-            <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-[#00D26A] to-emerald-400 flex items-center justify-center text-black font-black text-2xl shadow-xl shadow-[#00D26A]/20">
+            <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-[#DC2626] to-[#EF4444] flex items-center justify-center text-white font-black text-2xl shadow-xl shadow-[#DC2626]/20 border border-[#E5A93C]/40">
               <ShieldCheck size={32} />
             </div>
             <div>
-              <h1 className="text-xl font-black tracking-wide text-white">JAMBASE VIP ADMIN</h1>
+              <h1 className="text-xl font-black tracking-wide text-white">HBO JAMBASE MUSIC VIP ADMIN</h1>
               <p className="text-xs text-neutral-400 font-mono mt-1">Dedicated Administration Portal</p>
             </div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[11px] font-semibold text-[#00D26A]">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#DC2626]/15 border border-[#DC2626]/30 text-[11px] font-semibold text-[#E5A93C]">
               <Lock size={12} />
               <span>Restricted Access & End-to-End Token Authorization</span>
             </div>
@@ -423,7 +423,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="Enter admin username"
-                  className="w-full pl-10 pr-4 py-3 rounded-2xl bg-neutral-900/90 border border-neutral-800 text-white placeholder-neutral-500 text-xs focus:outline-none focus:border-[#00D26A] transition-colors"
+                  className="w-full pl-10 pr-4 py-3 rounded-2xl bg-neutral-900/90 border border-neutral-800 text-white placeholder-neutral-500 text-xs focus:outline-none focus:border-[#E5A93C] transition-colors"
                 />
               </div>
             </div>
@@ -438,7 +438,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter secure admin password"
-                  className="w-full pl-10 pr-10 py-3 rounded-2xl bg-neutral-900/90 border border-neutral-800 text-white placeholder-neutral-500 text-xs focus:outline-none focus:border-[#00D26A] transition-colors font-mono"
+                  className="w-full pl-10 pr-10 py-3 rounded-2xl bg-neutral-900/90 border border-neutral-800 text-white placeholder-neutral-500 text-xs focus:outline-none focus:border-[#E5A93C] transition-colors font-mono"
                 />
                 <button
                   type="button"
@@ -453,7 +453,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
             <button
               type="submit"
               disabled={loginLoading}
-              className="w-full mt-2 py-3.5 rounded-2xl bg-[#00D26A] hover:bg-[#00e875] text-black font-extrabold text-xs tracking-wide shadow-lg shadow-[#00D26A]/20 transition-all flex items-center justify-center gap-2 active:scale-98 disabled:opacity-50"
+              className="w-full mt-2 py-3.5 rounded-2xl bg-gradient-to-r from-[#DC2626] to-[#B91C1C] hover:from-[#EF4444] hover:to-[#DC2626] text-white font-extrabold text-xs tracking-wide shadow-lg shadow-[#DC2626]/20 transition-all flex items-center justify-center gap-2 active:scale-98 disabled:opacity-50 border border-[#E5A93C]/40"
             >
               {loginLoading ? <RefreshCw className="animate-spin" size={16} /> : <ShieldCheck size={16} />}
               <span>{loginLoading ? 'Authenticating...' : 'Sign In to Admin Portal'}</span>
@@ -477,18 +477,18 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
 
   // 2. DEDICATED AUTHENTICATED ADMIN CONSOLE
   return (
-    <div className="min-h-screen bg-[#08090d] text-neutral-100 flex flex-col selection:bg-[#00D26A] selection:text-black">
+    <div className="min-h-screen bg-[#08090d] text-neutral-100 flex flex-col selection:bg-[#DC2626] selection:text-white">
       {/* Top Admin Navigation Bar */}
       <header className="sticky top-0 z-40 bg-[#0d0f15]/95 backdrop-blur-md border-b border-neutral-800/80 px-4 sm:px-6 py-3.5">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#00D26A] to-emerald-400 flex items-center justify-center text-black font-black text-lg shadow-md shadow-[#00D26A]/20">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#DC2626] to-[#EF4444] flex items-center justify-center text-white font-black text-lg shadow-md shadow-[#DC2626]/20 border border-[#E5A93C]/40">
               <ShieldCheck size={20} />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="font-extrabold text-sm text-white tracking-wide">JAMBASE VIP ADMIN CONSOLE</h1>
-                <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-[#00D26A] border border-emerald-500/30 text-[10px] font-mono font-bold">
+                <h1 className="font-extrabold text-sm text-white tracking-wide">HBO JAMBASE MUSIC VIP ADMIN CONSOLE</h1>
+                <span className="px-2 py-0.5 rounded-md bg-[#DC2626]/20 text-[#E5A93C] border border-[#DC2626]/30 text-[10px] font-mono font-bold">
                   AUTH: SUPER_ADMIN
                 </span>
               </div>
@@ -532,7 +532,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
             className={`p-3.5 rounded-2xl border text-xs font-semibold flex items-center justify-between transition-all ${
               actionMsg.isError
                 ? 'bg-red-950/70 border-red-500 text-red-200'
-                : 'bg-emerald-950/70 border-[#00D26A] text-emerald-200'
+                : 'bg-[#DC2626]/20 border-[#DC2626]/50 text-[#FDE047]'
             }`}
           >
             <div className="flex items-center gap-2">
@@ -550,7 +550,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
           <div className="p-4 rounded-2xl bg-[#11131a] border border-neutral-800/80">
             <div className="flex items-center justify-between text-neutral-400 text-xs font-semibold">
               <span>Total Members</span>
-              <Users size={16} className="text-[#00D26A]" />
+              <Users size={16} className="text-[#E5A93C]" />
             </div>
             <div className="text-2xl font-black text-white mt-1.5">{overview?.totalUsers || 1}</div>
             <span className="text-[10px] text-neutral-500 font-mono">Platform registered</span>
@@ -639,7 +639,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
                     ? 'bg-amber-400 text-slate-950 shadow-md shadow-amber-500/20'
                     : tab.isPendingHighlight
                     ? 'bg-amber-400 text-black shadow-md shadow-amber-500/20 font-black'
-                    : 'bg-[#00D26A] text-black shadow-md shadow-[#00D26A]/20'
+                    : 'bg-gradient-to-r from-[#DC2626] to-[#B91C1C] text-[#FDE047] shadow-md shadow-[#DC2626]/20 border border-[#E5A93C]/40'
                   : tab.isPendingHighlight
                     ? 'bg-amber-950/40 text-amber-300 border border-amber-500/40 hover:bg-amber-900/60'
                     : tab.highlight
@@ -716,7 +716,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
                       <span
                         className={`px-2.5 py-1 rounded-full text-[11px] font-extrabold ${
                           ref.isValid
-                            ? 'bg-emerald-500/20 text-[#00D26A] border border-emerald-500/30'
+                            ? 'bg-[#DC2626]/20 text-[#FDE047] border border-[#DC2626]/40'
                             : 'bg-red-500/20 text-red-300 border border-red-500/30'
                         }`}
                       >
@@ -741,7 +741,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
                       className={`w-full py-2 rounded-xl text-xs font-bold transition-colors ${
                         ref.isValid
                           ? 'bg-neutral-800 hover:bg-neutral-700 text-neutral-300'
-                          : 'bg-[#00D26A] hover:bg-[#00e875] text-black font-extrabold'
+                          : 'bg-gradient-to-r from-[#DC2626] to-[#EF4444] text-white font-extrabold border border-[#E5A93C]/40'
                       }`}
                     >
                       {ref.isValid ? 'Disqualify Member' : 'Re-qualify Referral'}
@@ -763,7 +763,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
               </div>
               <button
                 onClick={() => setShowAddTicket(!showAddTicket)}
-                className="px-3.5 py-2 rounded-xl bg-[#00D26A] hover:bg-[#00e875] text-black font-extrabold text-xs flex items-center gap-1.5"
+                className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#DC2626] to-[#EF4444] hover:from-[#EF4444] hover:to-[#DC2626] text-white font-extrabold text-xs flex items-center gap-1.5 border border-[#E5A93C]/40 shadow-md shadow-[#DC2626]/20"
               >
                 <Plus size={14} />
                 <span>{showAddTicket ? 'Close Form' : 'Publish New Ticket'}</span>
@@ -851,7 +851,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 rounded-xl bg-[#00D26A] text-black font-extrabold text-xs"
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#DC2626] to-[#EF4444] text-white font-extrabold text-xs border border-[#E5A93C]/40"
                   >
                     Publish to Marketplace
                   </button>
@@ -869,7 +869,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
                     <div className="text-sm font-bold text-white truncate">{tkt.name}</div>
                     <div className="text-xs text-neutral-400">{tkt.artist}</div>
                     <div className="flex items-center justify-between mt-2 text-xs font-mono">
-                      <span className="text-[#00D26A] font-bold">{tkt.price.toLocaleString()} ETB</span>
+                      <span className="text-[#E5A93C] font-bold">{tkt.price.toLocaleString()} ETB</span>
                       <span className="text-neutral-400">VIP {tkt.vipRequired} Req.</span>
                     </div>
                   </div>
@@ -903,7 +903,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
                   required
                   value={noticeTitle}
                   onChange={(e) => setNoticeTitle(e.target.value)}
-                  placeholder="e.g. JAMBASE VIP daily yields calculated at 00:00 UTC."
+                  placeholder="e.g. HBO JAMBASE MUSIC daily grab earnings are credited immediately."
                   className="w-full px-3.5 py-2.5 rounded-xl bg-black border border-neutral-800 text-xs text-white"
                 />
               </div>
@@ -921,7 +921,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
 
               <button
                 type="submit"
-                className="py-2.5 px-5 rounded-xl bg-[#00D26A] hover:bg-[#00e875] text-black font-extrabold text-xs flex items-center gap-1.5"
+                className="py-2.5 px-5 rounded-xl bg-gradient-to-r from-[#DC2626] to-[#EF4444] hover:from-[#EF4444] hover:to-[#DC2626] text-white font-extrabold text-xs flex items-center gap-1.5 border border-[#E5A93C]/40 shadow-md shadow-[#DC2626]/20"
               >
                 <Send size={14} />
                 <span>Broadcast Announcement Now</span>
@@ -952,12 +952,12 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
               </div>
 
               <div className="p-3 rounded-xl bg-black/60 border border-neutral-850 text-xs text-neutral-400">
-                Direct Contact URL: <strong className="text-[#00D26A] font-mono">https://t.me/{telegramUsername.replace('@', '')}</strong>
+                Direct Contact URL: <strong className="text-[#E5A93C] font-mono">https://t.me/{telegramUsername.replace('@', '')}</strong>
               </div>
 
               <button
                 type="submit"
-                className="py-2.5 px-5 rounded-xl bg-[#00D26A] hover:bg-[#00e875] text-black font-extrabold text-xs flex items-center gap-1.5"
+                className="py-2.5 px-5 rounded-xl bg-gradient-to-r from-[#DC2626] to-[#EF4444] hover:from-[#EF4444] hover:to-[#DC2626] text-white font-extrabold text-xs flex items-center gap-1.5 border border-[#E5A93C]/40 shadow-md shadow-[#DC2626]/20"
               >
                 <Check size={14} />
                 <span>Save Telegram Configuration</span>
@@ -1007,10 +1007,10 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
         {activeTab === 'backups' && (
           <div className="space-y-6">
             {/* Header & Quick Action Row */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 rounded-3xl bg-gradient-to-r from-emerald-950/40 via-[#11131a] to-[#11131a] border border-emerald-500/30">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 rounded-3xl bg-gradient-to-r from-red-950/40 via-[#11131a] to-[#11131a] border border-[#DC2626]/30">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <div className="p-2 rounded-xl bg-[#00D26A]/20 text-[#00D26A]">
+                  <div className="p-2 rounded-xl bg-[#DC2626]/20 text-[#FDE047] border border-[#DC2626]/30">
                     <ShieldCheck size={22} />
                   </div>
                   <h2 className="text-lg font-black text-white">VIP Data Protection & Disaster Recovery</h2>
@@ -1059,7 +1059,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
                     <span className="text-sm font-extrabold text-white">System Integrity & Balance Audit</span>
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-black uppercase ${
                       integrityReport.status === 'healthy' 
-                        ? 'bg-emerald-500/20 text-[#00D26A] border border-emerald-500/30' 
+                        ? 'bg-[#DC2626]/20 text-[#FDE047] border border-[#DC2626]/40' 
                         : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
                     }`}>
                       {integrityReport.status}
@@ -1123,7 +1123,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
                       }`}
                     >
                       {chk.passed ? (
-                        <CheckCircle2 size={16} className="text-[#00D26A] shrink-0 mt-0.5" />
+                        <CheckCircle2 size={16} className="text-[#E5A93C] shrink-0 mt-0.5" />
                       ) : (
                         <AlertCircle size={16} className="text-red-400 shrink-0 mt-0.5" />
                       )}
@@ -1140,7 +1140,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
             {/* CREATE INSTANT BACKUP SNAPSHOT */}
             <div className="p-5 rounded-3xl bg-[#11131a] border border-neutral-800 space-y-4">
               <div className="flex items-center gap-2">
-                <Save size={18} className="text-[#00D26A]" />
+                <Save size={18} className="text-[#E5A93C]" />
                 <h3 className="text-sm font-extrabold text-white">Create Manual VIP Safety Snapshot</h3>
               </div>
               <p className="text-xs text-neutral-400">
@@ -1153,12 +1153,12 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
                   value={backupReason}
                   onChange={(e) => setBackupReason(e.target.value)}
                   placeholder="Snapshot description (e.g., Pre-deployment checkpoint, Member balance verification audit)"
-                  className="flex-1 px-4 py-2.5 rounded-xl bg-black border border-neutral-800 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-[#00D26A]"
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-black border border-neutral-800 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-[#E5A93C]"
                 />
                 <button
                   type="submit"
                   disabled={creatingBackup}
-                  className="px-5 py-2.5 rounded-xl bg-[#00D26A] hover:bg-[#00e875] text-black font-extrabold text-xs flex items-center justify-center gap-2 shadow-lg shadow-[#00D26A]/20 transition-all active:scale-98 disabled:opacity-50 shrink-0"
+                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#DC2626] to-[#EF4444] hover:from-[#EF4444] hover:to-[#DC2626] text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-lg shadow-[#DC2626]/20 transition-all active:scale-98 disabled:opacity-50 shrink-0 border border-[#E5A93C]/40"
                 >
                   {creatingBackup ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
                   <span>{creatingBackup ? 'Creating Snapshot...' : 'Save Snapshot Now'}</span>
@@ -1170,21 +1170,21 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
             <div className="p-5 rounded-3xl bg-[#11131a] border border-neutral-800 space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-neutral-800/80 pb-3">
                 <div className="flex items-center gap-2">
-                  <History size={18} className="text-emerald-400" />
+                  <History size={18} className="text-[#E5A93C]" />
                   <h3 className="text-sm font-extrabold text-white">Continuous Automated & Manual Snapshots</h3>
                   <span className="px-2 py-0.5 rounded-full bg-neutral-800 text-neutral-300 text-[10px] font-mono">
                     {backups.length} stored
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-neutral-400">
-                  <Clock size={13} className="text-emerald-400" />
+                  <Clock size={13} className="text-[#E5A93C]" />
                   <span>Auto-backup daemon active (every 5 mins)</span>
                 </div>
               </div>
 
               {loadingBackups ? (
                 <div className="p-8 text-center text-neutral-400 text-xs flex items-center justify-center gap-2">
-                  <RefreshCw className="animate-spin text-[#00D26A]" size={16} />
+                  <RefreshCw className="animate-spin text-[#DC2626]" size={16} />
                   <span>Loading backup catalog...</span>
                 </div>
               ) : backups.length === 0 ? (
@@ -1207,7 +1207,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
                                 ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
                                 : b.type === 'pre-restore'
                                 ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                                : 'bg-emerald-500/20 text-[#00D26A] border border-emerald-500/30'
+                                : 'bg-[#DC2626]/20 text-[#FDE047] border border-[#DC2626]/30'
                             }`}
                           >
                             {b.type}

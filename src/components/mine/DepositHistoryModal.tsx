@@ -40,12 +40,12 @@ export const DepositHistoryModal: React.FC<DepositHistoryModalProps> = ({
         {/* Header */}
         <div className="px-5 py-4 border-b border-neutral-800/80 flex items-center justify-between bg-neutral-900/50">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-[#00D26A]/20 border border-[#00D26A]/40 text-[#00D26A] flex items-center justify-center font-bold">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#DC2626]/20 to-[#B91C1C]/10 border border-[#DC2626]/40 text-[#FDE047] flex items-center justify-center font-bold">
               <ArrowDownLeft size={16} />
             </div>
             <div>
               <h2 className="text-sm font-extrabold text-white">Deposit History</h2>
-              <p className="text-[10px] text-neutral-400">Recharges, Networks & Blockchain Hashes</p>
+              <p className="text-[10px] text-neutral-400">Recharges, Networks & Transaction References</p>
             </div>
           </div>
           <button
@@ -70,14 +70,14 @@ export const DepositHistoryModal: React.FC<DepositHistoryModalProps> = ({
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="font-extrabold text-[#00D26A] text-sm">
+                    <span className="font-extrabold text-[#E5A93C] text-sm font-mono">
                       +{dep.amount.toLocaleString()} ETB
                     </span>
                     <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-neutral-800 text-neutral-400">
                       {dep.bankName || 'CBE Bank'}
                     </span>
                   </div>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#00D26A]/15 text-[#00D26A] border border-[#00D26A]/30 flex items-center gap-1">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#DC2626]/15 text-[#FDE047] border border-[#DC2626]/30 flex items-center gap-1">
                     <CheckCircle2 size={10} /> {dep.status}
                   </span>
                 </div>
@@ -89,7 +89,7 @@ export const DepositHistoryModal: React.FC<DepositHistoryModalProps> = ({
                       onClick={() => handleCopy((dep.referenceNumber || dep.txHash)!, dep.id)}
                       className="text-neutral-400 hover:text-white shrink-0 ml-1"
                     >
-                      {copiedId === dep.id ? <Check size={11} className="text-[#00D26A]" /> : <Copy size={11} />}
+                      {copiedId === dep.id ? <Check size={11} className="text-[#E5A93C]" /> : <Copy size={11} />}
                     </button>
                   </div>
                 )}

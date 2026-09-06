@@ -15,12 +15,12 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({ isOpen, on
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div
         id="notification-modal"
-        className="w-full max-w-md bg-[#12131a] border-t sm:border border-neutral-800 rounded-t-3xl sm:rounded-3xl max-h-[85vh] flex flex-col p-5 pb-8 animate-in slide-in-from-bottom-6 duration-300"
+        className="w-full max-w-md bg-[#160c0e] border-t sm:border border-[#3d181c] rounded-t-3xl sm:rounded-3xl max-h-[85vh] flex flex-col p-5 pb-8 animate-in slide-in-from-bottom-6 duration-300"
       >
         <div className="flex items-center justify-between pb-3 border-b border-neutral-800">
           <div className="flex items-center gap-2">
-            <Bell size={18} className="text-[#00D26A]" />
-            <h3 className="text-sm font-extrabold text-white">JAMBASE Official Notices</h3>
+            <Bell size={18} className="text-[#E5A93C]" />
+            <h3 className="text-sm font-extrabold text-white">HBO JAMBASE MUSIC Official Notices</h3>
           </div>
           <button
             onClick={onClose}
@@ -38,7 +38,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({ isOpen, on
             >
               <div className="flex items-center justify-between">
                 <span className="font-extrabold text-white flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#00D26A]"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#DC2626]"></span>
                   {notice.title}
                 </span>
                 <span className="text-[10px] text-neutral-500">{notice.date}</span>

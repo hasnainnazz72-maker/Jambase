@@ -279,8 +279,18 @@ export const api = {
     return data;
   },
 
+  async grab(): Promise<{ success: boolean; message: string; totalCredited: number; totalProfit: number; baseBalance: number; appliedRate: number; vipLevel: number; newBalance: number; user: User }> {
+    const res = await fetch('/api/grab', {
+      method: 'POST',
+      headers: getUserHeaders()
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to execute Grab');
+    return data;
+  },
+
   async claimDailyVipIncome(): Promise<{ success: boolean; message: string; totalCredited: number; totalProfit: number; baseBalance: number; appliedRate: number; vipLevel: number; newBalance: number; user: User }> {
-    const res = await fetch('/api/income/claim-daily-vip', {
+    const res = await fetch('/api/grab', {
       method: 'POST',
       headers: getUserHeaders()
     });

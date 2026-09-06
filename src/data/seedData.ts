@@ -9,7 +9,7 @@ export const VIP_TIERS: VIPTier[] = [
     minDirectMembers: 0,
     dailyRate: 0.019, // 1.9%
     description: 'Basic tier with steady 1.9% daily compound profit. 2,000 – 49,999 ETB.',
-    color: '#00D26A',
+    color: '#E5A93C',
     badge: '★ VIP 1'
   },
   {
@@ -20,7 +20,7 @@ export const VIP_TIERS: VIPTier[] = [
     minDirectMembers: 3,
     dailyRate: 0.022, // 2.2%
     description: 'Tier 2 with 2.2% daily compound profit. 50,000 – 199,999 ETB. Requires 3 valid direct members.',
-    color: '#22c55e',
+    color: '#F59E0B',
     badge: '★★ VIP 2'
   },
   {
@@ -31,7 +31,7 @@ export const VIP_TIERS: VIPTier[] = [
     minDirectMembers: 10,
     dailyRate: 0.03, // 3.0%
     description: 'Tier 3 with 3.0% daily compound profit. 200,000 – 499,999 ETB. Requires 10 valid direct members.',
-    color: '#10b981',
+    color: '#F97316',
     badge: '★★★ VIP 3'
   },
   {
@@ -42,7 +42,7 @@ export const VIP_TIERS: VIPTier[] = [
     minDirectMembers: 20,
     dailyRate: 0.04, // 4.0%
     description: 'Elite Tier with 4.0% daily compound profit. 500,000 – 1,999,999 ETB. Requires 20 valid direct members.',
-    color: '#34d399',
+    color: '#EF4444',
     badge: '★★★★ VIP 4'
   },
   {
@@ -53,7 +53,7 @@ export const VIP_TIERS: VIPTier[] = [
     minDirectMembers: 50,
     dailyRate: 0.05, // 5.0%
     description: 'Executive Tier with 5.0% daily compound profit. 2,000,000 – 5,000,000 ETB. Requires 50 valid direct members.',
-    color: '#6ee7b7',
+    color: '#DC2626',
     badge: '👑 VIP 5'
   }
 ];
@@ -392,7 +392,7 @@ export const INITIAL_NOTICES: PlatformNotice[] = [
   {
     id: 'n-2',
     title: 'Tier VIP Commission Chart: Level 1 (16%), Level 2 (8%), Level 3 (4%) in ETB.',
-    content: 'Invite your friends to join JAMBASE and earn generous daily multi-tier subordinate income dividends in ETB in real time.',
+    content: 'Invite your friends to join HBO JAMBASE MUSIC and earn generous daily multi-tier subordinate income dividends in ETB in real time.',
     date: '2026-08-27',
     type: 'upgrade'
   },

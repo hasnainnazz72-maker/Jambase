@@ -48,7 +48,7 @@ export const WithdrawalHistoryModal: React.FC<WithdrawalHistoryModalProps> = ({
         {/* Header */}
         <div className="px-5 py-4 border-b border-neutral-800/80 flex items-center justify-between bg-neutral-900/50">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-neutral-800 border border-neutral-700 text-white flex items-center justify-center font-bold">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#DC2626]/20 to-[#B91C1C]/10 border border-[#DC2626]/40 text-[#FDE047] flex items-center justify-center font-bold">
               <ArrowUpRight size={16} />
             </div>
             <div>
@@ -73,7 +73,9 @@ export const WithdrawalHistoryModal: React.FC<WithdrawalHistoryModalProps> = ({
                 key={f}
                 onClick={() => setFilter(f)}
                 className={`flex-1 py-1.5 rounded-lg capitalize transition-colors ${
-                  filter === f ? 'bg-[#00D26A] text-black font-bold' : 'text-neutral-400 hover:text-white'
+                  filter === f
+                    ? 'bg-gradient-to-r from-[#DC2626] to-[#B91C1C] text-white font-bold shadow-sm border border-[#E5A93C]/40'
+                    : 'text-neutral-400 hover:text-white'
                 }`}
               >
                 {f}
@@ -109,7 +111,7 @@ export const WithdrawalHistoryModal: React.FC<WithdrawalHistoryModalProps> = ({
                       <span
                         className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold flex items-center gap-1 ${
                           isCompleted
-                            ? 'bg-[#00D26A]/15 text-[#00D26A] border border-[#00D26A]/30'
+                            ? 'bg-[#DC2626]/15 text-[#FDE047] border border-[#DC2626]/30'
                             : isPending
                             ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
                             : 'bg-red-500/15 text-red-400 border border-red-500/30'
@@ -127,7 +129,7 @@ export const WithdrawalHistoryModal: React.FC<WithdrawalHistoryModalProps> = ({
                         Platform Fee (7%): <strong className="text-neutral-200">{wd.fee.toLocaleString()} ETB</strong>
                       </div>
                       <div>
-                        Net Payout: <strong className="text-[#00D26A] font-bold">{wd.netAmount.toLocaleString()} ETB</strong>
+                        Net Payout: <strong className="text-[#E5A93C] font-bold">{wd.netAmount.toLocaleString()} ETB</strong>
                       </div>
                     </div>
 
@@ -138,7 +140,7 @@ export const WithdrawalHistoryModal: React.FC<WithdrawalHistoryModalProps> = ({
                         className="text-neutral-400 hover:text-white shrink-0 ml-1"
                         title="Copy Account Number"
                       >
-                        {copiedId === wd.id ? <Check size={11} className="text-[#00D26A]" /> : <Copy size={11} />}
+                        {copiedId === wd.id ? <Check size={11} className="text-[#E5A93C]" /> : <Copy size={11} />}
                       </button>
                     </div>
 

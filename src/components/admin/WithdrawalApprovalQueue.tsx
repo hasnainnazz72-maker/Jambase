@@ -148,9 +148,9 @@ export const WithdrawalApprovalQueue: React.FC<WithdrawalApprovalQueueProps> = (
             <span className="text-[10px] text-neutral-400 block font-medium">Total Requests</span>
             <span className="text-xs font-black text-white font-mono">{withdrawals.length}</span>
           </div>
-          <div className="px-3 py-1.5 rounded-xl bg-emerald-950/40 border border-emerald-800/40 text-center">
-            <span className="text-[10px] text-emerald-400 block font-medium">Completed</span>
-            <span className="text-xs font-black text-[#00D26A] font-mono">{approvedCount}</span>
+          <div className="px-3 py-1.5 rounded-xl bg-[#DC2626]/20 border border-[#DC2626]/40 text-center">
+            <span className="text-[10px] text-[#FDE047] block font-medium">Completed</span>
+            <span className="text-xs font-black text-[#E5A93C] font-mono">{approvedCount}</span>
           </div>
           <div className="px-3 py-1.5 rounded-xl bg-red-950/40 border border-red-800/40 text-center">
             <span className="text-[10px] text-red-400 block font-medium">Rejected</span>
@@ -172,7 +172,7 @@ export const WithdrawalApprovalQueue: React.FC<WithdrawalApprovalQueueProps> = (
                   ? st === 'Pending'
                     ? 'bg-amber-400 text-black shadow-md shadow-amber-500/20'
                     : st === 'Completed'
-                    ? 'bg-[#00D26A] text-black shadow-md shadow-[#00D26A]/20'
+                    ? 'bg-gradient-to-r from-[#DC2626] to-[#B91C1C] text-[#FDE047] shadow-md shadow-[#DC2626]/20'
                     : st === 'Rejected'
                     ? 'bg-red-500 text-white shadow-md shadow-red-500/20'
                     : 'bg-white text-black'
@@ -192,7 +192,7 @@ export const WithdrawalApprovalQueue: React.FC<WithdrawalApprovalQueueProps> = (
             placeholder="Search ID, member, wallet..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 bg-neutral-950 border border-neutral-800 rounded-xl text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-[#00D26A]"
+            className="w-full pl-9 pr-3 py-1.5 bg-neutral-950 border border-neutral-800 rounded-xl text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-[#E5A93C]"
           />
           {searchQuery && (
             <button
@@ -258,7 +258,7 @@ export const WithdrawalApprovalQueue: React.FC<WithdrawalApprovalQueueProps> = (
                           className="text-neutral-400 hover:text-white transition-colors p-0.5"
                         >
                           {copiedKey === `id-${wd.id}` ? (
-                            <Check size={13} className="text-[#00D26A]" />
+                            <Check size={13} className="text-[#E5A93C]" />
                           ) : (
                             <Copy size={13} />
                           )}
@@ -276,7 +276,7 @@ export const WithdrawalApprovalQueue: React.FC<WithdrawalApprovalQueueProps> = (
                     <span
                       className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold ${
                         isApproved
-                          ? 'bg-emerald-500/20 text-[#00D26A] border border-emerald-500/30'
+                          ? 'bg-[#DC2626]/20 text-[#FDE047] border border-[#DC2626]/40'
                           : isPending
                           ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse'
                           : 'bg-red-500/20 text-red-300 border border-red-500/30'
@@ -309,9 +309,9 @@ export const WithdrawalApprovalQueue: React.FC<WithdrawalApprovalQueueProps> = (
 
                   <div className="space-y-0.5 col-span-2 sm:col-span-1">
                     <span className="text-[10px] text-neutral-400 font-sans block flex items-center gap-1">
-                      <DollarSign size={10} className="text-[#00D26A]" /> Avail. Balance
+                      <DollarSign size={10} className="text-[#E5A93C]" /> Avail. Balance
                     </span>
-                    <span className="text-emerald-400 font-bold block">{userBalAtReq.toLocaleString()} ETB</span>
+                    <span className="text-[#E5A93C] font-bold block">{userBalAtReq.toLocaleString()} ETB</span>
                   </div>
 
                   {wd.userEmail && (
@@ -337,16 +337,16 @@ export const WithdrawalApprovalQueue: React.FC<WithdrawalApprovalQueueProps> = (
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-bold text-neutral-300 flex items-center gap-1.5">
-                      <Building2 size={14} className="text-[#00D26A]" />
+                      <Building2 size={14} className="text-[#E5A93C]" />
                       <span>Destination Bank Account (CBE)</span>
                     </span>
-                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold font-mono bg-emerald-500/20 text-[#00D26A] border border-emerald-500/30">
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold font-mono bg-[#DC2626]/20 text-[#FDE047] border border-[#DC2626]/30">
                       {wd.bankName || 'Commercial Bank of Ethiopia'}
                     </span>
                   </div>
 
                   {/* Complete, fully visible bank account details with 1-tap copy */}
-                  <div className="relative group bg-[#090b10] border border-emerald-500/30 hover:border-emerald-500/60 transition-colors p-3 rounded-xl">
+                  <div className="relative group bg-[#090b10] border border-[#DC2626]/30 hover:border-[#DC2626]/60 transition-colors p-3 rounded-xl">
                     <div className="flex items-start justify-between gap-2">
                       <div className="font-mono text-xs text-white font-semibold break-all leading-relaxed select-all">
                         {wd.accountHolder && <div className="text-[11px] text-amber-300 mb-0.5">Holder: {wd.accountHolder}</div>}
@@ -357,7 +357,7 @@ export const WithdrawalApprovalQueue: React.FC<WithdrawalApprovalQueueProps> = (
                         onClick={() => handleCopy(wd.walletAddress, `wallet-${wd.id}`)}
                         className={`px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 shrink-0 transition-all ${
                           copiedKey === `wallet-${wd.id}`
-                            ? 'bg-[#00D26A] text-black shadow-md shadow-[#00D26A]/30'
+                            ? 'bg-gradient-to-r from-[#DC2626] to-[#B91C1C] text-[#FDE047] shadow-md shadow-[#DC2626]/30 border border-[#E5A93C]/30'
                             : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200 hover:text-white border border-neutral-700'
                         }`}
                         title="Copy full wallet address"
@@ -389,8 +389,8 @@ export const WithdrawalApprovalQueue: React.FC<WithdrawalApprovalQueueProps> = (
                     <span className="font-mono font-bold text-red-400">-{(wd.fee || wd.amount * 0.07).toLocaleString()} ETB</span>
                   </div>
                   <div>
-                    <span className="text-[10px] text-emerald-400 block font-bold">Net Member Payout</span>
-                    <span className="font-mono font-black text-[#00D26A] text-sm">
+                    <span className="text-[10px] text-[#FDE047] block font-bold">Net Member Payout</span>
+                    <span className="font-mono font-black text-[#E5A93C] text-sm">
                       {(wd.netAmount || wd.amount - (wd.fee || wd.amount * 0.07)).toLocaleString()} ETB
                     </span>
                   </div>
@@ -411,7 +411,7 @@ export const WithdrawalApprovalQueue: React.FC<WithdrawalApprovalQueueProps> = (
                       title="Copy Transaction Reference"
                     >
                       {copiedKey === `tx-${wd.id}` ? (
-                        <Check size={12} className="text-[#00D26A]" />
+                        <Check size={12} className="text-[#E5A93C]" />
                       ) : (
                         <Copy size={12} />
                       )}
@@ -443,7 +443,7 @@ export const WithdrawalApprovalQueue: React.FC<WithdrawalApprovalQueueProps> = (
                   <div className="flex items-center gap-2 pt-2 border-t border-neutral-800">
                     <button
                       onClick={() => setSelectedForApproval(wd)}
-                      className="flex-1 py-2.5 rounded-xl bg-[#00D26A] hover:bg-[#00e875] text-black font-extrabold text-xs shadow-md shadow-[#00D26A]/20 transition-all flex items-center justify-center gap-1.5 active:scale-98"
+                      className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-[#DC2626] to-[#EF4444] hover:from-[#EF4444] hover:to-[#DC2626] text-white font-extrabold text-xs shadow-md shadow-[#DC2626]/20 transition-all flex items-center justify-center gap-1.5 active:scale-98 border border-[#E5A93C]/40"
                     >
                       <CheckCircle2 size={15} />
                       <span>Review & Approve Payout</span>
@@ -469,11 +469,11 @@ export const WithdrawalApprovalQueue: React.FC<WithdrawalApprovalQueueProps> = (
       {/* ========================================================================= */}
       {selectedForApproval && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-[#11131a] border border-emerald-500/40 rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl shadow-emerald-950/50 space-y-5 text-neutral-100 max-h-[90vh] overflow-y-auto">
+          <div className="bg-[#11131a] border border-[#DC2626]/40 rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl shadow-red-950/50 space-y-5 text-neutral-100 max-h-[90vh] overflow-y-auto">
             {/* Header */}
             <div className="flex items-center justify-between border-b border-neutral-800 pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-[#00D26A]">
+                <div className="w-10 h-10 rounded-2xl bg-[#DC2626]/20 border border-[#DC2626]/40 flex items-center justify-center text-[#FDE047]">
                   <ShieldCheck size={22} />
                 </div>
                 <div>
@@ -513,7 +513,7 @@ export const WithdrawalApprovalQueue: React.FC<WithdrawalApprovalQueueProps> = (
 
               <div className="flex justify-between items-center pb-2 border-b border-neutral-850">
                 <span className="text-neutral-400">Payout Bank:</span>
-                <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-[#00D26A] font-bold font-mono text-[11px]">
+                <span className="px-2 py-0.5 rounded bg-[#DC2626]/20 text-[#FDE047] font-bold font-mono text-[11px] border border-[#DC2626]/30">
                   {selectedForApproval.bankName || 'Commercial Bank of Ethiopia'}
                 </span>
               </div>
@@ -532,9 +532,9 @@ export const WithdrawalApprovalQueue: React.FC<WithdrawalApprovalQueueProps> = (
                 </span>
               </div>
 
-              <div className="flex justify-between items-center pt-1 bg-emerald-950/30 p-2.5 rounded-xl border border-emerald-500/30">
-                <span className="font-bold text-emerald-300">NET MEMBER PAYOUT:</span>
-                <span className="font-mono font-black text-[#00D26A] text-base">
+              <div className="flex justify-between items-center pt-1 bg-[#DC2626]/10 p-2.5 rounded-xl border border-[#DC2626]/30">
+                <span className="font-bold text-[#FDE047]">NET MEMBER PAYOUT:</span>
+                <span className="font-mono font-black text-[#E5A93C] text-base">
                   {(selectedForApproval.netAmount || selectedForApproval.amount - (selectedForApproval.fee || selectedForApproval.amount * 0.07)).toLocaleString()} ETB
                 </span>
               </div>
@@ -544,14 +544,14 @@ export const WithdrawalApprovalQueue: React.FC<WithdrawalApprovalQueueProps> = (
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-bold text-white flex items-center gap-1.5">
-                  <Building2 size={14} className="text-[#00D26A]" /> Destination Bank Account Number:
+                  <Building2 size={14} className="text-[#E5A93C]" /> Destination Bank Account Number:
                 </span>
                 <button
                   onClick={() => handleCopy(selectedForApproval.accountNumber || selectedForApproval.walletAddress, 'modal-wallet')}
                   className="text-xs text-neutral-400 hover:text-white flex items-center gap-1"
                 >
                   {copiedKey === 'modal-wallet' ? (
-                    <span className="text-[#00D26A] font-bold">✓ Copied</span>
+                    <span className="text-[#E5A93C] font-bold">✓ Copied</span>
                   ) : (
                     <>
                       <Copy size={12} />
@@ -561,7 +561,7 @@ export const WithdrawalApprovalQueue: React.FC<WithdrawalApprovalQueueProps> = (
                 </button>
               </div>
 
-              <div className="p-3.5 rounded-xl bg-black border-2 border-[#00D26A]/60 text-white font-mono text-sm break-all select-all font-semibold leading-relaxed">
+              <div className="p-3.5 rounded-xl bg-black border-2 border-[#DC2626]/60 text-white font-mono text-sm break-all select-all font-semibold leading-relaxed">
                 {selectedForApproval.accountNumber || selectedForApproval.walletAddress}
               </div>
             </div>
@@ -574,7 +574,7 @@ export const WithdrawalApprovalQueue: React.FC<WithdrawalApprovalQueueProps> = (
                 placeholder="e.g. Verified transfer via CBE mobile banking / Ref #12345"
                 value={approvalNotes}
                 onChange={(e) => setApprovalNotes(e.target.value)}
-                className="w-full px-3 py-2 bg-black border border-neutral-800 rounded-xl text-white text-xs placeholder-neutral-500 focus:outline-none focus:border-[#00D26A]"
+                className="w-full px-3 py-2 bg-black border border-neutral-800 rounded-xl text-white text-xs placeholder-neutral-500 focus:outline-none focus:border-[#E5A93C]"
               />
             </div>
 
@@ -601,7 +601,7 @@ export const WithdrawalApprovalQueue: React.FC<WithdrawalApprovalQueueProps> = (
                 type="button"
                 onClick={handleConfirmApproval}
                 disabled={processingAction}
-                className="flex-2 py-3 rounded-xl bg-[#00D26A] hover:bg-[#00e875] text-black font-extrabold text-xs shadow-lg shadow-[#00D26A]/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50 active:scale-98"
+                className="flex-2 py-3 rounded-xl bg-gradient-to-r from-[#DC2626] to-[#EF4444] hover:from-[#EF4444] hover:to-[#DC2626] text-white font-extrabold text-xs shadow-lg shadow-[#DC2626]/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50 active:scale-98 border border-[#E5A93C]/40"
               >
                 {processingAction ? <RefreshCw size={15} className="animate-spin" /> : <CheckCircle2 size={15} />}
                 <span>{processingAction ? 'Processing Payout...' : 'Confirm & Complete Withdrawal'}</span>

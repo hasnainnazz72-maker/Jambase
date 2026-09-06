@@ -86,7 +86,7 @@ export const FrozenAssetsModal: React.FC<FrozenAssetsModalProps> = ({
                   </div>
                   <div className="flex items-center justify-between text-neutral-400 text-[11px]">
                     <span>Hold Amount: <strong className="text-white">{w.amount.toLocaleString()} ETB</strong></span>
-                    <span>Net to Receive: <strong className="text-[#00D26A]">{w.netAmount.toLocaleString()} ETB</strong></span>
+                    <span>Net to Receive: <strong className="text-[#E5A93C] font-mono">{w.netAmount.toLocaleString()} ETB</strong></span>
                   </div>
                   <span className="text-[10px] text-neutral-500 block">Submitted: {new Date(w.createdAt).toLocaleString()}</span>
                 </div>

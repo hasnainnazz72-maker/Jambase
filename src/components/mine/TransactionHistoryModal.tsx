@@ -79,7 +79,7 @@ export const TransactionHistoryModal: React.FC<TransactionHistoryModalProps> = (
                 onClick={() => setFilter(f.id as any)}
                 className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors ${
                   filter === f.id
-                    ? 'bg-[#00D26A] text-black font-bold shadow'
+                    ? 'bg-gradient-to-r from-[#DC2626] to-[#B91C1C] text-[#FDE047] font-bold shadow border border-[#E5A93C]/30'
                     : 'bg-neutral-900 text-neutral-400 border border-neutral-800 hover:text-white'
                 }`}
               >
@@ -106,7 +106,7 @@ export const TransactionHistoryModal: React.FC<TransactionHistoryModalProps> = (
                       isCommission
                         ? 'border-amber-500/30'
                         : isVipProfit
-                        ? 'border-[#00D26A]/30'
+                        ? 'border-[#E5A93C]/40'
                         : 'border-neutral-800'
                     }`}
                   >
@@ -118,7 +118,7 @@ export const TransactionHistoryModal: React.FC<TransactionHistoryModalProps> = (
                             tx.status === 'completed'
                               ? isCommission
                                 ? 'bg-amber-500/20 text-amber-300'
-                                : 'bg-[#00D26A]/15 text-[#00D26A]'
+                                : 'bg-[#DC2626]/20 text-[#E5A93C]'
                               : tx.status === 'pending'
                               ? 'bg-amber-500/15 text-amber-300'
                               : 'bg-red-500/15 text-red-400'
@@ -135,10 +135,10 @@ export const TransactionHistoryModal: React.FC<TransactionHistoryModalProps> = (
                     </div>
 
                     <div className="text-right shrink-0 pl-2">
-                      <span className={`text-sm font-extrabold ${
-                        isCommission ? 'text-amber-400' : isPositive ? 'text-[#00D26A]' : 'text-neutral-200'
+                      <span className={`text-sm font-extrabold font-mono ${
+                        isCommission ? 'text-amber-400' : isPositive ? 'text-[#E5A93C]' : 'text-neutral-200'
                       }`}>
-                        {isPositive ? '+' : '-'}${tx.amount.toFixed(2)}
+                        {isPositive ? '+' : '-'}{Number(tx.amount || 0).toLocaleString()} ETB
                       </span>
                     </div>
                   </div>

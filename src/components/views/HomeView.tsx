@@ -47,27 +47,28 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
   return (
     <div id="home-view-container" className="pb-28 space-y-5">
-      {/* 1. JAMBASE OFFICIAL CONCERT & TOUR FLEX SHOWCASE (Home Page Top Showcase) */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#071d13] via-[#0b1219] to-[#08090d] border border-[#00D26A]/40 p-4 sm:p-5 shadow-2xl shadow-black/80">
+      {/* 1. HBO JAMBASE MUSIC CONCERT & TOUR SHOWCASE (Home Page Top Flex Showcase) */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#2b0c0e] via-[#1a0a0c] to-[#0d0405] border border-[#DC2626]/40 p-4 sm:p-5 shadow-2xl shadow-black/80">
         <div 
-          className="absolute inset-0 opacity-20 bg-cover bg-center pointer-events-none mix-blend-luminosity"
+          className="absolute inset-0 opacity-25 bg-cover bg-center pointer-events-none mix-blend-luminosity"
           style={{ backgroundImage: `url('https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop&q=80')` }}
         />
-        <div className="absolute -top-12 -right-12 w-36 h-36 bg-[#00D26A]/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -top-12 -right-12 w-36 h-36 bg-[#DC2626]/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-[#E5A93C]/15 rounded-full blur-2xl pointer-events-none" />
 
         <div className="relative z-10 space-y-3">
           {/* Header Tag */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="flex h-2 w-2 relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00D26A] opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00D26A]"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#E5A93C] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#E5A93C]"></span>
               </span>
-              <span className="text-[11px] font-extrabold uppercase tracking-widest text-[#00D26A] flex items-center gap-1.5">
-                <Sparkles size={12} /> JAMBASE VIP CONCERT PASS
+              <span className="text-[11px] font-extrabold uppercase tracking-widest text-[#E5A93C] flex items-center gap-1.5">
+                <Sparkles size={12} /> HBO JAMBASE MUSIC
               </span>
             </div>
-            <span className="px-2 py-0.5 rounded-full bg-[#00D26A]/15 border border-[#00D26A]/30 text-[#00D26A] text-[10px] font-bold">
+            <span className="px-2 py-0.5 rounded-full bg-[#DC2626]/20 border border-[#DC2626]/40 text-[#FCA5A5] text-[10px] font-bold">
               LIVE TOURS 2026
             </span>
           </div>
@@ -75,43 +76,43 @@ export const HomeView: React.FC<HomeViewProps> = ({
           {/* Main Headline */}
           <div>
             <h2 className="text-lg font-black text-white tracking-tight leading-tight">
-              World Stadium Tours & Live Festival Yields
+              World Stadium Tours & Live Music Festivals
             </h2>
             <p className="text-xs text-neutral-300 mt-1 leading-relaxed">
-              Hold authentic concert tickets and earn daily returns backed by live global music event revenues.
+              Official live concert access, tour bookings, and verified festival experiences worldwide.
             </p>
           </div>
 
           {/* 3 Value Pillars */}
           <div className="grid grid-cols-3 gap-2 pt-1">
-            <div className="p-2 rounded-xl bg-black/50 border border-neutral-800 text-center">
-              <div className="text-[#00D26A] text-xs font-black">1-Min</div>
-              <div className="text-[10px] text-neutral-400 font-medium mt-0.5">Fast Settle</div>
+            <div className="p-2 rounded-xl bg-black/60 border border-[#DC2626]/30 text-center">
+              <div className="text-[#E5A93C] text-xs font-black">Official</div>
+              <div className="text-[10px] text-neutral-400 font-medium mt-0.5">Live Access</div>
             </div>
-            <div className="p-2 rounded-xl bg-black/50 border border-neutral-800 text-center">
-              <div className="text-[#00D26A] text-xs font-black">1.9% - 5.0%</div>
-              <div className="text-[10px] text-neutral-400 font-medium mt-0.5">Ticket Yield</div>
+            <div className="p-2 rounded-xl bg-black/60 border border-[#DC2626]/30 text-center">
+              <div className="text-[#E5A93C] text-xs font-black">Worldwide</div>
+              <div className="text-[10px] text-neutral-400 font-medium mt-0.5">Global Tours</div>
             </div>
-            <div className="p-2 rounded-xl bg-black/50 border border-neutral-800 text-center">
-              <div className="text-[#00D26A] text-xs font-black">Multiple</div>
-              <div className="text-[10px] text-neutral-400 font-medium mt-0.5">Daily Tickets</div>
+            <div className="p-2 rounded-xl bg-black/60 border border-[#DC2626]/30 text-center">
+              <div className="text-[#E5A93C] text-xs font-black">VIP Pass</div>
+              <div className="text-[10px] text-neutral-400 font-medium mt-0.5">Instant Booking</div>
             </div>
           </div>
 
           {/* Bottom Action Strip */}
-          <div className="pt-2 border-t border-white/5 flex items-center justify-between">
+          <div className="pt-2 border-t border-white/10 flex items-center justify-between">
             <div className="flex items-center gap-1.5 text-[11px] text-neutral-300 font-medium">
-              <Zap size={13} className="text-[#00D26A]" />
-              <span>Verified Global Music Assets</span>
+              <Zap size={13} className="text-[#E5A93C]" />
+              <span>Verified Music Event Access</span>
             </div>
             <button
               onClick={() => {
                 const el = document.getElementById('popular-events-section');
                 if (el) el.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="px-3 py-1.5 rounded-xl bg-[#00D26A] hover:bg-[#00e875] text-black text-xs font-extrabold shadow-md shadow-[#00D26A]/20 transition-transform active:scale-95 flex items-center gap-1"
+              className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#DC2626] to-[#B91C1C] hover:from-[#EF4444] hover:to-[#DC2626] text-white text-xs font-extrabold shadow-md shadow-[#DC2626]/30 transition-transform active:scale-95 flex items-center gap-1.5 border border-[#E5A93C]/40"
             >
-              <TicketIcon size={13} />
+              <TicketIcon size={13} className="text-[#E5A93C]" />
               <span>{t('home.popularList', 'Explore Tickets')}</span>
             </button>
           </div>
@@ -120,11 +121,11 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
       {/* 2. NOTIFICATION MARQUEE */}
       <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-neutral-900/90 border border-neutral-800 text-xs">
-        <Volume2 size={15} className="text-[#00D26A] shrink-0 animate-bounce" />
+        <Volume2 size={15} className="text-[#E5A93C] shrink-0 animate-bounce" />
         <div className="overflow-hidden whitespace-nowrap text-neutral-300 font-medium">
           <div className="inline-block animate-marquee">
-            <span className="text-[#00D26A] font-bold mr-1">notify:</span>
-            {notices[0]?.title || 'The reward for upgrading to VIP during festival season is active! Daily yield up to 5.0%.'}
+            <span className="text-[#E5A93C] font-bold mr-1">notify:</span>
+            {notices[0]?.title || 'Welcome to HBO JAMBASE MUSIC! Daily Grab income is now live for all VIP tiers.'}
           </div>
         </div>
       </div>
@@ -137,7 +138,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder={t('home.searchPlaceholder', 'Search tickets, artists, venues...')}
-          className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-neutral-900/90 border border-neutral-800 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-[#00D26A] transition-colors"
+          className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-neutral-900/90 border border-neutral-800 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-[#DC2626] transition-colors"
         />
         {searchQuery && (
           <button
@@ -155,7 +156,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           <h3 className="text-sm font-extrabold text-white tracking-wide">{t('home.starRecordMan', 'Star record man')}</h3>
           <button
             onClick={() => setSelectedArtist(null)}
-            className="text-xs text-[#00D26A] font-semibold hover:underline flex items-center gap-0.5"
+            className="text-xs text-[#E5A93C] font-semibold hover:underline flex items-center gap-0.5"
           >
             {selectedArtist ? 'Show All' : t('income.more', 'More')}
             <ChevronRight size={13} />
@@ -175,8 +176,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 <div
                   className={`relative w-15 h-15 rounded-full overflow-hidden p-0.5 transition-all ${
                     isSelected
-                      ? 'ring-2 ring-[#00D26A] shadow-[0_0_12px_#00D26A]'
-                      : 'border border-neutral-700 group-hover:border-[#00D26A]/60'
+                      ? 'ring-2 ring-[#DC2626] shadow-[0_0_12px_#DC2626]'
+                      : 'border border-neutral-700 group-hover:border-[#E5A93C]'
                   }`}
                 >
                   <img
@@ -186,7 +187,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     referrerPolicy="no-referrer"
                   />
                 </div>
-                <span className="mt-1.5 text-[11px] font-medium text-neutral-300 text-center leading-tight line-clamp-2 w-full group-hover:text-[#00D26A]">
+                <span className="mt-1.5 text-[11px] font-medium text-neutral-300 text-center leading-tight line-clamp-2 w-full group-hover:text-[#E5A93C]">
                   {artist.name}
                 </span>
               </div>
@@ -205,7 +206,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
               onClick={() => setSelectedCategory(cat.slug)}
               className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
                 isActive
-                  ? 'bg-[#00D26A] text-black font-bold shadow-md shadow-[#00D26A]/20'
+                  ? 'bg-gradient-to-r from-[#DC2626] to-[#B91C1C] text-white font-bold shadow-md shadow-[#DC2626]/20 border border-[#E5A93C]/40'
                   : 'bg-neutral-900 text-neutral-400 border border-neutral-800 hover:border-neutral-700 hover:text-neutral-200'
               }`}
             >
@@ -229,7 +230,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
               setSelectedCategory('all');
               setSelectedArtist(null);
             }}
-            className="text-xs text-[#00D26A] font-semibold hover:underline flex items-center gap-0.5"
+            className="text-xs text-[#E5A93C] font-semibold hover:underline flex items-center gap-0.5"
           >
             {t('income.more', 'More')}
             <ChevronRight size={13} />
@@ -242,9 +243,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
             <div
               key={ticket.id}
               id={`ticket-card-${ticket.id}`}
-              className="bg-[#121319] border border-neutral-800/80 hover:border-[#00D26A]/40 rounded-2xl overflow-hidden flex flex-col group transition-all duration-200 hover:shadow-lg hover:shadow-black/60"
+              className="bg-[#140b0d] border border-[#2d171a] hover:border-[#DC2626]/60 rounded-2xl overflow-hidden flex flex-col group transition-all duration-200 hover:shadow-lg hover:shadow-black/70"
             >
-              {/* Event Image with Green Play Circle at Bottom-Right */}
+              {/* Event Image with Red/Gold Play Circle at Bottom-Right */}
               <div className="relative aspect-square overflow-hidden bg-neutral-900">
                 <img
                   src={ticket.image}
@@ -258,14 +259,14 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   {t('home.voucher', 'Voucher')}:{ticket.voucherQty}
                 </div>
 
-                {/* Circular Green Music Play Button */}
+                {/* Circular Red Music Play Button with Gold Icon */}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     onPlayTrack(ticket);
                   }}
                   title="Play preview"
-                  className="absolute bottom-2.5 right-2.5 w-9 h-9 rounded-full bg-[#00D26A] hover:bg-[#00e875] text-white flex items-center justify-center shadow-lg shadow-black/50 transition-transform active:scale-90"
+                  className="absolute bottom-2.5 right-2.5 w-9 h-9 rounded-full bg-gradient-to-tr from-[#DC2626] to-[#EF4444] hover:from-[#EF4444] hover:to-[#F87171] text-[#FDE047] flex items-center justify-center shadow-lg shadow-black/60 transition-transform active:scale-90 border border-[#E5A93C]/30"
                 >
                   <Music size={16} fill="currentColor" />
                 </button>
@@ -274,7 +275,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
               {/* Card Meta Content */}
               <div className="p-3 flex-1 flex flex-col justify-between">
                 <div>
-                  <h4 className="text-xs font-bold text-white leading-tight line-clamp-1 group-hover:text-[#00D26A] transition-colors">
+                  <h4 className="text-xs font-bold text-white leading-tight line-clamp-1 group-hover:text-[#E5A93C] transition-colors">
                     {ticket.name}
                   </h4>
                   <p className="text-[11px] text-neutral-400 truncate mt-0.5">
@@ -287,7 +288,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     {t('home.voucher', 'Voucher')}:{ticket.voucherQty}
                   </div>
                   <div className="text-right">
-                    <span className="text-sm font-extrabold text-[#00D26A]">
+                    <span className="text-sm font-extrabold text-[#E5A93C]">
                       {ticket.price.toLocaleString()} ETB
                     </span>
                   </div>
@@ -296,9 +297,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 {/* Buy Button */}
                 <button
                   onClick={() => onSelectTicket(ticket)}
-                  className="mt-2 w-full py-1.5 rounded-lg bg-neutral-800 hover:bg-[#00D26A] text-neutral-200 hover:text-black text-xs font-extrabold transition-all active:scale-95 flex items-center justify-center gap-1"
+                  className="mt-2 w-full py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 hover:border-[#DC2626] hover:bg-gradient-to-r hover:from-[#DC2626] hover:to-[#B91C1C] text-neutral-200 hover:text-white text-xs font-extrabold transition-all active:scale-95 flex items-center justify-center gap-1"
                 >
-                  <TicketIcon size={12} />
+                  <TicketIcon size={12} className="text-[#E5A93C]" />
                   {t('home.buyNow', 'Buy Now')}
                 </button>
               </div>

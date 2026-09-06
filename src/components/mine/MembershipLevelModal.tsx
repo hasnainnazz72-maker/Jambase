@@ -25,9 +25,9 @@ export const MembershipLevelModal: React.FC<MembershipLevelModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="w-full max-w-sm max-h-[85vh] rounded-3xl bg-[#10121a] border border-[#00D26A]/40 overflow-hidden shadow-2xl text-white flex flex-col">
+      <div className="w-full max-w-sm max-h-[85vh] rounded-3xl bg-[#10121a] border border-[#DC2626]/40 overflow-hidden shadow-2xl text-white flex flex-col">
         {/* Header */}
-        <div className="relative p-5 bg-gradient-to-br from-[#0c261b] via-[#0e161f] to-[#0a0c10] border-b border-neutral-800 shrink-0">
+        <div className="relative p-5 bg-gradient-to-br from-[#2a0808] via-[#1a0f12] to-[#0a0c10] border-b border-neutral-800 shrink-0">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 p-1.5 rounded-full bg-black/50 text-neutral-400 hover:text-white"
@@ -36,12 +36,12 @@ export const MembershipLevelModal: React.FC<MembershipLevelModalProps> = ({
           </button>
 
           <div className="flex items-center gap-3">
-            <span className="w-10 h-10 rounded-2xl bg-[#00D26A] text-black flex items-center justify-center font-black shadow-lg shadow-[#00D26A]/30">
+            <span className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#DC2626] to-[#B91C1C] text-[#FDE047] flex items-center justify-center font-black shadow-lg shadow-[#DC2626]/30 border border-[#E5A93C]/40">
               <Crown size={22} />
             </span>
             <div>
               <h3 className="text-base font-black text-white">Membership Level</h3>
-              <p className="text-[11px] text-[#00D26A] font-semibold">
+              <p className="text-[11px] text-[#E5A93C] font-semibold">
                 Current: VIP {currentLevel} ({currentTier.name})
               </p>
             </div>
@@ -54,15 +54,15 @@ export const MembershipLevelModal: React.FC<MembershipLevelModalProps> = ({
           <div className="p-4 rounded-2xl bg-neutral-900 border border-neutral-800 space-y-2 text-xs">
             <div className="flex justify-between items-center">
               <span className="text-neutral-400">Personal Balance:</span>
-              <span className="font-extrabold text-[#00D26A]">{(user?.balance || 0).toLocaleString()} ETB</span>
+              <span className="font-extrabold text-[#E5A93C]">{(user?.balance || 0).toLocaleString()} ETB</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-neutral-400">Valid Direct Investors:</span>
               <span className="font-extrabold text-white">{user?.validDirectMembersCount || 0} Members</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-neutral-400">Daily Ticket Yield Rate:</span>
-              <span className="font-extrabold text-[#00D26A]">{(currentTier.dailyRate * 100).toFixed(1)}% / day</span>
+              <span className="text-neutral-400">Daily Grab Yield Rate:</span>
+              <span className="font-extrabold text-[#E5A93C]">{(currentTier.dailyRate * 100).toFixed(1)}% / day</span>
             </div>
           </div>
 
@@ -81,20 +81,20 @@ export const MembershipLevelModal: React.FC<MembershipLevelModalProps> = ({
                   key={tier.level}
                   className={`p-3.5 rounded-2xl border transition-all ${
                     isCurrent
-                      ? 'bg-gradient-to-r from-[#0c2419] to-neutral-900 border-[#00D26A] shadow-md shadow-[#00D26A]/20'
+                      ? 'bg-gradient-to-r from-[#2c0d0d] to-neutral-900 border-[#DC2626] shadow-md shadow-[#DC2626]/20'
                       : 'bg-neutral-900/80 border-neutral-800'
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className={`px-2 py-0.5 rounded-lg text-xs font-black ${
-                        isCurrent ? 'bg-[#00D26A] text-black' : 'bg-neutral-800 text-neutral-300'
+                        isCurrent ? 'bg-gradient-to-r from-[#DC2626] to-[#B91C1C] text-white border border-[#E5A93C]/40' : 'bg-neutral-800 text-neutral-300'
                       }`}>
                         VIP {tier.level}
                       </span>
                       <span className="text-xs font-bold text-white">{tier.name}</span>
                     </div>
-                    <span className="text-xs font-extrabold text-[#00D26A]">
+                    <span className="text-xs font-extrabold text-[#E5A93C]">
                       {(tier.dailyRate * 100).toFixed(1)}% Daily
                     </span>
                   </div>
@@ -124,7 +124,7 @@ export const MembershipLevelModal: React.FC<MembershipLevelModalProps> = ({
               onClose();
               onNavigateTab('finance');
             }}
-            className="flex-1 py-2.5 rounded-xl bg-[#00D26A] text-black font-extrabold text-xs shadow-md shadow-[#00D26A]/20"
+            className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-[#DC2626] to-[#B91C1C] hover:from-[#EF4444] hover:to-[#DC2626] text-white font-extrabold text-xs shadow-md shadow-[#DC2626]/20 border border-[#E5A93C]/40"
           >
             Upgrade via Recharge
           </button>

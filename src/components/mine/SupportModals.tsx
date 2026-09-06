@@ -39,7 +39,7 @@ export const SupportModal: React.FC<SupportModalProps> = ({
   const [chatMessages, setChatMessages] = useState<Array<{ sender: 'user' | 'support'; text: string; time: string }>>([
     {
       sender: 'support',
-      text: 'Hello! Welcome to JAMBASE 24/7 VIP Support. Our official Telegram customer support manager is online 24/7.',
+      text: 'Hello! Welcome to HBO JAMBASE MUSIC 24/7 VIP Support. Our official Telegram customer support manager is online 24/7.',
       time: 'Just now'
     }
   ]);
@@ -90,8 +90,8 @@ export const SupportModal: React.FC<SupportModalProps> = ({
       a: 'Daily income is calculated automatically at 00:00 UTC based on your Total Assets (Available + Frozen) multiplied by your active VIP Tier rate (1.9% for VIP 1 up to 6.0% for VIP 6).'
     },
     {
-      q: 'What is the $30 minimum balance rule?',
-      a: 'To prevent idle accounts from generating yield, accounts must maintain at least $30.00 in total assets. If your balance drops below $30, daily income is automatically paused until recharged.'
+      q: 'What is the 2,000 ETB minimum balance rule?',
+      a: 'To prevent idle accounts from generating yield, accounts must maintain at least 2,000 ETB in total assets. If your balance drops below 2,000 ETB, daily income is automatically paused until recharged.'
     },
     {
       q: 'How do multi-tier referral commissions work?',
@@ -119,256 +119,256 @@ export const SupportModal: React.FC<SupportModalProps> = ({
     setSupportMessage('');
     setSending(true);
 
-    setTimeout(() => {
-      setSending(false);
-      setChatMessages(prev => [
-        ...prev,
-        {
-          sender: 'support',
-          text: `Thank you for contacting JAMBASE Support. Our specialist is reviewing your inquiry regarding "${userText.slice(0, 30)}..." and will assist you immediately.`,
-          time: 'Just now'
-        }
-      ]);
-    }, 800);
-  };
+      setTimeout(() => {
+        setSending(false);
+        setChatMessages(prev => [
+          ...prev,
+          {
+            sender: 'support',
+            text: `Thank you for contacting HBO JAMBASE MUSIC Support. Our specialist is reviewing your inquiry regarding "${userText.slice(0, 30)}..." and will assist you immediately.`,
+            time: 'Just now'
+          }
+        ]);
+      }, 800);
+    };
 
-  return (
-    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div
-        id="support-modal"
-        className="w-full max-w-lg bg-[#0f1015] border border-neutral-800 rounded-t-3xl sm:rounded-3xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl animate-in slide-in-from-bottom duration-200"
-      >
-        {/* Header */}
-        <div className="px-5 py-4 border-b border-neutral-800/80 flex items-center justify-between bg-neutral-900/50">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-neutral-800 border border-neutral-700 text-white flex items-center justify-center font-bold">
-              {currentTab === 'announcements' && <Volume2 size={16} className="text-[#00D26A]" />}
-              {currentTab === 'help' && <HelpCircle size={16} className="text-[#00D26A]" />}
-              {currentTab === 'contact' && <Headphones size={16} className="text-[#00D26A]" />}
-            </div>
-            <div>
-              <h2 className="text-sm font-extrabold text-white">
-                {currentTab === 'announcements' && 'Platform Announcements'}
-                {currentTab === 'help' && 'Help Center & FAQ'}
-                {currentTab === 'contact' && '24/7 VIP Customer Support'}
-              </h2>
-              <p className="text-[10px] text-neutral-400">Official JAMBASE assistance & Telegram support</p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full bg-neutral-800/80 hover:bg-neutral-700 text-neutral-400 hover:text-white flex items-center justify-center transition-colors"
-          >
-            <X size={16} />
-          </button>
-        </div>
-
-        {/* Tab Selector Buttons */}
-        <div className="px-4 pt-3 flex items-center gap-2 border-b border-neutral-800/60 pb-2.5">
-          <button
-            onClick={() => setCurrentTab('contact')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-              currentTab === 'contact'
-                ? 'bg-[#0088cc] text-white shadow-md shadow-[#0088cc]/25'
-                : 'bg-neutral-900 text-neutral-400 hover:text-white border border-neutral-800'
-            }`}
-          >
-            <Headphones size={13} />
-            <span>VIP Support</span>
-          </button>
-
-          <button
-            onClick={() => setCurrentTab('help')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-              currentTab === 'help'
-                ? 'bg-[#00D26A] text-black shadow-md shadow-[#00D26A]/20'
-                : 'bg-neutral-900 text-neutral-400 hover:text-white border border-neutral-800'
-            }`}
-          >
-            <HelpCircle size={13} />
-            <span>FAQ & Rules</span>
-          </button>
-
-          <button
-            onClick={() => setCurrentTab('announcements')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-              currentTab === 'announcements'
-                ? 'bg-[#00D26A] text-black shadow-md shadow-[#00D26A]/20'
-                : 'bg-neutral-900 text-neutral-400 hover:text-white border border-neutral-800'
-            }`}
-          >
-            <Volume2 size={13} />
-            <span>Announcements</span>
-          </button>
-        </div>
-
-        {/* Content Body */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3.5 text-xs">
-          {/* ANNOUNCEMENTS */}
-          {currentTab === 'announcements' && (
-            <div className="space-y-3">
-              {notices.map((notice) => (
-                <div
-                  key={notice.id}
-                  className="p-4 rounded-2xl bg-[#14161f] border border-neutral-800 space-y-1.5"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-[#00D26A]/15 text-[#00D26A] border border-[#00D26A]/30">
-                      {notice.type}
-                    </span>
-                    <span className="text-[10px] text-neutral-500">{notice.date}</span>
-                  </div>
-                  <h4 className="font-extrabold text-white text-xs">{notice.title}</h4>
-                  <p className="text-neutral-400 text-[11px] leading-relaxed">{notice.content}</p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* HELP CENTER & FAQ */}
-          {currentTab === 'help' && (
-            <div className="space-y-2.5">
-              {faqs.map((faq, idx) => {
-                const isExpanded = expandedFaq === idx;
-                return (
-                  <div
-                    key={idx}
-                    className="rounded-2xl bg-[#14161f] border border-neutral-800 overflow-hidden transition-all"
-                  >
-                    <button
-                      onClick={() => setExpandedFaq(isExpanded ? null : idx)}
-                      className="w-full p-3.5 flex items-center justify-between text-left font-bold text-white hover:text-[#00D26A] transition-colors"
-                    >
-                      <span className="pr-2">{faq.q}</span>
-                      {isExpanded ? <ChevronUp size={16} className="shrink-0" /> : <ChevronDown size={16} className="shrink-0 text-neutral-400" />}
-                    </button>
-                    {isExpanded && (
-                      <div className="px-3.5 pb-3.5 pt-0 text-[11px] text-neutral-400 leading-relaxed border-t border-neutral-850">
-                        {faq.a}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* 24/7 TELEGRAM CUSTOMER SUPPORT */}
-          {currentTab === 'contact' && (
-            <div className="flex flex-col h-[460px] space-y-3">
-              {/* Telegram Support Spotlight Banner */}
-              <div className="p-4 rounded-2xl bg-gradient-to-r from-[#0088cc]/25 via-[#0088cc]/15 to-[#14161f] border border-[#0088cc]/50 space-y-3 shadow-lg shadow-[#0088cc]/10">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="w-10 h-10 rounded-2xl bg-[#0088cc] text-white flex items-center justify-center font-black shadow-lg shadow-[#0088cc]/40">
-                      <SendHorizontal size={22} />
-                    </span>
-                    <div>
-                      <h4 className="text-sm font-extrabold text-white">VIP Telegram Support</h4>
-                      <p className="text-xs text-sky-400 font-bold">{telegramConfig.username}</p>
-                    </div>
-                  </div>
-                  <a
-                    href={telegramConfig.link}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="px-4 py-2 rounded-xl bg-[#0088cc] hover:bg-[#0099e6] text-white text-xs font-extrabold flex items-center gap-1.5 shadow-md shadow-[#0088cc]/30 transition-transform active:scale-95"
-                  >
-                    <span>Open Telegram</span>
-                    <ExternalLink size={13} />
-                  </a>
-                </div>
-
-                <div className="flex items-center justify-between pt-2 border-t border-[#0088cc]/20 text-[11px]">
-                  <span className="text-neutral-300">
-                    Official Telegram: <strong className="text-white font-mono">{telegramConfig.username}</strong>
-                  </span>
-                  <button
-                    onClick={handleCopyTelegram}
-                    className="px-2.5 py-1 rounded-lg bg-[#0088cc]/20 hover:bg-[#0088cc]/40 text-sky-200 hover:text-white flex items-center gap-1.5 font-bold transition-colors"
-                  >
-                    {copiedTg ? <Check size={12} className="text-[#00D26A]" /> : <Copy size={12} />}
-                    {copiedTg ? 'Copied' : 'Copy Username'}
-                  </button>
-                </div>
+    return (
+      <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div
+          id="support-modal"
+          className="w-full max-w-lg bg-[#160c0e] border border-[#3d181c] rounded-t-3xl sm:rounded-3xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl animate-in slide-in-from-bottom duration-200"
+        >
+          {/* Header */}
+          <div className="px-5 py-4 border-b border-neutral-800/80 flex items-center justify-between bg-neutral-900/50">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-neutral-800 border border-neutral-700 text-white flex items-center justify-center font-bold">
+                {currentTab === 'announcements' && <Volume2 size={16} className="text-[#E5A93C]" />}
+                {currentTab === 'help' && <HelpCircle size={16} className="text-[#E5A93C]" />}
+                {currentTab === 'contact' && <Headphones size={16} className="text-[#E5A93C]" />}
               </div>
+              <div>
+                <h2 className="text-sm font-extrabold text-white">
+                  {currentTab === 'announcements' && 'Platform Announcements'}
+                  {currentTab === 'help' && 'Help Center & FAQ'}
+                  {currentTab === 'contact' && '24/7 VIP Customer Support'}
+                </h2>
+                <p className="text-[10px] text-neutral-400">Official HBO JAMBASE MUSIC assistance & Telegram support</p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="w-8 h-8 rounded-full bg-neutral-800/80 hover:bg-neutral-700 text-neutral-400 hover:text-white flex items-center justify-center transition-colors"
+            >
+              <X size={16} />
+            </button>
+          </div>
 
-              {/* Quick Direct Link Action Button */}
-              <a
-                href={telegramConfig.link}
-                target="_blank"
-                rel="noreferrer"
-                className="w-full py-3 rounded-xl bg-[#0088cc]/15 hover:bg-[#0088cc]/30 border border-[#0088cc]/50 hover:border-[#0088cc] text-white font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-[0.99] shadow-sm"
-              >
-                <SendHorizontal size={16} className="text-[#0088cc]" />
-                <span>Direct Chat with {telegramConfig.username} on Telegram</span>
-              </a>
+          {/* Tab Selector Buttons */}
+          <div className="px-4 pt-3 flex items-center gap-2 border-b border-neutral-800/60 pb-2.5">
+            <button
+              onClick={() => setCurrentTab('contact')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                currentTab === 'contact'
+                  ? 'bg-[#0088cc] text-white shadow-md shadow-[#0088cc]/25'
+                  : 'bg-neutral-900 text-neutral-400 hover:text-white border border-neutral-800'
+              }`}
+            >
+              <Headphones size={13} />
+              <span>VIP Support</span>
+            </button>
 
-              {/* Optional Telegram Channel Button if configured */}
-              {telegramConfig.channelLink && (
-                <a
-                  href={telegramConfig.channelLink}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="w-full py-2.5 rounded-xl bg-neutral-900 hover:bg-neutral-850 border border-neutral-800 hover:border-neutral-700 text-neutral-300 font-semibold text-xs flex items-center justify-center gap-2 transition-all active:scale-[0.99]"
-                >
-                  <Volume2 size={14} className="text-[#00D26A]" />
-                  <span>Join Official Telegram Channel: {telegramConfig.channelUsername}</span>
-                </a>
-              )}
+            <button
+              onClick={() => setCurrentTab('help')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                currentTab === 'help'
+                  ? 'bg-gradient-to-r from-[#DC2626] to-[#EF4444] text-[#FDE047] shadow-md shadow-[#DC2626]/20'
+                  : 'bg-neutral-900 text-neutral-400 hover:text-white border border-neutral-800'
+              }`}
+            >
+              <HelpCircle size={13} />
+              <span>FAQ & Rules</span>
+            </button>
 
-              {/* Chat Thread */}
-              <div className="flex-1 overflow-y-auto py-2 space-y-2.5">
-                {chatMessages.map((msg, i) => (
+            <button
+              onClick={() => setCurrentTab('announcements')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                currentTab === 'announcements'
+                  ? 'bg-gradient-to-r from-[#DC2626] to-[#EF4444] text-[#FDE047] shadow-md shadow-[#DC2626]/20'
+                  : 'bg-neutral-900 text-neutral-400 hover:text-white border border-neutral-800'
+              }`}
+            >
+              <Volume2 size={13} />
+              <span>Announcements</span>
+            </button>
+          </div>
+
+          {/* Content Body */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-3.5 text-xs">
+            {/* ANNOUNCEMENTS */}
+            {currentTab === 'announcements' && (
+              <div className="space-y-3">
+                {notices.map((notice) => (
                   <div
-                    key={i}
-                    className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                    key={notice.id}
+                    className="p-4 rounded-2xl bg-[#14161f] border border-neutral-800 space-y-1.5"
                   >
-                    <div
-                      className={`max-w-[85%] p-3 rounded-2xl text-[11px] leading-relaxed ${
-                        msg.sender === 'user'
-                          ? 'bg-[#00D26A] text-black font-semibold rounded-br-none'
-                          : 'bg-[#14161f] border border-neutral-800 text-neutral-200 rounded-bl-none'
-                      }`}
-                    >
-                      <p>{msg.text}</p>
-                      <span
-                        className={`text-[9px] block mt-1 ${
-                          msg.sender === 'user' ? 'text-black/70' : 'text-neutral-500'
-                        }`}
-                      >
-                        {msg.time}
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-[#DC2626]/20 text-[#E5A93C] border border-[#DC2626]/40">
+                        {notice.type}
                       </span>
+                      <span className="text-[10px] text-neutral-500">{notice.date}</span>
                     </div>
+                    <h4 className="font-extrabold text-white text-xs">{notice.title}</h4>
+                    <p className="text-neutral-400 text-[11px] leading-relaxed">{notice.content}</p>
                   </div>
                 ))}
-                {sending && (
-                  <div className="flex justify-start">
-                    <div className="bg-[#14161f] border border-neutral-800 p-2.5 rounded-2xl text-[10px] text-neutral-400">
-                      Support typing...
-                    </div>
-                  </div>
-                )}
               </div>
+            )}
 
-              {/* Input Form */}
-              <form onSubmit={handleSendSupportMessage} className="pt-2 border-t border-neutral-800 flex items-center gap-2">
-                <input
-                  type="text"
-                  value={supportMessage}
-                  onChange={(e) => setSupportMessage(e.target.value)}
-                  placeholder={`Type message or ask for ${telegramConfig.username}...`}
-                  className="flex-1 px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white placeholder-neutral-500 focus:outline-none focus:border-[#00D26A] text-xs"
-                />
-                <button
-                  type="submit"
-                  className="p-2.5 rounded-xl bg-[#00D26A] hover:bg-[#00e875] text-black transition-transform active:scale-95 shrink-0"
+            {/* HELP CENTER & FAQ */}
+            {currentTab === 'help' && (
+              <div className="space-y-2.5">
+                {faqs.map((faq, idx) => {
+                  const isExpanded = expandedFaq === idx;
+                  return (
+                    <div
+                      key={idx}
+                      className="rounded-2xl bg-[#14161f] border border-neutral-800 overflow-hidden transition-all"
+                    >
+                      <button
+                        onClick={() => setExpandedFaq(isExpanded ? null : idx)}
+                        className="w-full p-3.5 flex items-center justify-between text-left font-bold text-white hover:text-[#E5A93C] transition-colors"
+                      >
+                        <span className="pr-2">{faq.q}</span>
+                        {isExpanded ? <ChevronUp size={16} className="shrink-0" /> : <ChevronDown size={16} className="shrink-0 text-neutral-400" />}
+                      </button>
+                      {isExpanded && (
+                        <div className="px-3.5 pb-3.5 pt-0 text-[11px] text-neutral-400 leading-relaxed border-t border-neutral-850">
+                          {faq.a}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* 24/7 TELEGRAM CUSTOMER SUPPORT */}
+            {currentTab === 'contact' && (
+              <div className="flex flex-col h-[460px] space-y-3">
+                {/* Telegram Support Spotlight Banner */}
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-[#0088cc]/25 via-[#0088cc]/15 to-[#14161f] border border-[#0088cc]/50 space-y-3 shadow-lg shadow-[#0088cc]/10">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="w-10 h-10 rounded-2xl bg-[#0088cc] text-white flex items-center justify-center font-black shadow-lg shadow-[#0088cc]/40">
+                        <SendHorizontal size={22} />
+                      </span>
+                      <div>
+                        <h4 className="text-sm font-extrabold text-white">VIP Telegram Support</h4>
+                        <p className="text-xs text-sky-400 font-bold">{telegramConfig.username}</p>
+                      </div>
+                    </div>
+                    <a
+                      href={telegramConfig.link}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-4 py-2 rounded-xl bg-[#0088cc] hover:bg-[#0099e6] text-white text-xs font-extrabold flex items-center gap-1.5 shadow-md shadow-[#0088cc]/30 transition-transform active:scale-95"
+                    >
+                      <span>Open Telegram</span>
+                      <ExternalLink size={13} />
+                    </a>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-[#0088cc]/20 text-[11px]">
+                    <span className="text-neutral-300">
+                      Official Telegram: <strong className="text-white font-mono">{telegramConfig.username}</strong>
+                    </span>
+                    <button
+                      onClick={handleCopyTelegram}
+                      className="px-2.5 py-1 rounded-lg bg-[#0088cc]/20 hover:bg-[#0088cc]/40 text-sky-200 hover:text-white flex items-center gap-1.5 font-bold transition-colors"
+                    >
+                      {copiedTg ? <Check size={12} className="text-[#E5A93C]" /> : <Copy size={12} />}
+                      {copiedTg ? 'Copied' : 'Copy Username'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Quick Direct Link Action Button */}
+                <a
+                  href={telegramConfig.link}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-full py-3 rounded-xl bg-[#0088cc]/15 hover:bg-[#0088cc]/30 border border-[#0088cc]/50 hover:border-[#0088cc] text-white font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-[0.99] shadow-sm"
                 >
-                  <Send size={15} />
-                </button>
-              </form>
-            </div>
-          )}
+                  <SendHorizontal size={16} className="text-[#0088cc]" />
+                  <span>Direct Chat with {telegramConfig.username} on Telegram</span>
+                </a>
+
+                {/* Optional Telegram Channel Button if configured */}
+                {telegramConfig.channelLink && (
+                  <a
+                    href={telegramConfig.channelLink}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full py-2.5 rounded-xl bg-neutral-900 hover:bg-neutral-850 border border-neutral-800 hover:border-neutral-700 text-neutral-300 font-semibold text-xs flex items-center justify-center gap-2 transition-all active:scale-[0.99]"
+                  >
+                    <Volume2 size={14} className="text-[#E5A93C]" />
+                    <span>Join Official Telegram Channel: {telegramConfig.channelUsername}</span>
+                  </a>
+                )}
+
+                {/* Chat Thread */}
+                <div className="flex-1 overflow-y-auto py-2 space-y-2.5">
+                  {chatMessages.map((msg, i) => (
+                    <div
+                      key={i}
+                      className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div
+                        className={`max-w-[85%] p-3 rounded-2xl text-[11px] leading-relaxed ${
+                          msg.sender === 'user'
+                            ? 'bg-gradient-to-r from-[#DC2626] to-[#EF4444] text-[#FDE047] font-semibold rounded-br-none border border-[#E5A93C]/40'
+                            : 'bg-[#14161f] border border-neutral-800 text-neutral-200 rounded-bl-none'
+                        }`}
+                      >
+                        <p>{msg.text}</p>
+                        <span
+                          className={`text-[9px] block mt-1 ${
+                            msg.sender === 'user' ? 'text-[#FDE047]/80' : 'text-neutral-500'
+                          }`}
+                        >
+                          {msg.time}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                  {sending && (
+                    <div className="flex justify-start">
+                      <div className="bg-[#14161f] border border-neutral-800 p-2.5 rounded-2xl text-[10px] text-neutral-400">
+                        Support typing...
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Input Form */}
+                <form onSubmit={handleSendSupportMessage} className="pt-2 border-t border-neutral-800 flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={supportMessage}
+                    onChange={(e) => setSupportMessage(e.target.value)}
+                    placeholder={`Type message or ask for ${telegramConfig.username}...`}
+                    className="flex-1 px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white placeholder-neutral-500 focus:outline-none focus:border-[#E5A93C] text-xs"
+                  />
+                  <button
+                    type="submit"
+                    className="p-2.5 rounded-xl bg-gradient-to-r from-[#DC2626] to-[#EF4444] text-white hover:from-[#EF4444] hover:to-[#DC2626] transition-transform active:scale-95 shrink-0 border border-[#E5A93C]/40"
+                  >
+                    <Send size={15} />
+                  </button>
+                </form>
+              </div>
+            )}
         </div>
       </div>
     </div>

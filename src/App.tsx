@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Header } from './components/Header';
 import { BottomNav } from './components/BottomNav';
 import { HomeView } from './components/views/HomeView';
-import { IncomeView } from './components/views/IncomeView';
+import { GrabView } from './components/views/GrabView';
 import { TaskView } from './components/views/TaskView';
 import { FinanceView } from './components/views/FinanceView';
 import { MineView } from './components/views/MineView';
@@ -207,9 +207,9 @@ export default function App() {
   const pendingTasksCount = (tasks || []).filter(t => t.isCompleted && !t.isClaimed).length;
 
   return (
-    <div className="min-h-screen bg-[#0b0c10] text-neutral-100 flex justify-center selection:bg-[#00D26A] selection:text-black">
+    <div className="min-h-screen bg-[#0b0c10] text-neutral-100 flex justify-center selection:bg-[#DC2626] selection:text-white">
       {/* Mobile viewport wrapper (max-w-md matching real smartphone screens) */}
-      <div className="w-full max-w-md min-h-screen flex flex-col relative bg-[#0d0e12] border-x border-neutral-800/40 shadow-2xl">
+      <div className="w-full max-w-md min-h-screen flex flex-col relative bg-[#0d0708] border-x border-[#2d171a] shadow-2xl">
         {/* Top Header - ONLY displayed on Homepage */}
         {currentTab === 'home' && (
           <Header
@@ -224,7 +224,7 @@ export default function App() {
 
         {/* Global Toast Notification */}
         {toastMessage && (
-          <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-[#00D26A] text-black font-extrabold text-xs shadow-xl shadow-[#00D26A]/30 animate-in fade-in zoom-in-95">
+          <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-gradient-to-r from-[#DC2626] to-[#B91C1C] text-white font-extrabold text-xs shadow-xl shadow-[#DC2626]/40 border border-[#E5A93C]/40 animate-in fade-in zoom-in-95">
             {toastMessage}
           </div>
         )}
@@ -244,10 +244,11 @@ export default function App() {
             />
           )}
 
-          {currentTab === 'income' && (
-            <IncomeView
+          {currentTab === 'grab' && (
+            <GrabView
+              user={user}
               incomeData={incomeData}
-              purchases={purchases}
+              vipTiers={vipTiers}
               onRefresh={loadAllData}
               onNavigateTab={(tab) => setCurrentTab(tab)}
             />

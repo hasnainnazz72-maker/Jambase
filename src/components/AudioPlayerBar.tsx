@@ -40,7 +40,7 @@ export const AudioPlayerBar: React.FC<AudioPlayerBarProps> = ({ currentTrack, on
   return (
     <div
       id="floating-audio-player"
-      className="fixed bottom-20 left-4 right-4 max-w-md mx-auto z-40 bg-[#16171f]/95 backdrop-blur-md border border-[#00D26A]/30 rounded-2xl p-2.5 shadow-2xl shadow-black/80 flex items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-4"
+      className="fixed bottom-20 left-4 right-4 max-w-md mx-auto z-40 bg-[#160c0e]/95 backdrop-blur-md border border-[#DC2626]/40 rounded-2xl p-2.5 shadow-2xl shadow-black/80 flex items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-4"
     >
       <audio
         ref={audioRef}
@@ -50,7 +50,7 @@ export const AudioPlayerBar: React.FC<AudioPlayerBarProps> = ({ currentTrack, on
 
       {/* Track Art & Info */}
       <div className="flex items-center gap-3 min-w-0">
-        <div className="relative w-11 h-11 rounded-xl overflow-hidden shrink-0 border border-neutral-700">
+        <div className="relative w-11 h-11 rounded-xl overflow-hidden shrink-0 border border-[#3d181c]">
           <img
             src={currentTrack.image}
             alt={currentTrack.name}
@@ -59,16 +59,16 @@ export const AudioPlayerBar: React.FC<AudioPlayerBarProps> = ({ currentTrack, on
           />
           {isPlaying && (
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-0.5">
-              <span className="w-1 bg-[#00D26A] h-3 animate-pulse"></span>
-              <span className="w-1 bg-[#00D26A] h-5 animate-pulse delay-75"></span>
-              <span className="w-1 bg-[#00D26A] h-2 animate-pulse delay-150"></span>
+              <span className="w-1 bg-[#E5A93C] h-3 animate-pulse"></span>
+              <span className="w-1 bg-[#DC2626] h-5 animate-pulse delay-75"></span>
+              <span className="w-1 bg-[#E5A93C] h-2 animate-pulse delay-150"></span>
             </div>
           )}
         </div>
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <span className="text-[10px] text-[#00D26A] font-bold uppercase tracking-wider flex items-center gap-1">
+            <span className="text-[10px] text-[#E5A93C] font-bold uppercase tracking-wider flex items-center gap-1">
               <Music size={10} /> NOW PLAYING
             </span>
           </div>
@@ -81,7 +81,7 @@ export const AudioPlayerBar: React.FC<AudioPlayerBarProps> = ({ currentTrack, on
       <div className="flex items-center gap-2 shrink-0">
         <button
           onClick={togglePlay}
-          className="w-9 h-9 rounded-full bg-[#00D26A] hover:bg-[#00e875] text-black flex items-center justify-center font-bold shadow-lg shadow-[#00D26A]/30 transition-transform active:scale-95"
+          className="w-9 h-9 rounded-full bg-gradient-to-tr from-[#DC2626] to-[#EF4444] text-[#FDE047] flex items-center justify-center font-bold shadow-lg shadow-[#DC2626]/40 transition-transform active:scale-95 border border-[#E5A93C]/40"
         >
           {isPlaying ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" className="ml-0.5" />}
         </button>

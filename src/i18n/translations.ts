@@ -24,13 +24,14 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
   en: {
     // Navigation
     'nav.home': 'Home',
-    'nav.income': 'Income',
     'nav.task': 'Task',
+    'nav.grab': 'Grab',
+    'nav.income': 'Income',
     'nav.finance': 'Finance',
     'nav.mine': 'Mine',
 
     // Header & Brand
-    'header.brand': 'JAMBASE',
+    'header.brand': 'HBO JAMBASE MUSIC',
     'header.vip': 'VIP',
     'header.balance': 'Balance',
     'header.language': 'Language',
@@ -104,7 +105,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     'mine.logout': 'Sign Out',
 
     // Auth
-    'auth.register': 'Create JAMBASE Account',
+    'auth.register': 'Create HBO JAMBASE MUSIC Account',
     'auth.login': 'Account Login',
     'auth.username': 'Username',
     'auth.phone': 'Mobile Phone Number',
@@ -126,7 +127,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     'nav.finance': 'Finans',
     'nav.mine': 'Profilim',
 
-    'header.brand': 'JAMBASE',
+    'header.brand': 'HBO JAMBASE MUSIC',
     'header.vip': 'VIP',
     'header.balance': 'Bakiye',
     'header.language': 'Dil',
@@ -216,7 +217,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     'nav.finance': 'Finanzas',
     'nav.mine': 'Mi Cuenta',
 
-    'header.brand': 'JAMBASE',
+    'header.brand': 'HBO JAMBASE MUSIC',
     'header.vip': 'VIP',
     'header.balance': 'Saldo',
     'header.language': 'Idioma',
@@ -306,7 +307,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     'nav.finance': 'Finance',
     'nav.mine': 'Mon Compte',
 
-    'header.brand': 'JAMBASE',
+    'header.brand': 'HBO JAMBASE MUSIC',
     'header.vip': 'VIP',
     'header.balance': 'Solde',
     'header.language': 'Langue',
@@ -396,7 +397,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     'nav.finance': 'Finanzen',
     'nav.mine': 'Mein Konto',
 
-    'header.brand': 'JAMBASE',
+    'header.brand': 'HBO JAMBASE MUSIC',
     'header.vip': 'VIP',
     'header.balance': 'Guthaben',
     'header.language': 'Sprache',
@@ -486,7 +487,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     'nav.finance': 'المالية',
     'nav.mine': 'حسابي',
 
-    'header.brand': 'JAMBASE',
+    'header.brand': 'HBO JAMBASE MUSIC',
     'header.vip': 'VIP',
     'header.balance': 'الرصيد',
     'header.language': 'اللغة',
@@ -576,7 +577,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     'nav.finance': 'Finanças',
     'nav.mine': 'Meu Perfil',
 
-    'header.brand': 'JAMBASE',
+    'header.brand': 'HBO JAMBASE MUSIC',
     'header.vip': 'VIP',
     'header.balance': 'Saldo',
     'header.language': 'Idioma',
@@ -666,7 +667,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     'nav.finance': 'Финансы',
     'nav.mine': 'Мой профиль',
 
-    'header.brand': 'JAMBASE',
+    'header.brand': 'HBO JAMBASE MUSIC',
     'header.vip': 'VIP',
     'header.balance': 'Баланс',
     'header.language': 'Язык',
@@ -756,7 +757,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     'nav.finance': '資産管理',
     'nav.mine': 'マイページ',
 
-    'header.brand': 'JAMBASE',
+    'header.brand': 'HBO JAMBASE MUSIC',
     'header.vip': 'VIP',
     'header.balance': '残高',
     'header.language': '言語',
@@ -846,7 +847,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     'nav.finance': '财务',
     'nav.mine': '我的',
 
-    'header.brand': 'JAMBASE',
+    'header.brand': 'HBO JAMBASE MUSIC',
     'header.vip': 'VIP',
     'header.balance': '余额',
     'header.language': '语言',

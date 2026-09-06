@@ -1,4 +1,4 @@
-export type TabType = 'home' | 'income' | 'task' | 'finance' | 'mine';
+export type TabType = 'home' | 'task' | 'grab' | 'finance' | 'mine';
 
 export interface VIPTier {
   level: number;

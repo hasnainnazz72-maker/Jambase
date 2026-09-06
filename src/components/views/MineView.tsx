@@ -82,10 +82,10 @@ export const MineView: React.FC<MineViewProps> = ({
           </span>
         </div>
 
-        {/* Music / Profile Group Badge */}
+        {/* Profile Group Badge */}
         <div
           onClick={() => setShowMembershipModal(true)}
-          className="w-10 h-10 rounded-full p-0.5 bg-gradient-to-tr from-[#00D26A] via-teal-400 to-emerald-600 shadow-md shadow-[#00D26A]/30 cursor-pointer overflow-hidden flex items-center justify-center shrink-0"
+          className="w-10 h-10 rounded-full p-0.5 bg-gradient-to-tr from-[#DC2626] via-[#B91C1C] to-[#E5A93C] shadow-md shadow-[#DC2626]/30 cursor-pointer overflow-hidden flex items-center justify-center shrink-0"
         >
           <img
             src={user?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&auto=format&fit=crop&q=80'}
@@ -100,7 +100,7 @@ export const MineView: React.FC<MineViewProps> = ({
       <div className="grid grid-cols-2 gap-4 py-4 px-2">
         {/* Left: Personal Income */}
         <div className="text-center">
-          <div className="text-3xl font-black text-[#00D26A] tracking-tight">
+          <div className="text-3xl font-black text-[#E5A93C] tracking-tight">
             {personalIncome}
           </div>
           <div className="text-xs text-neutral-300 font-medium mt-1">
@@ -110,7 +110,7 @@ export const MineView: React.FC<MineViewProps> = ({
 
         {/* Right: Available Balance */}
         <div className="text-center">
-          <div className="text-3xl font-black text-[#00D26A] tracking-tight">
+          <div className="text-3xl font-black text-[#E5A93C] tracking-tight">
             {availableBalance}
           </div>
           <div className="text-xs text-neutral-300 font-medium mt-1">
@@ -126,7 +126,7 @@ export const MineView: React.FC<MineViewProps> = ({
         </span>
         <button
           onClick={() => setShowMembershipModal(true)}
-          className="px-5 py-1.5 rounded-full bg-[#00D26A] hover:bg-[#00e875] text-black font-extrabold text-xs shadow-md shadow-[#00D26A]/20 transition-transform active:scale-95"
+          className="px-5 py-1.5 rounded-full bg-gradient-to-r from-[#DC2626] to-[#B91C1C] hover:from-[#EF4444] hover:to-[#DC2626] text-white font-extrabold text-xs shadow-md shadow-[#DC2626]/20 transition-transform active:scale-95 border border-[#E5A93C]/40"
         >
           {t('income.more', 'More')}
         </button>
@@ -136,14 +136,14 @@ export const MineView: React.FC<MineViewProps> = ({
       <div className="grid grid-cols-2 gap-3.5 pt-1">
         <button
           onClick={() => onNavigateTab('finance')}
-          className="py-3 rounded-full border border-neutral-700 bg-transparent hover:border-[#00D26A] hover:text-[#00D26A] text-white font-extrabold text-sm transition-all shadow-md text-center active:scale-98"
+          className="py-3 rounded-full border border-neutral-700 bg-transparent hover:border-[#DC2626] hover:text-[#E5A93C] text-white font-extrabold text-sm transition-all shadow-md text-center active:scale-98"
         >
           {t('home.quickDeposit', 'Recharge')}
         </button>
 
         <button
           onClick={() => onNavigateTab('finance')}
-          className="py-3 rounded-full border border-neutral-700 bg-transparent hover:border-[#00D26A] hover:text-[#00D26A] text-white font-extrabold text-sm transition-all shadow-md text-center active:scale-98"
+          className="py-3 rounded-full border border-neutral-700 bg-transparent hover:border-[#DC2626] hover:text-[#E5A93C] text-white font-extrabold text-sm transition-all shadow-md text-center active:scale-98"
         >
           {t('home.quickWithdraw', 'Withdraw')}
         </button>
@@ -157,10 +157,10 @@ export const MineView: React.FC<MineViewProps> = ({
           className="p-4 rounded-2xl bg-[#111317] border border-neutral-850 hover:border-neutral-700 flex items-center justify-between cursor-pointer transition-all active:scale-[0.99] group shadow-md"
         >
           <div className="flex items-center gap-3.5">
-            <span className="w-8 h-8 rounded-full bg-[#00D26A] text-black flex items-center justify-center font-black shrink-0 shadow-sm">
-              <CircleDot size={18} className="text-black" />
+            <span className="w-8 h-8 rounded-full bg-gradient-to-br from-[#DC2626] to-[#B91C1C] text-[#FDE047] border border-[#E5A93C]/30 flex items-center justify-center font-black shrink-0 shadow-sm">
+              <CircleDot size={18} className="text-[#FDE047]" />
             </span>
-            <span className="text-sm font-semibold text-white group-hover:text-[#00D26A] transition-colors">
+            <span className="text-sm font-semibold text-white group-hover:text-[#E5A93C] transition-colors">
               {t('mine.welfareCenter', 'Welfare center')}
             </span>
           </div>
@@ -173,10 +173,10 @@ export const MineView: React.FC<MineViewProps> = ({
           className="p-4 rounded-2xl bg-[#111317] border border-neutral-850 hover:border-neutral-700 flex items-center justify-between cursor-pointer transition-all active:scale-[0.99] group shadow-md"
         >
           <div className="flex items-center gap-3.5">
-            <span className="w-8 h-8 rounded-full bg-[#00D26A] text-black flex items-center justify-center font-black shrink-0 shadow-sm">
-              <Users size={16} className="text-black" />
+            <span className="w-8 h-8 rounded-full bg-gradient-to-br from-[#DC2626] to-[#B91C1C] text-[#FDE047] border border-[#E5A93C]/30 flex items-center justify-center font-black shrink-0 shadow-sm">
+              <Users size={16} className="text-[#FDE047]" />
             </span>
-            <span className="text-sm font-semibold text-white group-hover:text-[#00D26A] transition-colors">
+            <span className="text-sm font-semibold text-white group-hover:text-[#E5A93C] transition-colors">
               {t('mine.teamReport', "Team's income")}
             </span>
           </div>
@@ -189,10 +189,10 @@ export const MineView: React.FC<MineViewProps> = ({
           className="p-4 rounded-2xl bg-[#111317] border border-neutral-850 hover:border-neutral-700 flex items-center justify-between cursor-pointer transition-all active:scale-[0.99] group shadow-md"
         >
           <div className="flex items-center gap-3.5">
-            <span className="w-8 h-8 rounded-full bg-[#00D26A] text-black flex items-center justify-center font-black shrink-0 shadow-sm">
-              <Clock size={16} className="text-black" />
+            <span className="w-8 h-8 rounded-full bg-gradient-to-br from-[#DC2626] to-[#B91C1C] text-[#FDE047] border border-[#E5A93C]/30 flex items-center justify-center font-black shrink-0 shadow-sm">
+              <Clock size={16} className="text-[#FDE047]" />
             </span>
-            <span className="text-sm font-semibold text-white group-hover:text-[#00D26A] transition-colors">
+            <span className="text-sm font-semibold text-white group-hover:text-[#E5A93C] transition-colors">
               {t('mine.accountChange', 'Account change record')}
             </span>
           </div>
@@ -205,10 +205,10 @@ export const MineView: React.FC<MineViewProps> = ({
           className="p-4 rounded-2xl bg-[#111317] border border-neutral-850 hover:border-neutral-700 flex items-center justify-between cursor-pointer transition-all active:scale-[0.99] group shadow-md"
         >
           <div className="flex items-center gap-3.5">
-            <span className="w-8 h-8 rounded-full bg-[#00D26A] text-black flex items-center justify-center font-black shrink-0 shadow-sm">
-              <Building2 size={16} className="text-black" />
+            <span className="w-8 h-8 rounded-full bg-gradient-to-br from-[#DC2626] to-[#B91C1C] text-[#FDE047] border border-[#E5A93C]/30 flex items-center justify-center font-black shrink-0 shadow-sm">
+              <Building2 size={16} className="text-[#FDE047]" />
             </span>
-            <span className="text-sm font-semibold text-white group-hover:text-[#00D26A] transition-colors">
+            <span className="text-sm font-semibold text-white group-hover:text-[#E5A93C] transition-colors">
               {t('mine.companyProfile', 'Company Profile')}
             </span>
           </div>
@@ -221,10 +221,10 @@ export const MineView: React.FC<MineViewProps> = ({
           className="p-4 rounded-2xl bg-[#111317] border border-neutral-850 hover:border-neutral-700 flex items-center justify-between cursor-pointer transition-all active:scale-[0.99] group shadow-md"
         >
           <div className="flex items-center gap-3.5">
-            <span className="w-8 h-8 rounded-full bg-[#00D26A] text-black flex items-center justify-center font-black shrink-0 shadow-sm">
-              <Headphones size={16} className="text-black" />
+            <span className="w-8 h-8 rounded-full bg-gradient-to-br from-[#DC2626] to-[#B91C1C] text-[#FDE047] border border-[#E5A93C]/30 flex items-center justify-center font-black shrink-0 shadow-sm">
+              <Headphones size={16} className="text-[#FDE047]" />
             </span>
-            <span className="text-sm font-semibold text-white group-hover:text-[#00D26A] transition-colors">
+            <span className="text-sm font-semibold text-white group-hover:text-[#E5A93C] transition-colors">
               {t('mine.customerService', 'Customer service')}
             </span>
           </div>
@@ -237,10 +237,10 @@ export const MineView: React.FC<MineViewProps> = ({
           className="p-4 rounded-2xl bg-[#111317] border border-neutral-850 hover:border-neutral-700 flex items-center justify-between cursor-pointer transition-all active:scale-[0.99] group shadow-md"
         >
           <div className="flex items-center gap-3.5">
-            <span className="w-8 h-8 rounded-full bg-[#00D26A] text-black flex items-center justify-center font-black shrink-0 shadow-sm">
-              <UserPlus size={16} className="text-black" />
+            <span className="w-8 h-8 rounded-full bg-gradient-to-br from-[#DC2626] to-[#B91C1C] text-[#FDE047] border border-[#E5A93C]/30 flex items-center justify-center font-black shrink-0 shadow-sm">
+              <UserPlus size={16} className="text-[#FDE047]" />
             </span>
-            <span className="text-sm font-semibold text-white group-hover:text-[#00D26A] transition-colors">
+            <span className="text-sm font-semibold text-white group-hover:text-[#E5A93C] transition-colors">
               {t('mine.inviteFriends', 'Invite friends')}
             </span>
           </div>
@@ -253,11 +253,11 @@ export const MineView: React.FC<MineViewProps> = ({
           className="p-4 rounded-2xl bg-[#111317] border border-neutral-850 hover:border-neutral-700 flex items-center justify-between cursor-pointer transition-all active:scale-[0.99] group shadow-md"
         >
           <div className="flex items-center gap-3.5">
-            <span className="w-8 h-8 rounded-full bg-[#00D26A] text-black flex items-center justify-center font-black shrink-0 shadow-sm">
-              <Globe size={16} className="text-black" />
+            <span className="w-8 h-8 rounded-full bg-gradient-to-br from-[#DC2626] to-[#B91C1C] text-[#FDE047] border border-[#E5A93C]/30 flex items-center justify-center font-black shrink-0 shadow-sm">
+              <Globe size={16} className="text-[#FDE047]" />
             </span>
             <div>
-              <span className="text-sm font-semibold text-white group-hover:text-[#00D26A] transition-colors block">
+              <span className="text-sm font-semibold text-white group-hover:text-[#E5A93C] transition-colors block">
                 {t('mine.changeLanguage', 'Change Language')}
               </span>
               <span className="text-[11px] text-neutral-400">

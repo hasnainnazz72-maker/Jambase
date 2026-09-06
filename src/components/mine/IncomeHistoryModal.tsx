@@ -54,7 +54,7 @@ export const IncomeHistoryModal: React.FC<IncomeHistoryModalProps> = ({
         {/* Header */}
         <div className="px-5 py-4 border-b border-neutral-800/80 flex items-center justify-between bg-neutral-900/50">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-[#00D26A]/20 border border-[#00D26A]/40 text-[#00D26A] flex items-center justify-center font-bold">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#DC2626]/20 to-[#B91C1C]/10 border border-[#DC2626]/40 text-[#FDE047] flex items-center justify-center font-bold">
               <TrendingUp size={16} />
             </div>
             <div>
@@ -73,17 +73,17 @@ export const IncomeHistoryModal: React.FC<IncomeHistoryModalProps> = ({
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3.5">
           {/* Summary Box with Separate Totals */}
-          <div className="p-4 rounded-2xl bg-gradient-to-br from-[#121c17] to-[#0e1218] border border-[#00D26A]/30 space-y-3">
+          <div className="p-4 rounded-2xl bg-gradient-to-br from-[#2a0808] to-[#12080a] border border-[#DC2626]/40 space-y-3">
             <div className="flex items-center justify-between">
               <div>
                 <span className="text-[11px] text-neutral-400 block font-medium">Total Earned Income</span>
-                <span className="text-2xl font-extrabold text-[#00D26A]">
+                <span className="text-2xl font-extrabold text-[#E5A93C]">
                   {(user?.totalEarnedIncome ?? 84.50).toLocaleString()} ETB
                 </span>
               </div>
               <div className="text-right">
                 <span className="text-[10px] text-neutral-400 block font-medium">Current VIP Tier</span>
-                <span className="text-xs font-black text-white px-2 py-0.5 rounded bg-[#00D26A]/20 text-[#00D26A] border border-[#00D26A]/30">
+                <span className="text-xs font-black text-white px-2 py-0.5 rounded bg-[#DC2626]/20 text-[#FDE047] border border-[#DC2626]/30">
                   VIP {user?.vipLevel || 1}
                 </span>
               </div>
@@ -92,7 +92,7 @@ export const IncomeHistoryModal: React.FC<IncomeHistoryModalProps> = ({
             <div className="grid grid-cols-2 gap-2 pt-2.5 border-t border-neutral-800/80 text-xs">
               <div className="p-2.5 rounded-xl bg-black/40 border border-neutral-800">
                 <span className="text-[10px] text-neutral-400 block">VIP Profit Ledger:</span>
-                <span className="font-extrabold text-[#00D26A]">
+                <span className="font-extrabold text-[#E5A93C]">
                   {(user?.totalVipProfit ?? vipProfitTotal ?? 54.50).toLocaleString()} ETB
                 </span>
               </div>
@@ -117,7 +117,7 @@ export const IncomeHistoryModal: React.FC<IncomeHistoryModalProps> = ({
                 onClick={() => setFilter(f.id as any)}
                 className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors ${
                   filter === f.id
-                    ? 'bg-[#00D26A] text-black font-bold shadow'
+                    ? 'bg-gradient-to-r from-[#DC2626] to-[#B91C1C] text-white font-bold shadow-sm border border-[#E5A93C]/40'
                     : 'bg-neutral-900 text-neutral-400 border border-neutral-800 hover:text-white'
                 }`}
               >
@@ -138,7 +138,7 @@ export const IncomeHistoryModal: React.FC<IncomeHistoryModalProps> = ({
                   <div
                     key={record.id}
                     className={`p-4 rounded-2xl bg-[#14161f] border space-y-2.5 text-xs ${
-                      isCommission ? 'border-amber-500/30' : 'border-[#00D26A]/25'
+                      isCommission ? 'border-amber-500/30' : 'border-[#DC2626]/30'
                     }`}
                   >
                     <div className="flex items-center justify-between">
@@ -149,7 +149,7 @@ export const IncomeHistoryModal: React.FC<IncomeHistoryModalProps> = ({
                             className={`text-[9px] px-1.5 py-0.5 rounded font-black uppercase ${
                               isCommission
                                 ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                                : 'bg-[#00D26A]/20 text-[#00D26A] border border-[#00D26A]/30'
+                                : 'bg-[#DC2626]/20 text-[#FDE047] border border-[#DC2626]/30'
                             }`}
                           >
                             {isCommission ? `Tier ${record.commissionTier || 1} Rebate` : `VIP ${record.vipLevel} Yield`}
@@ -159,7 +159,7 @@ export const IncomeHistoryModal: React.FC<IncomeHistoryModalProps> = ({
                           Rate: {(record.dailyRate * 100).toFixed(1)}% {isCommission ? 'Rebate Dividend' : 'Configured VIP Yield'}
                         </span>
                       </div>
-                      <span className={`text-base font-extrabold ${isCommission ? 'text-amber-400' : 'text-[#00D26A]'}`}>
+                      <span className={`text-base font-extrabold ${isCommission ? 'text-amber-400' : 'text-[#E5A93C]'}`}>
                         +{record.incomeAmount.toLocaleString()} ETB
                       </span>
                     </div>
@@ -175,7 +175,7 @@ export const IncomeHistoryModal: React.FC<IncomeHistoryModalProps> = ({
                         Previous Balance: <strong className="text-neutral-300">{record.previousBalance.toLocaleString()} ETB</strong>
                       </div>
                       <div>
-                        New Balance: <strong className="text-[#00D26A]">{record.newBalance.toLocaleString()} ETB</strong>
+                        New Balance: <strong className="text-[#E5A93C]">{record.newBalance.toLocaleString()} ETB</strong>
                       </div>
                     </div>
 

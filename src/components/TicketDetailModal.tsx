@@ -83,21 +83,18 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     }
   };
 
-  const vipDailyRate = user?.vipLevel === 1 ? 0.019 : user?.vipLevel === 2 ? 0.022 : user?.vipLevel === 3 ? 0.03 : user?.vipLevel === 4 ? 0.04 : 0.05;
-  // STRICT RULE: Profit calculated strictly on the ticket investment amount
-  const estimatedProfit = Number((totalPrice * vipDailyRate).toFixed(2));
   const remainingBalanceAfterBuy = Number(Math.max(0, currentBalance - totalPrice).toFixed(2));
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div
         id="ticket-purchase-modal"
-        className="w-full max-w-md bg-[#12131a] border-t sm:border border-neutral-800 rounded-t-3xl sm:rounded-3xl max-h-[90vh] overflow-y-auto p-5 pb-8 animate-in slide-in-from-bottom-6 duration-300"
+        className="w-full max-w-md bg-[#160c0e] border-t sm:border border-[#3d181c] rounded-t-3xl sm:rounded-3xl max-h-[90vh] overflow-y-auto p-5 pb-8 animate-in slide-in-from-bottom-6 duration-300"
       >
         {/* Header bar */}
         <div className="flex items-center justify-between pb-3 border-b border-neutral-800/80">
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded text-[11px] font-extrabold uppercase tracking-wider bg-[#00D26A]/15 text-[#00D26A] border border-[#00D26A]/30">
+            <span className="px-2.5 py-0.5 rounded text-[11px] font-extrabold uppercase tracking-wider bg-[#DC2626]/20 text-[#FCA5A5] border border-[#DC2626]/40">
               {ticket.category}
             </span>
           </div>
@@ -119,13 +116,13 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-4">
             <div>
-              <p className="text-xs text-[#00D26A] font-semibold">{ticket.artist}</p>
+              <p className="text-xs text-[#E5A93C] font-semibold">{ticket.artist}</p>
               <h3 className="text-lg font-bold text-white leading-snug">{ticket.name}</h3>
             </div>
           </div>
           <button
             onClick={() => onPlayTrack(ticket)}
-            className="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-[#00D26A] hover:bg-[#00e875] text-black flex items-center justify-center shadow-lg shadow-[#00D26A]/40 transition-transform active:scale-95"
+            className="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-gradient-to-tr from-[#DC2626] to-[#EF4444] text-[#FDE047] flex items-center justify-center shadow-lg shadow-black/60 transition-transform active:scale-95 border border-[#E5A93C]/30"
             title="Preview Music"
           >
             <Music size={18} />
@@ -135,11 +132,11 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
         {/* Event Meta Details */}
         <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-neutral-300">
           <div className="flex items-center gap-2 p-2.5 rounded-xl bg-neutral-900/90 border border-neutral-800">
-            <Calendar size={15} className="text-[#00D26A] shrink-0" />
+            <Calendar size={15} className="text-[#E5A93C] shrink-0" />
             <span className="truncate">{ticket.eventDate}</span>
           </div>
           <div className="flex items-center gap-2 p-2.5 rounded-xl bg-neutral-900/90 border border-neutral-800">
-            <MapPin size={15} className="text-[#00D26A] shrink-0" />
+            <MapPin size={15} className="text-[#E5A93C] shrink-0" />
             <span className="truncate">{ticket.venue}, {ticket.location}</span>
           </div>
         </div>
@@ -183,7 +180,7 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                 onClick={() => setQuantity(qty)}
                 className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-colors ${
                   quantity === qty
-                    ? 'bg-[#00D26A] text-black'
+                    ? 'bg-gradient-to-r from-[#DC2626] to-[#B91C1C] text-white border border-[#E5A93C]/40'
                     : 'bg-neutral-800 text-neutral-300 hover:bg-neutral-700'
                 }`}
               >
@@ -193,8 +190,8 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
           </div>
         </div>
 
-        {/* Price & Calculation Breakdown */}
-        <div className="mt-4 p-3.5 rounded-2xl bg-[#0d0e12] border border-neutral-800 space-y-2 text-xs">
+        {/* Price Breakdown */}
+        <div className="mt-4 p-3.5 rounded-2xl bg-[#0d0708] border border-neutral-800 space-y-2 text-xs">
           <div className="flex justify-between text-neutral-400">
             <span>Ticket Price</span>
             <span className="font-semibold text-neutral-200">{unitPrice.toLocaleString()} ETB</span>
@@ -203,24 +200,13 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
             <span>Quantity Selected</span>
             <span className="font-semibold text-neutral-200">× {quantity}</span>
           </div>
-          <div className="flex justify-between text-neutral-400">
-            <span>VIP Rate (Your Level: VIP {user?.vipLevel || 1})</span>
-            <span className="font-bold text-[#00D26A]">
-              +{((user?.vipLevel === 1 ? 1.9 : user?.vipLevel === 2 ? 2.2 : user?.vipLevel === 3 ? 3.0 : user?.vipLevel === 4 ? 4.0 : 5.0)).toFixed(1)}% (on {totalPrice.toLocaleString()} ETB)
-            </span>
-          </div>
-          <div className="flex justify-between text-neutral-400">
-            <span>VIP Profit on this Ticket</span>
-            <span className="font-bold text-[#00D26A]">+{estimatedProfit.toLocaleString()} ETB</span>
-          </div>
 
-          <div className="p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-800/40 text-[11px] text-emerald-300 space-y-1">
-            <span className="font-bold block text-[#00D26A]">⚡ 1-Minute Fast Settle Rule:</span>
-            <p>
-              In exactly <strong>1 minute</strong>, both your <strong>Investment ({totalPrice.toLocaleString()} ETB)</strong> and <strong>Ticket Profit (+{estimatedProfit.toLocaleString()} ETB)</strong> will automatically settle and return directly to your Available Balance!
-            </p>
-            <p className="text-emerald-400">
-              Your remaining <strong>{remainingBalanceAfterBuy.toLocaleString()} ETB</strong> balance remains fully usable to buy more tickets (from 500 ETB to 10,000 ETB) anytime without daily limits.
+          <div className="p-2.5 rounded-xl bg-neutral-900/80 border border-neutral-800 text-[11px] text-neutral-300 space-y-1">
+            <span className="font-bold flex items-center gap-1 text-[#E5A93C]">
+              <ShieldCheck size={13} /> Official Concert Access Pass
+            </span>
+            <p className="text-neutral-400">
+              Verified live concert reservation by HBO JAMBASE MUSIC. (Note: Grab is the exclusive income system for members).
             </p>
           </div>
 
@@ -228,11 +214,11 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
             <div>
               <span className="text-sm font-bold text-white block">Order Total</span>
               <span className="text-[11px] text-neutral-400">
-                Remaining Balance: <strong className="text-[#00D26A]">{remainingBalanceAfterBuy.toLocaleString()} ETB</strong>
+                Remaining Balance: <strong className="text-[#E5A93C]">{remainingBalanceAfterBuy.toLocaleString()} ETB</strong>
               </span>
             </div>
             <div className="text-right">
-              <span className="text-xl font-extrabold text-[#00D26A]">{totalPrice.toLocaleString()} ETB</span>
+              <span className="text-xl font-extrabold text-[#E5A93C]">{totalPrice.toLocaleString()} ETB</span>
               <p className="text-[10px] text-neutral-500">
                 Available: {currentBalance.toLocaleString()} ETB
               </p>
@@ -265,8 +251,8 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
         )}
 
         {success && (
-          <div className="mt-3 p-3 rounded-xl bg-[#00D26A]/15 border border-[#00D26A]/30 flex items-center gap-2 text-xs text-[#00D26A]">
-            <CheckCircle2 size={16} className="shrink-0" />
+          <div className="mt-3 p-3 rounded-xl bg-[#DC2626]/20 border border-[#DC2626]/40 flex items-center gap-2 text-xs text-[#FCA5A5]">
+            <CheckCircle2 size={16} className="shrink-0 text-[#E5A93C]" />
             <span>{success}</span>
           </div>
         )}
@@ -284,10 +270,10 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                 ? 'bg-amber-500 hover:bg-amber-400 text-black shadow-amber-500/20 active:scale-[0.98]'
                 : !hasEnoughBalance
                 ? 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700 cursor-pointer'
-                : 'bg-[#00D26A] hover:bg-[#00e875] text-black shadow-[#00D26A]/25 active:scale-[0.98]'
+                : 'bg-gradient-to-r from-[#DC2626] to-[#B91C1C] hover:from-[#EF4444] hover:to-[#DC2626] text-white shadow-[#DC2626]/30 active:scale-[0.98] border border-[#E5A93C]/40'
             }`}
           >
-            <TicketIcon size={18} />
+            <TicketIcon size={18} className="text-[#E5A93C]" />
             {loading
               ? 'Processing Secure Order...'
               : success
@@ -296,7 +282,7 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
               ? 'Buy Ticket • 500 ETB Min Balance'
               : !hasEnoughBalance
               ? 'Insufficient Balance (Recharge)'
-              : `Purchase Now • ${totalPrice.toLocaleString()} ETB`}
+              : `Book Pass • ${totalPrice.toLocaleString()} ETB`}
           </button>
         </div>
       </div>

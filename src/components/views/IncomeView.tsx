@@ -148,36 +148,36 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
 
   return (
     <div id="my-income-view" className="pb-28 space-y-4">
-      {/* 1. TOP GREEN HEADER BAR */}
-      <div className="-mx-4 -mt-3 mb-2 bg-[#00D26A] text-black px-4 py-3.5 shadow-md flex items-center justify-between">
+      {/* 1. TOP HEADER BAR */}
+      <div className="-mx-4 -mt-3 mb-2 bg-gradient-to-r from-[#DC2626] to-[#B91C1C] text-white px-4 py-3.5 shadow-md flex items-center justify-between border-b border-[#E5A93C]/30">
         <h1 className="text-base font-extrabold tracking-wide mx-auto">{t('income.title', 'My income')}</h1>
       </div>
 
       {/* 2. DAILY VIP COMPOUND PROFIT & UTC INCOME GENERATOR */}
-      <div className="p-5 rounded-3xl bg-gradient-to-br from-[#0e2118] via-[#10141b] to-[#0d0e12] border-2 border-[#00D26A]/40 shadow-2xl relative overflow-hidden space-y-4">
+      <div className="p-5 rounded-3xl bg-gradient-to-br from-[#2a0808] via-[#1a0f12] to-[#0d0e12] border border-[#DC2626]/40 shadow-2xl relative overflow-hidden space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <span className="w-9 h-9 rounded-xl bg-[#00D26A] text-black flex items-center justify-center font-extrabold shadow-lg shadow-[#00D26A]/30">
+            <span className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#DC2626] to-[#B91C1C] text-[#FDE047] flex items-center justify-center font-extrabold shadow-lg shadow-[#DC2626]/30 border border-[#E5A93C]/40">
               <Sparkles size={20} />
             </span>
             <div>
               <h3 className="text-sm font-extrabold text-white">Daily VIP Compound Profit</h3>
-              <p className="text-[11px] text-emerald-400 font-medium">
+              <p className="text-[11px] text-[#E5A93C] font-medium">
                 Earned once a day on Available Balance • VIP {user?.vipLevel || 1}
               </p>
             </div>
           </div>
           <div className="text-right">
             <span className="text-[10px] text-neutral-400 block font-mono">UTC Reset in</span>
-            <span className="text-xs font-mono font-bold text-[#00D26A] flex items-center gap-1 justify-end">
+            <span className="text-xs font-mono font-bold text-[#E5A93C] flex items-center gap-1 justify-end">
               <Clock size={11} /> {utcCountdown}
             </span>
           </div>
         </div>
 
         {/* Compound Profit Explanation Banner */}
-        <div className="p-3 rounded-2xl bg-emerald-950/40 border border-emerald-800/40 text-xs text-emerald-300 space-y-1.5">
-          <div className="flex items-center gap-1.5 font-bold text-[#00D26A]">
+        <div className="p-3 rounded-2xl bg-[#2a0808]/50 border border-[#DC2626]/30 text-xs text-[#FDE047] space-y-1.5">
+          <div className="flex items-center gap-1.5 font-bold text-[#E5A93C]">
             <Zap size={14} />
             <span>Daily Compounding Rules:</span>
           </div>
@@ -203,8 +203,8 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
                 </div>
                 <div>
                   <span className="text-[11px] text-neutral-400 block">VIP {user?.vipLevel || 1} Daily Yield:</span>
-                  <span className="text-base font-extrabold text-[#00D26A] font-mono">
-                    +{expectedDailyProfit.toLocaleString()} ETB <span className="text-xs text-emerald-400">({(rate * 100).toFixed(1)}%)</span>
+                  <span className="text-base font-extrabold text-[#E5A93C] font-mono">
+                    +{expectedDailyProfit.toLocaleString()} ETB <span className="text-xs text-amber-300">({(rate * 100).toFixed(1)}%)</span>
                   </span>
                 </div>
               </div>
@@ -212,13 +212,13 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
               <div className="pt-2 border-t border-neutral-800/70 flex justify-between items-center text-[11px] text-neutral-400">
                 <span>Daily claim status:</span>
                 {isClaimedToday ? (
-                  <span className="text-emerald-400 font-bold flex items-center gap-1">
+                  <span className="text-[#E5A93C] font-bold flex items-center gap-1">
                     <CheckCircle2 size={13} /> Claimed for UTC {todayUtc}
                   </span>
-                ) : availableBalance < 30 ? (
-                  <span className="text-amber-400 font-bold">Min $30.00 Balance Required</span>
+                ) : availableBalance < 500 ? (
+                  <span className="text-amber-400 font-bold">Min 500 ETB Balance Required</span>
                 ) : (
-                  <span className="text-[#00D26A] font-bold">Ready to Claim Today</span>
+                  <span className="text-[#E5A93C] font-bold">Ready to Claim Today</span>
                 )}
               </div>
             </div>
@@ -228,8 +228,8 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
         {/* Action Button: Claim Once Per Day */}
         <div>
           {isClaimedToday ? (
-            <div className="p-3.5 rounded-2xl bg-black/60 border border-emerald-900/60 text-center space-y-1">
-              <div className="text-xs font-bold text-[#00D26A] flex items-center justify-center gap-1.5">
+            <div className="p-3.5 rounded-2xl bg-black/60 border border-[#DC2626]/30 text-center space-y-1">
+              <div className="text-xs font-bold text-[#E5A93C] flex items-center justify-center gap-1.5">
                 <CheckCircle2 size={15} />
                 <span>Today's VIP Profit Already Claimed!</span>
               </div>
@@ -237,14 +237,14 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
                 Next compound profit claim unlocks at <strong>00:00:00 UTC</strong> (in {utcCountdown}).
               </p>
             </div>
-          ) : availableBalance < 30 ? (
+          ) : availableBalance < 500 ? (
             <div className="space-y-2">
               <div className="p-3 rounded-2xl bg-amber-950/30 border border-amber-800/40 text-xs text-amber-300 text-center">
-                Available balance is below $30.00. Recharge to unlock daily VIP income.
+                Available balance is below 500 ETB. Recharge to unlock daily VIP income.
               </div>
               <button
                 onClick={() => onNavigateTab('finance')}
-                className="w-full py-3 rounded-2xl bg-[#00D26A] hover:bg-[#00e875] text-black font-extrabold text-xs shadow-lg shadow-[#00D26A]/30 flex items-center justify-center gap-2"
+                className="w-full py-3 rounded-2xl bg-gradient-to-r from-[#DC2626] to-[#B91C1C] hover:from-[#EF4444] hover:to-[#DC2626] text-white font-extrabold text-xs shadow-lg shadow-[#DC2626]/30 flex items-center justify-center gap-2 border border-[#E5A93C]/40"
               >
                 <span>Recharge Account</span>
                 <ArrowUpRight size={14} />
@@ -255,7 +255,7 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
               onClick={handleClaimProfit}
               disabled={claiming}
               id="btn-claim-daily-profit"
-              className="w-full py-3.5 rounded-2xl bg-[#00D26A] hover:bg-[#00e875] text-black font-extrabold text-sm shadow-lg shadow-[#00D26A]/30 flex items-center justify-center gap-2 transition-all active:scale-[0.99] animate-pulse"
+              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#DC2626] to-[#B91C1C] hover:from-[#EF4444] hover:to-[#DC2626] text-white font-extrabold text-sm shadow-lg shadow-[#DC2626]/30 flex items-center justify-center gap-2 transition-all active:scale-[0.99] animate-pulse border border-[#E5A93C]/40"
             >
               <Sparkles size={17} className={claiming ? "animate-spin" : ""} />
               <span>
@@ -271,7 +271,7 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
             className={`p-3 rounded-2xl text-xs flex items-center gap-2 ${
               claimMsg.isError
                 ? 'bg-red-500/15 text-red-300 border border-red-500/30'
-                : 'bg-[#00D26A]/15 text-[#00D26A] border border-[#00D26A]/30'
+                : 'bg-[#DC2626]/15 text-[#FDE047] border border-[#DC2626]/30'
             }`}
           >
             {claimMsg.isError ? <AlertCircle size={15} /> : <CheckCircle2 size={15} />}
@@ -283,12 +283,12 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
         <div className="pt-2 border-t border-neutral-800/80">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-bold text-neutral-300 flex items-center gap-1">
-              <Sparkles size={12} className="text-[#00D26A]" /> Compounding Balance Projection
+              <Sparkles size={12} className="text-[#E5A93C]" /> Compounding Balance Projection
             </span>
-            <span className="text-[10px] text-neutral-500">Based on ${(availableBalance || 100).toFixed(2)} Balance</span>
+            <span className="text-[10px] text-neutral-500">Based on {(availableBalance || 1000).toLocaleString()} ETB Balance</span>
           </div>
           {(() => {
-            const base = availableBalance > 0 ? availableBalance : 100;
+            const base = availableBalance > 0 ? availableBalance : 1000;
             const rate = user?.vipLevel === 2 ? 0.025 : user?.vipLevel === 3 ? 0.03 : user?.vipLevel === 4 ? 0.04 : user?.vipLevel === 5 ? 0.05 : user?.vipLevel === 6 ? 0.06 : 0.019;
             const day1 = base * (1 + rate);
             const day3 = base * Math.pow(1 + rate, 3);
@@ -299,23 +299,23 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
               <div className="grid grid-cols-4 gap-1.5 text-center text-[10px]">
                 <div className="p-2 rounded-xl bg-black/40 border border-neutral-800/80">
                   <span className="text-neutral-400 block text-[9px]">Day 1</span>
-                  <span className="font-bold text-white block">${day1.toFixed(2)}</span>
-                  <span className="text-[#00D26A] text-[9px]">+${(day1 - base).toFixed(2)}</span>
+                  <span className="font-bold text-white block">{Math.round(day1).toLocaleString()}</span>
+                  <span className="text-[#E5A93C] text-[9px]">+{Math.round(day1 - base).toLocaleString()} ETB</span>
                 </div>
                 <div className="p-2 rounded-xl bg-black/40 border border-neutral-800/80">
                   <span className="text-neutral-400 block text-[9px]">Day 3</span>
-                  <span className="font-bold text-white block">${day3.toFixed(2)}</span>
-                  <span className="text-[#00D26A] text-[9px]">+${(day3 - base).toFixed(2)}</span>
+                  <span className="font-bold text-white block">{Math.round(day3).toLocaleString()}</span>
+                  <span className="text-[#E5A93C] text-[9px]">+{Math.round(day3 - base).toLocaleString()} ETB</span>
                 </div>
                 <div className="p-2 rounded-xl bg-black/40 border border-neutral-800/80">
                   <span className="text-neutral-400 block text-[9px]">Day 7</span>
-                  <span className="font-bold text-white block">${day7.toFixed(2)}</span>
-                  <span className="text-[#00D26A] text-[9px]">+${(day7 - base).toFixed(2)}</span>
+                  <span className="font-bold text-white block">{Math.round(day7).toLocaleString()}</span>
+                  <span className="text-[#E5A93C] text-[9px]">+{Math.round(day7 - base).toLocaleString()} ETB</span>
                 </div>
-                <div className="p-2 rounded-xl bg-black/40 border border-emerald-900/40 bg-emerald-950/20">
-                  <span className="text-emerald-400 font-bold block text-[9px]">Day 30</span>
-                  <span className="font-extrabold text-[#00D26A] block">${day30.toFixed(2)}</span>
-                  <span className="text-emerald-300 text-[9px]">+${(day30 - base).toFixed(2)}</span>
+                <div className="p-2 rounded-xl bg-black/40 border border-[#DC2626]/40 bg-[#2a0808]/30">
+                  <span className="text-[#FDE047] font-bold block text-[9px]">Day 30</span>
+                  <span className="font-extrabold text-[#E5A93C] block">{Math.round(day30).toLocaleString()}</span>
+                  <span className="text-[#FDE047] text-[9px]">+{Math.round(day30 - base).toLocaleString()} ETB</span>
                 </div>
               </div>
             );
@@ -342,7 +342,7 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
                 cy="50"
                 r="38"
                 fill="transparent"
-                stroke="#00D26A"
+                stroke="#DC2626"
                 strokeWidth="12"
                 strokeDasharray={`${(availablePercent * 238) / 100} 238`}
                 strokeLinecap="round"
@@ -357,15 +357,15 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
           <div className="flex-1 space-y-3">
             <div className="flex justify-between items-baseline">
               <span className="text-xs text-neutral-300 font-medium">{t('income.totalAssets', 'Total assets:')}</span>
-              <span className="text-xl font-extrabold text-[#00D26A]">
-                ${totalAssets.toFixed(2)}
+              <span className="text-xl font-extrabold text-[#E5A93C]">
+                {totalAssets.toLocaleString()} ETB
               </span>
             </div>
 
             <div className="flex justify-between items-baseline">
               <span className="text-xs text-neutral-400">{t('income.availableSpendable', 'Available Balance:')}</span>
               <span className="text-sm font-bold text-white">
-                ${availableBalance.toFixed(2)}
+                {availableBalance.toLocaleString()} ETB
               </span>
             </div>
 
@@ -374,7 +374,7 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
               <span className="text-neutral-400">Withdrawable anytime</span>
               <button
                 onClick={() => onNavigateTab('mine')}
-                className="text-[#00D26A] font-bold hover:underline"
+                className="text-[#E5A93C] font-bold hover:underline"
               >
                 Withdraw →
               </button>
@@ -386,7 +386,7 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
         <div className="mt-5 pt-4 border-t border-neutral-800/80 grid grid-cols-3 gap-2 text-center">
           <div>
             <div className="text-base font-extrabold text-white">
-              ${(summary?.recordExpenditure ?? 0).toFixed(0)}
+              {(summary?.recordExpenditure ?? 0).toLocaleString()} ETB
             </div>
             <div className="text-[10px] text-neutral-400 mt-0.5 leading-tight">
               {t('income.recordExpenditure', 'Record expenditure')}
@@ -394,15 +394,15 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
           </div>
           <div>
             <div className="text-base font-extrabold text-white">
-              ${(summary?.concertExpenditure ?? 0).toFixed(0)}
+              {(summary?.concertExpenditure ?? 0).toLocaleString()} ETB
             </div>
             <div className="text-[10px] text-neutral-400 mt-0.5 leading-tight">
-              {t('income.concertExpenditure', 'Concert expenditure')}
+              Grab order expenditure
             </div>
           </div>
           <div>
             <div className="text-base font-extrabold text-white">
-              ${(summary?.financialExpenditure ?? 0).toFixed(0)}
+              {(summary?.financialExpenditure ?? 0).toLocaleString()} ETB
             </div>
             <div className="text-[10px] text-neutral-400 mt-0.5 leading-tight">
               {t('income.financialExpenditure', 'Financial expenditure')}
@@ -415,15 +415,15 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
       <div className="space-y-3">
         <div className="flex items-center justify-between px-1">
           <h3 className="text-xs font-black uppercase tracking-wider text-neutral-400">Account Earning Ledgers</h3>
-          <span className="text-[10px] text-[#00D26A] font-bold">100% Additive & Independent</span>
+          <span className="text-[10px] text-[#E5A93C] font-bold">100% Additive & Independent</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {/* LEDGER 1: VIP PROFIT LEDGER */}
-          <div className="p-4 rounded-2xl bg-gradient-to-br from-[#121c17] to-[#0e1218] border border-[#00D26A]/30 space-y-2.5 shadow-lg">
+          <div className="p-4 rounded-2xl bg-gradient-to-br from-[#2a0808] to-[#12080a] border border-[#DC2626]/40 space-y-2.5 shadow-lg">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-[#00D26A]/20 text-[#00D26A] flex items-center justify-center font-black text-xs">
+                <div className="w-7 h-7 rounded-lg bg-[#DC2626]/20 text-[#FDE047] border border-[#DC2626]/30 flex items-center justify-center font-black text-xs">
                   VIP
                 </div>
                 <div>
@@ -433,7 +433,7 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
                   </span>
                 </div>
               </div>
-              <span className="px-2 py-0.5 rounded text-[10px] font-black bg-[#00D26A]/15 text-[#00D26A] border border-[#00D26A]/30">
+              <span className="px-2 py-0.5 rounded text-[10px] font-black bg-[#DC2626]/15 text-[#FDE047] border border-[#DC2626]/30">
                 VIP {user?.vipLevel || 1}
               </span>
             </div>
@@ -441,7 +441,7 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
             <div className="grid grid-cols-2 gap-2 pt-2 border-t border-neutral-800/80 text-xs">
               <div>
                 <span className="text-[10px] text-neutral-400 block">Today's VIP Yield:</span>
-                <span className="font-extrabold text-[#00D26A]">
+                <span className="font-extrabold text-[#E5A93C]">
                   +{(user?.todayVipProfit ?? user?.todayTicketIncome ?? 0).toLocaleString()} ETB
                 </span>
               </div>
@@ -496,7 +496,7 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
         {/* Total Combined Income */}
         <div className="p-3.5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-7 h-7 rounded-lg bg-[#00D26A]/15 border border-[#00D26A]/30 flex items-center justify-center text-[#00D26A]">
+            <div className="w-7 h-7 rounded-lg bg-[#DC2626]/15 border border-[#DC2626]/30 flex items-center justify-center text-[#FDE047]">
               <FileText size={15} />
             </div>
             <div>
@@ -504,21 +504,21 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
               <span className="text-[10px] text-neutral-400">Combined sum of all additive VIP yields + Team rebates</span>
             </div>
           </div>
-          <span className="text-sm font-extrabold text-[#00D26A]">
+          <span className="text-sm font-extrabold text-[#E5A93C]">
             {(user?.totalEarnedIncome ?? summary?.totalIncome ?? 0).toLocaleString()} ETB
           </span>
         </div>
       </div>
 
-      {/* 5. TICKET RECORD SECTION WITH LIVE 2-MINUTE TIMERS */}
+      {/* 5. ORDER RECORD SECTION WITH LIVE TIMERS */}
       <div>
         <div className="flex items-center justify-between mb-3 px-0.5">
           <h3 className="text-sm font-extrabold text-white tracking-wide">{t('income.myRecord', 'My record')}</h3>
           <span
             onClick={() => onNavigateTab('home')}
-            className="text-xs text-[#00D26A] font-semibold cursor-pointer hover:underline flex items-center gap-0.5"
+            className="text-xs text-[#E5A93C] font-semibold cursor-pointer hover:underline flex items-center gap-0.5"
           >
-            Buy More
+            Grab More
             <ChevronRight size={13} />
           </span>
         </div>
@@ -526,12 +526,12 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
         {/* List of Held Record Cards */}
         {purchases.length === 0 ? (
           <div className="p-6 rounded-2xl bg-neutral-900/60 border border-neutral-800 text-center">
-            <p className="text-xs text-neutral-400">No ticket purchases yet.</p>
+            <p className="text-xs text-neutral-400">No active bookings yet.</p>
             <button
               onClick={() => onNavigateTab('home')}
-              className="mt-2.5 px-3 py-1.5 rounded-xl bg-[#00D26A] text-black text-xs font-bold"
+              className="mt-2.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#DC2626] to-[#B91C1C] text-white text-xs font-bold border border-[#E5A93C]/40"
             >
-              Browse Ticket Market
+              Start Grabbing Orders
             </button>
           </div>
         ) : (
@@ -564,18 +564,18 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
                           pur.status === 'completed'
                             ? 'bg-neutral-800 text-neutral-400 border border-neutral-700'
-                            : 'bg-[#00D26A]/15 text-[#00D26A] border border-[#00D26A]/30 animate-pulse'
+                            : 'bg-[#DC2626]/15 text-[#FDE047] border border-[#DC2626]/30 animate-pulse'
                         }`}>
-                          {pur.status === 'completed' ? '✅ Settled to Balance' : `⏳ 1-Min Lock: ${timerStr}`}
+                          {pur.status === 'completed' ? '✅ Settled to Balance' : `⏳ Processing: ${timerStr}`}
                         </span>
                       </div>
                       <p className="text-[11px] text-neutral-400 truncate mt-0.5">{pur.artist}</p>
                       <div className="mt-1 flex items-center gap-2 text-[10px] text-neutral-400">
                         <span>Qty: {pur.quantity}</span>
                         <span>•</span>
-                        <span>Invest: <strong className="text-white">${pur.totalAmount.toFixed(2)}</strong></span>
+                        <span>Invest: <strong className="text-white">{pur.totalAmount.toLocaleString()} ETB</strong></span>
                         <span>•</span>
-                        <span className="text-[#00D26A] font-bold">Profit: +${(pur.profitAmount || 0).toFixed(2)}</span>
+                        <span className="text-[#E5A93C] font-bold">Profit: +{(pur.profitAmount || 0).toLocaleString()} ETB</span>
                       </div>
                     </div>
                   </div>
@@ -584,27 +584,27 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
                   {isFrozen && remainingSec > 0 ? (
                     <div className="p-2.5 rounded-xl bg-black/60 border border-neutral-800/80 space-y-1.5">
                       <div className="flex justify-between items-center text-[10px]">
-                        <span className="text-emerald-400 font-semibold flex items-center gap-1">
+                        <span className="text-[#E5A93C] font-semibold flex items-center gap-1">
                           <Timer size={12} /> Auto-settling to Available Balance in:
                         </span>
                         <span className="text-white font-mono font-bold">{timerStr}</span>
                       </div>
                       <div className="w-full h-1.5 rounded-full bg-neutral-800 overflow-hidden">
                         <div
-                          className="h-full bg-gradient-to-r from-emerald-500 to-[#00D26A] rounded-full transition-all duration-300"
+                          className="h-full bg-gradient-to-r from-[#DC2626] to-[#EF4444] rounded-full transition-all duration-300"
                           style={{ width: `${progressPercent}%` }}
                         />
                       </div>
                       <div className="flex justify-between text-[9px] text-neutral-400">
                         <span>Principal: {pur.totalAmount.toLocaleString()} ETB</span>
-                        <span className="text-[#00D26A]">Yield: +{(pur.profitAmount || 0).toLocaleString()} ETB</span>
+                        <span className="text-[#E5A93C]">Yield: +{(pur.profitAmount || 0).toLocaleString()} ETB</span>
                         <span className="text-white font-bold">Total Credit: {(pur.totalAmount + (pur.profitAmount || 0)).toLocaleString()} ETB</span>
                       </div>
                     </div>
                   ) : pur.status === 'completed' ? (
-                    <div className="p-2 rounded-xl bg-emerald-950/30 border border-emerald-800/30 flex items-center justify-between text-[10px] text-emerald-300">
+                    <div className="p-2 rounded-xl bg-[#2a0808]/30 border border-[#DC2626]/30 flex items-center justify-between text-[10px] text-[#FDE047]">
                       <span className="flex items-center gap-1">
-                        <CheckCircle2 size={12} className="text-[#00D26A]" />
+                        <CheckCircle2 size={12} className="text-[#E5A93C]" />
                         <span>Investment ({pur.totalAmount.toLocaleString()} ETB) + Profit (+{(pur.profitAmount || 0).toLocaleString()} ETB) credited to Balance</span>
                       </span>
                       <span className="font-bold text-white">{(pur.totalAmount + (pur.profitAmount || 0)).toLocaleString()} ETB</span>
@@ -618,13 +618,13 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
 
         {/* Income Transaction History Table */}
         <div className="mt-4 pt-3 border-t border-neutral-800">
-          <h4 className="text-xs font-bold text-neutral-300 mb-2">Yield Audit History (Ticket Logs)</h4>
+          <h4 className="text-xs font-bold text-neutral-300 mb-2">Yield Audit History (Order Logs)</h4>
           <div className="space-y-2">
             {records.slice(0, 4).map((rec) => (
               <div key={rec.id} className="p-2.5 rounded-xl bg-neutral-900/70 border border-neutral-800 text-[11px]">
                 <div className="flex justify-between items-center text-neutral-300">
                   <span className="font-semibold text-white">{rec.ticketName}</span>
-                  <span className="font-extrabold text-[#00D26A]">+{rec.incomeAmount.toLocaleString()} ETB</span>
+                  <span className="font-extrabold text-[#E5A93C]">+{rec.incomeAmount.toLocaleString()} ETB</span>
                 </div>
                 <div className="mt-1 flex justify-between text-neutral-500 text-[10px]">
                   <span>TX: {rec.transactionId}</span>

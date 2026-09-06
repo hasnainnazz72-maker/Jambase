@@ -108,10 +108,10 @@ export const TaskView: React.FC<TaskViewProps> = ({ tasks = [], user, onRefresh 
   return (
     <div id="task-view-container" className="pb-28 space-y-4">
       {/* Header Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0e2118] via-[#10141b] to-[#0d0e12] border border-[#00D26A]/30 p-5 shadow-xl">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#2a0808] via-[#1a0f12] to-[#0d0e12] border border-[#DC2626]/30 p-5 shadow-xl">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="w-10 h-10 rounded-2xl bg-[#00D26A] text-black flex items-center justify-center font-black shadow-lg shadow-[#00D26A]/30">
+            <span className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#DC2626] to-[#B91C1C] text-[#FDE047] flex items-center justify-center font-black shadow-lg shadow-[#DC2626]/30 border border-[#E5A93C]/40">
               <Gift size={20} />
             </span>
             <div>
@@ -121,7 +121,7 @@ export const TaskView: React.FC<TaskViewProps> = ({ tasks = [], user, onRefresh 
           </div>
           <div className="text-right">
             <span className="text-[11px] text-neutral-400 block font-medium">Valid Direct</span>
-            <span className="text-sm font-extrabold text-[#00D26A]">
+            <span className="text-sm font-extrabold text-[#E5A93C]">
               {user?.validDirectMembersCount || 0} Members
             </span>
           </div>
@@ -132,12 +132,12 @@ export const TaskView: React.FC<TaskViewProps> = ({ tasks = [], user, onRefresh 
           <div
             className={`mt-4 p-3 rounded-2xl border text-xs flex items-center gap-2.5 animate-in fade-in duration-200 ${
               feedback.type === 'success'
-                ? 'bg-emerald-950/60 border-emerald-500/40 text-emerald-300'
+                ? 'bg-[#DC2626]/20 border-[#DC2626]/40 text-[#FDE047]'
                 : 'bg-red-950/60 border-red-500/40 text-red-300'
             }`}
           >
             {feedback.type === 'success' ? (
-              <Sparkles size={16} className="text-[#00D26A] shrink-0" />
+              <Sparkles size={16} className="text-[#E5A93C] shrink-0" />
             ) : (
               <AlertCircle size={16} className="text-red-400 shrink-0" />
             )}
@@ -170,7 +170,7 @@ export const TaskView: React.FC<TaskViewProps> = ({ tasks = [], user, onRefresh 
                 isClaimed
                   ? 'border-neutral-800/60 opacity-80'
                   : isDone
-                  ? 'border-[#00D26A]/50 bg-[#121b16]/70 shadow-lg shadow-[#00D26A]/10'
+                  ? 'border-[#DC2626]/50 bg-[#220c0e]/60 shadow-lg shadow-[#DC2626]/10'
                   : 'border-neutral-800 hover:border-neutral-700'
               }`}
             >
@@ -179,7 +179,7 @@ export const TaskView: React.FC<TaskViewProps> = ({ tasks = [], user, onRefresh 
                   <div
                     className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${
                       isDone
-                        ? 'bg-[#00D26A]/20 border-[#00D26A]/40 text-[#00D26A]'
+                        ? 'bg-[#DC2626]/20 border-[#DC2626]/40 text-[#FDE047]'
                         : 'bg-neutral-900 border-neutral-800 text-neutral-400'
                     }`}
                   >
@@ -191,7 +191,7 @@ export const TaskView: React.FC<TaskViewProps> = ({ tasks = [], user, onRefresh 
                       {task.title}
                     </h4>
                     <p className="text-[11px] text-neutral-400 mt-0.5">
-                      Reward: <strong className="text-[#00D26A] font-extrabold">+{task.rewardAmount.toLocaleString()} ETB</strong>
+                      Reward: <strong className="text-[#E5A93C] font-extrabold">+{task.rewardAmount.toLocaleString()} ETB</strong>
                     </p>
 
                     {/* Progress indicator */}
@@ -199,7 +199,7 @@ export const TaskView: React.FC<TaskViewProps> = ({ tasks = [], user, onRefresh 
                       <div className="w-28 sm:w-36 h-1.5 rounded-full bg-neutral-800 overflow-hidden">
                         <div
                           className={`h-full rounded-full transition-all duration-300 ${
-                            isDone ? 'bg-[#00D26A]' : 'bg-amber-500'
+                            isDone ? 'bg-gradient-to-r from-[#DC2626] to-[#EF4444]' : 'bg-amber-500'
                           }`}
                           style={{
                             width: `${Math.min(100, (task.progress / task.maxProgress) * 100)}%`
@@ -229,7 +229,7 @@ export const TaskView: React.FC<TaskViewProps> = ({ tasks = [], user, onRefresh 
                       onClick={() => handleClaim(task)}
                       disabled={isClaiming}
                       id={`btn-claim-${task.id}`}
-                      className="px-4 py-2 rounded-xl bg-[#00D26A] hover:bg-[#00e875] text-black font-extrabold text-xs shadow-md shadow-[#00D26A]/30 transition-all active:scale-95 flex items-center gap-1.5 animate-pulse"
+                      className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#DC2626] to-[#B91C1C] hover:from-[#EF4444] hover:to-[#DC2626] text-white font-extrabold text-xs shadow-md shadow-[#DC2626]/30 transition-all active:scale-95 flex items-center gap-1.5 animate-pulse border border-[#E5A93C]/40"
                     >
                       {isClaiming ? (
                         <>

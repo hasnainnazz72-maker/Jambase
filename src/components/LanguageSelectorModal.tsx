@@ -20,16 +20,16 @@ export const LanguageSelectorModal: React.FC<LanguageSelectorModalProps> = ({ is
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="w-full max-w-sm rounded-3xl bg-[#10121a] border border-neutral-800 overflow-hidden shadow-2xl text-white flex flex-col max-h-[85vh]">
+      <div className="w-full max-w-sm rounded-3xl bg-[#160c0e] border border-[#3d181c] overflow-hidden shadow-2xl text-white flex flex-col max-h-[85vh]">
         {/* Modal Header */}
-        <div className="p-4 bg-gradient-to-r from-neutral-900 via-[#12161f] to-neutral-900 border-b border-neutral-800 flex items-center justify-between">
+        <div className="p-4 bg-gradient-to-r from-[#2a0e11] via-[#1a0c0f] to-[#2a0e11] border-b border-[#3d181c] flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <span className="w-8 h-8 rounded-xl bg-[#00D26A]/20 text-[#00D26A] flex items-center justify-center">
+            <span className="w-8 h-8 rounded-xl bg-[#DC2626]/20 text-[#E5A93C] flex items-center justify-center">
               <Globe size={18} />
             </span>
             <div>
               <h3 className="text-sm font-black text-white">{t('header.language', 'Select Language')}</h3>
-              <p className="text-[11px] text-neutral-400">International language options</p>
+              <p className="text-[11px] text-[#E5A93C]">International language options</p>
             </div>
           </div>
           <button
@@ -50,7 +50,7 @@ export const LanguageSelectorModal: React.FC<LanguageSelectorModalProps> = ({ is
                 onClick={() => handleSelect(lang.code)}
                 className={`w-full p-3 rounded-2xl flex items-center justify-between border transition-all ${
                   isSelected
-                    ? 'bg-[#00D26A]/15 border-[#00D26A] text-[#00D26A]'
+                    ? 'bg-[#DC2626]/20 border-[#DC2626] text-[#E5A93C]'
                     : 'bg-neutral-900/60 border-neutral-800/80 text-neutral-300 hover:bg-neutral-800 hover:text-white'
                 }`}
               >
@@ -63,7 +63,7 @@ export const LanguageSelectorModal: React.FC<LanguageSelectorModalProps> = ({ is
                 </div>
 
                 {isSelected && (
-                  <span className="w-6 h-6 rounded-full bg-[#00D26A] text-black flex items-center justify-center">
+                  <span className="w-6 h-6 rounded-full bg-gradient-to-r from-[#DC2626] to-[#EF4444] text-[#FDE047] flex items-center justify-center">
                     <Check size={14} strokeWidth={3} />
                   </span>
                 )}

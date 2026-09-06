@@ -279,62 +279,33 @@ function checkAndSettleFrozenTickets(userId?: string) {
         if (!user) continue;
 
         const principal = p.totalAmount || 0;
-        const profit = p.profitAmount || 0;
-        const totalCredited = Number((principal + profit).toFixed(2));
-        const appliedRate = p.vipRateAtPurchase || 0.019;
-        const vipLevel = p.vipLevelAtPurchase || user.vipLevel || 1;
+        // GRAB IS THE ONLY SOURCE OF MEMBER INCOME. Tickets have zero profit.
+        const profit = 0;
+        const totalCredited = principal;
+        const appliedRate = 0;
+        const vipLevel = user.vipLevel || 1;
 
-        // Release principal from frozenBalance
+        // Release principal from frozenBalance back to balance
         user.frozenBalance = Number(Math.max(0, (user.frozenBalance || 0) - principal).toFixed(2));
-
-        // Strictly Additive Balance & Cumulative VIP Profit updates: Principal + Profit returned to Available Balance
         user.balance = Number((user.balance + totalCredited).toFixed(2));
-        user.totalVipProfit = Number(((user.totalVipProfit || 0) + profit).toFixed(2));
-        user.todayVipProfit = Number(((user.todayVipProfit || 0) + profit).toFixed(2));
-        user.todayTicketIncome = Number(((user.todayTicketIncome || 0) + profit).toFixed(2));
-        user.totalEarnedIncome = Number(((user.totalEarnedIncome || 0) + profit).toFixed(2));
-        user.lastIncomeCalculatedAt = new Date().toISOString();
         user.totalAssets = Number((user.balance + (user.frozenBalance || 0)).toFixed(2));
 
-        const todayKey = new Date().toISOString().slice(0, 10);
         const randomSuffix = crypto.randomBytes(3).toString('hex').toUpperCase();
-        const recordId = `INC-VIP-${todayKey}-${randomSuffix}`;
-        const txId = `TXN-VIP-${Date.now()}-${randomSuffix}`;
+        const txId = `TXN-ST-${Date.now()}-${randomSuffix}`;
 
-        // 1. Add Dedicated VIP Profit Income Record in Separate VIP Ledger
-        incomeRecords.unshift({
-          id: recordId,
-          userId: user.id,
-          ticketName: `${p.ticketName} (1-Min Yield Settlement)`,
-          categoryType: 'vip_profit',
-          previousBalance: Number((user.balance - totalCredited).toFixed(2)),
-          incomeAmount: profit,
-          vipLevel: vipLevel,
-          dailyRate: appliedRate,
-          newBalance: user.balance,
-          timestamp: new Date().toISOString(),
-          status: 'credited',
-          transactionId: txId,
-          notes: `1-Minute Ticket Auto-Settled: Principal ${principal.toLocaleString()} ETB returned + VIP profit +${profit.toFixed(2)} ETB (${(appliedRate * 100).toFixed(1)}%) credited to Available Balance.`
-        });
-
-        // 2. Add Dedicated VIP Profit Settlement Transaction in Ledger
         transactions.unshift({
           id: txId,
           userId: user.id,
-          type: 'vip_profit',
-          category: 'vip_profit',
+          type: 'ticket_purchase',
+          category: 'ticket_purchase',
           amount: totalCredited,
           vipLevel: vipLevel,
-          appliedRate: appliedRate,
+          appliedRate: 0,
           status: 'completed',
           title: `Ticket Settlement: ${p.ticketName}`,
-          description: `Principal ${principal.toLocaleString()} ETB + Profit +${profit.toFixed(2)} ETB returned to Available Balance (Total: +${totalCredited.toLocaleString()} ETB)`,
+          description: `Event ticket reservation confirmed. Principal ${principal.toLocaleString()} ETB returned to balance.`,
           createdAt: new Date().toISOString()
         });
-
-        // 3. Distribute Team Commission strictly from ticket profit (A: 16%, B: 8%, C: 4%)
-        distributeTicketProfitTeamCommissions(user.id, profit, p.ticketName);
 
         changed = true;
       }
@@ -551,7 +522,7 @@ function recalculateUserState(userId: string = PRIMARY_USER_ID) {
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', time: new Date().toISOString(), platform: 'JAMBASE' });
+  res.json({ status: 'ok', time: new Date().toISOString(), platform: 'HBO JAMBASE MUSIC' });
 });
 
 // GET Current User Profile & Synchronized State
@@ -650,28 +621,18 @@ app.post('/api/tickets/purchase', (req, res) => {
     });
   }
 
-  // Determine VIP Tier and daily rate
-  const tier = VIP_TIERS.find(t => t.level === user.vipLevel) || VIP_TIERS[0];
-  const rate = tier.dailyRate; // e.g. VIP 1 = 1.9%, VIP 2 = 2.5%, VIP 3 = 3.0%, etc.
-
-  // STRICT RULE: Profit is generated ONLY on the purchased ticket amount
-  const profitAmount = Number((totalAmount * rate).toFixed(2));
-
-  // Exactly deduct purchase amount from available balance into frozen state
+  // Deduct purchase amount from available balance for event booking
   const prevAvailableBalance = user.balance;
   user.balance = Number((user.balance - totalAmount).toFixed(2));
-  user.frozenBalance = Number(((user.frozenBalance || 0) + totalAmount).toFixed(2));
   user.recordExpenditure = Number(((user.recordExpenditure || 0) + totalAmount).toFixed(2));
   user.dailyTicketSpent = Number(((user.dailyTicketSpent || 0) + totalAmount).toFixed(2));
+  user.totalAssets = Number((user.balance + (user.frozenBalance || 0)).toFixed(2));
 
   // Update ticket sold count
   ticket.soldCount += qty;
 
   const now = new Date();
-  // EXACTLY 1 MINUTE (60 SECONDS) CYCLE
-  const frozenUntil = new Date(Date.now() + 1 * 60 * 1000).toISOString();
-
-  // Record Purchase with unique ID as frozen/processing (auto-settles in 1 minute)
+  // Completed purchase record: Tickets are content only, NO profit/yield
   const uniquePurchaseId = `PUR-${Date.now()}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
   const newPurchase: TicketPurchase = {
     id: uniquePurchaseId,
@@ -684,11 +645,11 @@ app.post('/api/tickets/purchase', (req, res) => {
     quantity: qty,
     totalAmount,
     vipLevelAtPurchase: user.vipLevel,
-    vipRateAtPurchase: rate,
-    profitAmount,
-    frozenUntil,
+    vipRateAtPurchase: 0,
+    profitAmount: 0,
     createdAt: now.toISOString(),
-    status: 'frozen'
+    status: 'completed',
+    settledAt: now.toISOString()
   };
   purchases.unshift(newPurchase);
 
@@ -703,20 +664,20 @@ app.post('/api/tickets/purchase', (req, res) => {
     previousBalance: prevAvailableBalance,
     newBalance: user.balance,
     vipLevel: user.vipLevel,
-    appliedRate: rate,
+    appliedRate: 0,
     status: 'completed',
     title: `Purchased ${qty}x ${ticket.name}`,
-    description: `Ticket purchase of ${totalAmount.toLocaleString()} ETB. In 1 minute, Principal (${totalAmount.toLocaleString()} ETB) and Profit (+${profitAmount.toFixed(2)} ETB) will automatically return to your Available Balance.`,
+    description: `Official event ticket booking of ${totalAmount.toLocaleString()} ETB confirmed for ${ticket.name}.`,
     createdAt: now.toISOString()
   };
   transactions.unshift(newTx);
 
   recalculateUserState(user.id);
-  persistDb(`Ticket Purchased: ${ticket.name} (1-Min Cycle)`);
+  persistDb(`Ticket Booked: ${ticket.name}`);
 
   res.json({
     success: true,
-    message: `Ticket #${uniquePurchaseId} purchased successfully! ${totalAmount.toLocaleString()} ETB deducted from Available Balance (Remaining Available: ${user.balance.toLocaleString()} ETB). In exactly 1 minute, your ticket will auto-settle, returning your ${totalAmount.toLocaleString()} ETB principal + ${profitAmount.toFixed(2)} ETB profit back to your Available Balance.`,
+    message: `Ticket #${uniquePurchaseId} reserved successfully! ${totalAmount.toLocaleString()} ETB deducted from Available Balance (Remaining Available: ${user.balance.toLocaleString()} ETB). Enjoy the event!`,
     purchase: newPurchase,
     newBalance: user.balance,
     frozenBalance: user.frozenBalance,
@@ -784,14 +745,14 @@ const handleDailyProfitClaim = (req: express.Request, res: express.Response) => 
   });
 
   const randomSuffix = crypto.randomBytes(3).toString('hex').toUpperCase();
-  const txId = `TXN-VIP-${Date.now()}-${randomSuffix}`;
-  const incId = `INC-VIP-${todayUtc}-${randomSuffix}`;
+  const txId = `TXN-GRAB-${Date.now()}-${randomSuffix}`;
+  const incId = `INC-GRAB-${todayUtc}-${randomSuffix}`;
 
-  // 1. Add Dedicated VIP Profit Income Record
+  // 1. Add Dedicated VIP Grab Income Record
   incomeRecords.unshift({
     id: incId,
     userId: user.id,
-    ticketName: `Daily VIP ${user.vipLevel} Compound Yield (${(appliedRate * 100).toFixed(1)}%)`,
+    ticketName: `VIP ${user.vipLevel} Daily Grab Revenue (${(appliedRate * 100).toFixed(1)}%)`,
     categoryType: 'vip_profit',
     previousBalance: prevBalance,
     incomeAmount: dailyProfit,
@@ -801,10 +762,10 @@ const handleDailyProfitClaim = (req: express.Request, res: express.Response) => 
     timestamp: new Date().toISOString(),
     status: 'credited',
     transactionId: txId,
-    notes: `Daily VIP ${user.vipLevel} Profit (${(appliedRate * 100).toFixed(1)}%) earned on ${baseAvailableBalance.toLocaleString()} ETB available balance. Compounded to new balance: ${user.balance.toLocaleString()} ETB.`
+    notes: `Daily VIP ${user.vipLevel} Grab (${(appliedRate * 100).toFixed(1)}%) earned on ${baseAvailableBalance.toLocaleString()} ETB available balance. Compounded to new balance: ${user.balance.toLocaleString()} ETB.`
   });
 
-  // 2. Add Dedicated VIP Profit Transaction in Ledger
+  // 2. Add Dedicated VIP Grab Transaction in Ledger
   transactions.unshift({
     id: txId,
     userId: user.id,
@@ -814,20 +775,20 @@ const handleDailyProfitClaim = (req: express.Request, res: express.Response) => 
     vipLevel: user.vipLevel,
     appliedRate: appliedRate,
     status: 'completed',
-    title: `Daily VIP ${user.vipLevel} Compound Profit (UTC ${todayUtc})`,
-    description: `+${dailyProfit.toFixed(2)} ETB earned (${(appliedRate * 100).toFixed(1)}% on ${baseAvailableBalance.toLocaleString()} ETB balance). Balance compounded to ${user.balance.toLocaleString()} ETB.`,
+    title: `VIP ${user.vipLevel} Daily Grab Revenue (UTC ${todayUtc})`,
+    description: `+${dailyProfit.toFixed(2)} ETB earned (${(appliedRate * 100).toFixed(1)}% on ${baseAvailableBalance.toLocaleString()} ETB balance). Balance compounded to ${user.balance.toLocaleString()} ETB via Grab.`,
     createdAt: new Date().toISOString()
   });
 
-  // Distribute Team Commission strictly from daily ticket profit (A: 16%, B: 8%, C: 4%)
-  distributeTicketProfitTeamCommissions(user.id, dailyProfit, `Daily VIP ${user.vipLevel} Yield`);
+  // Distribute Team Commission strictly from daily Grab profit (A: 16%, B: 8%, C: 4%)
+  distributeTicketProfitTeamCommissions(user.id, dailyProfit, `VIP ${user.vipLevel} Grab Revenue`);
 
   recalculateUserState(user.id);
-  persistDb(`Daily VIP Profit Claimed: +${dailyProfit.toFixed(2)} ETB`);
+  persistDb(`Daily VIP Grab Claimed: +${dailyProfit.toFixed(2)} ETB`);
 
   res.json({
     success: true,
-    message: `Successfully earned +${dailyProfit.toFixed(2)} ETB daily VIP ${user.vipLevel} profit on your ${baseAvailableBalance.toLocaleString()} ETB balance! Your new compounded balance is ${user.balance.toLocaleString()} ETB.`,
+    message: `Successfully earned +${dailyProfit.toFixed(2)} ETB daily VIP ${user.vipLevel} Grab revenue on your ${baseAvailableBalance.toLocaleString()} ETB balance! Your new compounded balance is ${user.balance.toLocaleString()} ETB.`,
     totalCredited: dailyProfit,
     totalProfit: dailyProfit,
     baseBalance: baseAvailableBalance,
@@ -838,6 +799,8 @@ const handleDailyProfitClaim = (req: express.Request, res: express.Response) => 
   });
 };
 
+app.post('/api/grab', handleDailyProfitClaim);
+app.post('/api/grab/execute', handleDailyProfitClaim);
 app.post('/api/tickets/claim-profit', handleDailyProfitClaim);
 app.post('/api/income/claim-daily', handleDailyProfitClaim);
 app.post('/api/income/claim-daily-vip', handleDailyProfitClaim);
