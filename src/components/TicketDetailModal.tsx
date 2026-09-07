@@ -1,14 +1,12 @@
-import React, { useState } from 'react';
-import { X, Calendar, MapPin, Ticket as TicketIcon, Music, Plus, Minus, ShieldCheck, AlertCircle, CheckCircle2 } from 'lucide-react';
-import confetti from 'canvas-confetti';
+import React from 'react';
+import { X, Calendar, MapPin, Music, ShieldCheck, Gift, Info, ArrowRight } from 'lucide-react';
 import { Ticket, User } from '../types';
-import { api } from '../services/api';
 
 interface TicketDetailModalProps {
   ticket: Ticket | null;
   user: User | null;
   onClose: () => void;
-  onPurchaseSuccess: (updatedUser: User, purchaseMsg: string) => void;
+  onPurchaseSuccess?: (updatedUser: User, purchaseMsg: string) => void;
   onPlayTrack: (ticket: Ticket) => void;
   onNavigateTab?: (tab: any) => void;
 }
@@ -17,78 +15,15 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   ticket,
   user,
   onClose,
-  onPurchaseSuccess,
   onPlayTrack,
   onNavigateTab
 }) => {
-  const [quantity, setQuantity] = useState<number>(1);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-
   if (!ticket) return null;
-
-  const unitPrice = ticket.price;
-  const totalPrice = Number((unitPrice * quantity).toFixed(2));
-  const currentBalance = user?.balance ?? 0;
-  const hasEnoughBalance = currentBalance >= totalPrice;
-
-  const handleIncrement = () => {
-    if (quantity < (ticket.maxQuantity || 10)) {
-      setQuantity(prev => prev + 1);
-    }
-  };
-
-  const handleDecrement = () => {
-    if (quantity > 1) {
-      setQuantity(prev => prev - 1);
-    }
-  };
-
-  const handleBuy = async () => {
-    setError(null);
-
-    // ACTION-TRIGGERED NOTIFICATION: Account below minimum 500 ETB
-    if (currentBalance < 500 && (user?.totalAssets || 0) < 500) {
-      setError('Insufficient Balance — Your available balance is below 500 ETB. Please recharge your account to purchase tickets.');
-      return;
-    }
-
-    if (currentBalance < totalPrice) {
-      setError(`Insufficient available balance (${currentBalance.toLocaleString()} ETB). Please recharge ${(totalPrice - currentBalance).toLocaleString()} ETB to complete this purchase.`);
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const res = await api.purchaseTicket(ticket.id, quantity);
-      confetti({
-        particleCount: 80,
-        spread: 60,
-        origin: { y: 0.7 }
-      });
-      setSuccess(res.message);
-      setTimeout(() => {
-        // Fetch fresh user state
-        api.getUser().then(freshUser => {
-          onPurchaseSuccess(freshUser, res.message);
-          onClose();
-        });
-      }, 1200);
-    } catch (err: any) {
-      setError(err.message || 'Purchase failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const remainingBalanceAfterBuy = Number(Math.max(0, currentBalance - totalPrice).toFixed(2));
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div
-        id="ticket-purchase-modal"
+        id="ticket-detail-modal"
         className="w-full max-w-md bg-[#160c0e] border-t sm:border border-[#3d181c] rounded-t-3xl sm:rounded-3xl max-h-[90vh] overflow-y-auto p-5 pb-8 animate-in slide-in-from-bottom-6 duration-300"
       >
         {/* Header bar */}
@@ -96,6 +31,9 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
           <div className="flex items-center gap-2">
             <span className="px-2.5 py-0.5 rounded text-[11px] font-extrabold uppercase tracking-wider bg-[#DC2626]/20 text-[#FCA5A5] border border-[#DC2626]/40">
               {ticket.category}
+            </span>
+            <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-neutral-800 text-neutral-300">
+              Event Information
             </span>
           </div>
           <button
@@ -146,143 +84,56 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
           {ticket.description}
         </p>
 
-        {/* Multiple Ticket Quantity Selector */}
-        <div className="mt-5 p-4 rounded-2xl bg-neutral-900/80 border border-neutral-800">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <span className="text-xs font-semibold text-neutral-300">Select Quantity</span>
-              <p className="text-[11px] text-neutral-500">Max {ticket.maxQuantity || 10} tickets per order</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleDecrement}
-                disabled={quantity <= 1}
-                className="w-8 h-8 rounded-lg bg-neutral-800 hover:bg-neutral-700 disabled:opacity-40 text-neutral-200 flex items-center justify-center font-bold"
-              >
-                <Minus size={14} />
-              </button>
-              <span className="font-extrabold text-lg text-white w-6 text-center">{quantity}</span>
-              <button
-                onClick={handleIncrement}
-                disabled={quantity >= (ticket.maxQuantity || 10)}
-                className="w-8 h-8 rounded-lg bg-neutral-800 hover:bg-neutral-700 disabled:opacity-40 text-neutral-200 flex items-center justify-center font-bold"
-              >
-                <Plus size={14} />
-              </button>
-            </div>
+        {/* Event Pass & Information Card (Viewing Only - No Purchase Option) */}
+        <div className="mt-4 p-4 rounded-2xl bg-[#0d0708] border border-neutral-800 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-neutral-400">Official Pass Valuation</span>
+            <span className="text-base font-extrabold text-[#E5A93C]">{ticket.price.toLocaleString()} ETB</span>
           </div>
 
-          {/* Quick Quantity Buttons */}
-          <div className="flex items-center gap-2 pt-2 border-t border-neutral-800">
-            {[1, 3, 5, 10].map((qty) => (
-              <button
-                key={qty}
-                onClick={() => setQuantity(qty)}
-                className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-                  quantity === qty
-                    ? 'bg-gradient-to-r from-[#DC2626] to-[#B91C1C] text-white border border-[#E5A93C]/40'
-                    : 'bg-neutral-800 text-neutral-300 hover:bg-neutral-700'
-                }`}
-              >
-                {qty}x
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Price Breakdown */}
-        <div className="mt-4 p-3.5 rounded-2xl bg-[#0d0708] border border-neutral-800 space-y-2 text-xs">
-          <div className="flex justify-between text-neutral-400">
-            <span>Ticket Price</span>
-            <span className="font-semibold text-neutral-200">{unitPrice.toLocaleString()} ETB</span>
-          </div>
-          <div className="flex justify-between text-neutral-400">
-            <span>Quantity Selected</span>
-            <span className="font-semibold text-neutral-200">× {quantity}</span>
-          </div>
-
-          <div className="p-2.5 rounded-xl bg-neutral-900/80 border border-neutral-800 text-[11px] text-neutral-300 space-y-1">
-            <span className="font-bold flex items-center gap-1 text-[#E5A93C]">
-              <ShieldCheck size={13} /> Official Concert Access Pass
+          <div className="p-3 rounded-xl bg-neutral-900/80 border border-neutral-800 text-xs text-neutral-300 space-y-1.5">
+            <span className="font-bold flex items-center gap-1.5 text-[#E5A93C]">
+              <ShieldCheck size={14} /> Official Concert Access Pass
             </span>
-            <p className="text-neutral-400">
-              Verified live concert reservation by HBO JAMBASE MUSIC. (Note: Grab is the exclusive income system for members).
+            <p className="text-[11px] text-neutral-400 leading-relaxed">
+              Live concert and tour showcase by HBO JAMBASE MUSIC. Ticket purchase option is closed.
             </p>
           </div>
 
-          <div className="pt-2 border-t border-neutral-800 flex justify-between items-baseline">
-            <div>
-              <span className="text-sm font-bold text-white block">Order Total</span>
-              <span className="text-[11px] text-neutral-400">
-                Remaining Balance: <strong className="text-[#E5A93C]">{remainingBalanceAfterBuy.toLocaleString()} ETB</strong>
-              </span>
+          {/* Exclusive Grab Income Notice */}
+          <div className="p-3 rounded-xl bg-gradient-to-r from-red-950/40 to-amber-950/30 border border-red-800/40 text-xs space-y-1">
+            <div className="flex items-center gap-1.5 font-bold text-amber-300">
+              <Gift size={14} className="text-red-400" />
+              <span>Exclusive Member Income via Grab</span>
             </div>
-            <div className="text-right">
-              <span className="text-xl font-extrabold text-[#E5A93C]">{totalPrice.toLocaleString()} ETB</span>
-              <p className="text-[10px] text-neutral-500">
-                Available: {currentBalance.toLocaleString()} ETB
-              </p>
-            </div>
+            <p className="text-[11px] text-neutral-300 leading-relaxed">
+              Ticket purchases are not available. Members earn daily income exclusively through the <strong>Grab</strong> feature based on available balance and VIP tier.
+            </p>
           </div>
         </div>
 
-        {/* Error / Success feedback */}
-        {error && (
-          <div className="mt-3 p-3.5 rounded-xl bg-red-500/15 border border-red-500/30 text-xs text-red-200 space-y-2">
-            <div className="flex items-start gap-2.5">
-              <AlertCircle size={17} className="shrink-0 text-red-400 mt-0.5" />
-              <span className="font-semibold leading-relaxed">{error}</span>
-            </div>
-            {onNavigateTab && currentBalance < 500 && (
-              <div className="pt-1 flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => {
-                    onClose();
-                    onNavigateTab('finance');
-                  }}
-                  className="px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 text-white font-bold text-[11px] shadow-sm transition-transform active:scale-95"
-                >
-                  Recharge Account
-                </button>
-              </div>
-            )}
-          </div>
-        )}
+        {/* Action: Direct Member to Earn via Grab */}
+        <div className="mt-5 space-y-2">
+          {onNavigateTab && (
+            <button
+              id="modal-goto-grab-btn"
+              onClick={() => {
+                onClose();
+                onNavigateTab('grab');
+              }}
+              className="w-full py-3.5 rounded-xl font-extrabold text-sm tracking-wide transition-all shadow-lg flex items-center justify-center gap-2 bg-gradient-to-r from-[#DC2626] to-[#B91C1C] hover:from-[#EF4444] hover:to-[#DC2626] text-white shadow-[#DC2626]/30 active:scale-[0.98] border border-[#E5A93C]/40"
+            >
+              <Gift size={18} className="text-[#FDE047]" />
+              <span>Go to Daily Grab to Earn Income</span>
+              <ArrowRight size={16} />
+            </button>
+          )}
 
-        {success && (
-          <div className="mt-3 p-3 rounded-xl bg-[#DC2626]/20 border border-[#DC2626]/40 flex items-center gap-2 text-xs text-[#FCA5A5]">
-            <CheckCircle2 size={16} className="shrink-0 text-[#E5A93C]" />
-            <span>{success}</span>
-          </div>
-        )}
-
-        {/* 1-Click Purchase Action */}
-        <div className="mt-5">
           <button
-            id="modal-confirm-buy-btn"
-            onClick={handleBuy}
-            disabled={loading || !!success}
-            className={`w-full py-3.5 rounded-xl font-extrabold text-sm tracking-wide transition-all shadow-lg flex items-center justify-center gap-2 ${
-              loading || success
-                ? 'bg-neutral-700 text-neutral-400 cursor-not-allowed'
-                : currentBalance < 500
-                ? 'bg-amber-500 hover:bg-amber-400 text-black shadow-amber-500/20 active:scale-[0.98]'
-                : !hasEnoughBalance
-                ? 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700 cursor-pointer'
-                : 'bg-gradient-to-r from-[#DC2626] to-[#B91C1C] hover:from-[#EF4444] hover:to-[#DC2626] text-white shadow-[#DC2626]/30 active:scale-[0.98] border border-[#E5A93C]/40'
-            }`}
+            onClick={onClose}
+            className="w-full py-2.5 rounded-xl text-xs font-semibold text-neutral-400 hover:text-white bg-neutral-900 border border-neutral-800 hover:border-neutral-700 transition-colors"
           >
-            <TicketIcon size={18} className="text-[#E5A93C]" />
-            {loading
-              ? 'Processing Secure Order...'
-              : success
-              ? 'Purchase Completed!'
-              : currentBalance < 500
-              ? 'Buy Ticket • 500 ETB Min Balance'
-              : !hasEnoughBalance
-              ? 'Insufficient Balance (Recharge)'
-              : `Book Pass • ${totalPrice.toLocaleString()} ETB`}
+            Close Event Details
           </button>
         </div>
       </div>

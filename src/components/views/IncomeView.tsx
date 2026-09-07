@@ -59,7 +59,7 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
           origin: { y: 0.6 }
         });
         setClaimMsg({
-          text: '🎉 1-Minute Ticket Settled! Both Principal Investment and Ticket Profit have been returned to your Available Balance.'
+          text: '🎉 Ticket Settled! Principal Investment returned to your Available Balance. (Note: Grab / Credit Bank is the exclusive income source).'
         });
         onRefresh();
       }
@@ -103,19 +103,20 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
     setClaimMsg(null);
 
     try {
-      const res = await api.claimDailyTicketProfit();
+      // Call Grab daily income endpoint
+      const res = await api.claimDailyVipIncome();
       confetti({
         particleCount: 90,
         spread: 70,
         origin: { y: 0.6 }
       });
       setClaimMsg({
-        text: res.message || `Successfully claimed ${res.totalProfit.toLocaleString()} ETB profit!`
+        text: res.message || `Successfully claimed ${res.totalProfit.toLocaleString()} ETB Grab income!`
       });
       onRefresh();
     } catch (err: any) {
       setClaimMsg({
-        text: err.message || 'Failed to claim ticket profit',
+        text: err.message || 'Failed to claim Grab income',
         isError: true
       });
     } finally {
@@ -153,7 +154,7 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
         <h1 className="text-base font-extrabold tracking-wide mx-auto">{t('income.title', 'My income')}</h1>
       </div>
 
-      {/* 2. DAILY VIP COMPOUND PROFIT & UTC INCOME GENERATOR */}
+      {/* 2. DAILY GRAB MEMBER INCOME ENGINE */}
       <div className="p-5 rounded-3xl bg-gradient-to-br from-[#2a0808] via-[#1a0f12] to-[#0d0e12] border border-[#DC2626]/40 shadow-2xl relative overflow-hidden space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -161,9 +162,9 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
               <Sparkles size={20} />
             </span>
             <div>
-              <h3 className="text-sm font-extrabold text-white">Daily VIP Compound Profit</h3>
+              <h3 className="text-sm font-extrabold text-white">Daily Grab Member Income Engine</h3>
               <p className="text-[11px] text-[#E5A93C] font-medium">
-                Earned once a day on Available Balance • VIP {user?.vipLevel || 1}
+                Exclusive Earning Source • VIP {user?.vipLevel || 1}
               </p>
             </div>
           </div>
@@ -175,16 +176,16 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
           </div>
         </div>
 
-        {/* Compound Profit Explanation Banner */}
+        {/* Grab Rules & Explanation Banner */}
         <div className="p-3 rounded-2xl bg-[#2a0808]/50 border border-[#DC2626]/30 text-xs text-[#FDE047] space-y-1.5">
           <div className="flex items-center gap-1.5 font-bold text-[#E5A93C]">
             <Zap size={14} />
-            <span>Daily Compounding Rules:</span>
+            <span>Grab Income Rules:</span>
           </div>
           <ul className="text-[11px] text-neutral-300 space-y-1 list-disc list-inside leading-relaxed">
-            <li>Profit is calculated strictly on your <strong>Available Balance ({availableBalance.toLocaleString()} ETB)</strong>.</li>
-            <li>Earned once every 24 hours — cycle resets daily at <strong>00:00:00 UTC</strong>.</li>
-            <li>As your balance grows every day, your daily profit compounds automatically!</li>
+            <li>The <strong>Grab feature is the exclusive income system</strong> for all members.</li>
+            <li>Yield is calculated on your <strong>Available Balance ({availableBalance.toLocaleString()} ETB)</strong>.</li>
+            <li>Generates daily income every 24 hours — cycle resets at <strong>00:00:00 UTC</strong>.</li>
           </ul>
         </div>
 
@@ -192,7 +193,6 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
         {(() => {
           const rate = user?.vipLevel === 2 ? 0.025 : user?.vipLevel === 3 ? 0.03 : user?.vipLevel === 4 ? 0.04 : user?.vipLevel === 5 ? 0.05 : user?.vipLevel === 6 ? 0.06 : 0.019;
           const expectedDailyProfit = Number((availableBalance * rate).toFixed(2));
-          const compoundedNewBalance = Number((availableBalance + expectedDailyProfit).toFixed(2));
 
           return (
             <div className="p-3.5 rounded-2xl bg-black/40 border border-neutral-800/90 space-y-2.5 text-xs">
@@ -202,7 +202,7 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
                   <span className="text-base font-extrabold text-white font-mono">{availableBalance.toLocaleString()} ETB</span>
                 </div>
                 <div>
-                  <span className="text-[11px] text-neutral-400 block">VIP {user?.vipLevel || 1} Daily Yield:</span>
+                  <span className="text-[11px] text-neutral-400 block">VIP {user?.vipLevel || 1} Grab Yield:</span>
                   <span className="text-base font-extrabold text-[#E5A93C] font-mono">
                     +{expectedDailyProfit.toLocaleString()} ETB <span className="text-xs text-amber-300">({(rate * 100).toFixed(1)}%)</span>
                   </span>
@@ -210,7 +210,7 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
               </div>
 
               <div className="pt-2 border-t border-neutral-800/70 flex justify-between items-center text-[11px] text-neutral-400">
-                <span>Daily claim status:</span>
+                <span>Grab claim status:</span>
                 {isClaimedToday ? (
                   <span className="text-[#E5A93C] font-bold flex items-center gap-1">
                     <CheckCircle2 size={13} /> Claimed for UTC {todayUtc}
@@ -225,22 +225,22 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
           );
         })()}
 
-        {/* Action Button: Claim Once Per Day */}
-        <div>
+        {/* Action Button: Claim Grab Income or Open Grab Console */}
+        <div className="space-y-2">
           {isClaimedToday ? (
             <div className="p-3.5 rounded-2xl bg-black/60 border border-[#DC2626]/30 text-center space-y-1">
               <div className="text-xs font-bold text-[#E5A93C] flex items-center justify-center gap-1.5">
                 <CheckCircle2 size={15} />
-                <span>Today's VIP Profit Already Claimed!</span>
+                <span>Today's Grab Income Already Claimed!</span>
               </div>
               <p className="text-[10px] text-neutral-400">
-                Next compound profit claim unlocks at <strong>00:00:00 UTC</strong> (in {utcCountdown}).
+                Next Grab cycle unlocks at <strong>00:00:00 UTC</strong> (in {utcCountdown}).
               </p>
             </div>
           ) : availableBalance < 500 ? (
             <div className="space-y-2">
               <div className="p-3 rounded-2xl bg-amber-950/30 border border-amber-800/40 text-xs text-amber-300 text-center">
-                Available balance is below 500 ETB. Recharge to unlock daily VIP income.
+                Available balance is below 500 ETB. Maintain at least 500 ETB to generate Grab income.
               </div>
               <button
                 onClick={() => onNavigateTab('finance')}
@@ -259,10 +259,19 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
             >
               <Sparkles size={17} className={claiming ? "animate-spin" : ""} />
               <span>
-                {claiming ? 'Processing Compound Profit...' : `Claim Today's VIP Profit (+${((user?.vipLevel === 2 ? 0.025 : user?.vipLevel === 3 ? 0.03 : user?.vipLevel === 4 ? 0.04 : user?.vipLevel === 5 ? 0.05 : user?.vipLevel === 6 ? 0.06 : 0.019) * 100).toFixed(1)}%)`}
+                {claiming ? 'Processing Grab Income...' : `Claim Today's Grab Income (+${((user?.vipLevel === 2 ? 0.025 : user?.vipLevel === 3 ? 0.03 : user?.vipLevel === 4 ? 0.04 : user?.vipLevel === 5 ? 0.05 : user?.vipLevel === 6 ? 0.06 : 0.019) * 100).toFixed(1)}%)`}
               </span>
             </button>
           )}
+
+          {/* Direct Link to the Interactive Grab Tab */}
+          <button
+            onClick={() => onNavigateTab('grab')}
+            className="w-full py-2.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-200 hover:text-white border border-neutral-700/80 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
+          >
+            <span>Open Grab System</span>
+            <ChevronRight size={14} className="text-[#E5A93C]" />
+          </button>
         </div>
 
         {/* Notice feedback */}
@@ -515,10 +524,10 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
         <div className="flex items-center justify-between mb-3 px-0.5">
           <h3 className="text-sm font-extrabold text-white tracking-wide">{t('income.myRecord', 'My record')}</h3>
           <span
-            onClick={() => onNavigateTab('home')}
+            onClick={() => onNavigateTab('grab')}
             className="text-xs text-[#E5A93C] font-semibold cursor-pointer hover:underline flex items-center gap-0.5"
           >
-            Grab More
+            Go to Grab Hub
             <ChevronRight size={13} />
           </span>
         </div>
@@ -528,10 +537,10 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
           <div className="p-6 rounded-2xl bg-neutral-900/60 border border-neutral-800 text-center">
             <p className="text-xs text-neutral-400">No active bookings yet.</p>
             <button
-              onClick={() => onNavigateTab('home')}
+              onClick={() => onNavigateTab('grab')}
               className="mt-2.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#DC2626] to-[#B91C1C] text-white text-xs font-bold border border-[#E5A93C]/40"
             >
-              Start Grabbing Orders
+              Open Grab Hub
             </button>
           </div>
         ) : (

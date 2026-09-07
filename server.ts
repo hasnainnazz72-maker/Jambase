@@ -576,113 +576,11 @@ app.get('/api/notices', (req, res) => {
 });
 
 // POST Purchase Ticket(s)
-// TICKET PURCHASE & BALANCE RULES:
-// 1. Immediately after purchase, exactly the ticket total is deducted from Available Balance (e.g. $100 - $10 = $90).
-// 2. The ticket enters an active/processing state.
-// 3. After exactly 1 minute (60s), the ticket is automatically settled.
-// 4. At settlement, Principal + Profit defined by the ticket rate is credited back to Available Balance.
-// 5. The member is NOT restricted to one ticket per day.
-// 6. The remaining Available Balance remains usable immediately to purchase more tickets anytime.
-// 7. Any ticket denomination allowed by the system can be purchased without VIP level restrictions.
-// 8. Available Balance is validated before every purchase.
+// TICKET PURCHASE OPTION DISABLED:
+// Members cannot purchase tickets. Member income is exclusively generated through the Grab feature.
 app.post('/api/tickets/purchase', (req, res) => {
-  const { ticketId, quantity } = req.body;
-  const targetId = resolveUserId(req);
-  const user = recalculateUserState(targetId);
-
-  if (!user) return res.status(404).json({ error: 'User not found' });
-
-  // STRICT REQUIREMENT: Member must maintain minimum 500 ETB total account assets to work
-  if ((user.totalAssets || 0) < 500 && (user.balance || 0) < 500) {
-    return res.status(400).json({
-      error: 'Insufficient Balance — Your available balance is below 500 ETB. Please recharge your account to purchase tickets.'
-    });
-  }
-
-  const qty = parseInt(quantity, 10);
-  if (isNaN(qty) || qty < 1 || qty > 100) {
-    return res.status(400).json({ error: 'Invalid quantity (must be between 1 and 100)' });
-  }
-
-  const ticket = tickets.find(t => t.id === ticketId);
-  if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
-
-  if (!ticket.isActive) {
-    return res.status(400).json({ error: 'This ticket event is currently inactive' });
-  }
-
-  // Authoritative server-side price calculation
-  const totalAmount = Number((ticket.price * qty).toFixed(2));
-
-  // Validate Available Balance before purchase: Must have enough available wallet balance
-  if (user.balance < totalAmount) {
-    return res.status(400).json({
-      error: `Insufficient available balance (${user.balance.toLocaleString()} ETB). Required: ${totalAmount.toLocaleString()} ETB. Please recharge or select a lower ticket denomination.`
-    });
-  }
-
-  // Deduct purchase amount from available balance for event booking
-  const prevAvailableBalance = user.balance;
-  user.balance = Number((user.balance - totalAmount).toFixed(2));
-  user.recordExpenditure = Number(((user.recordExpenditure || 0) + totalAmount).toFixed(2));
-  user.dailyTicketSpent = Number(((user.dailyTicketSpent || 0) + totalAmount).toFixed(2));
-  user.totalAssets = Number((user.balance + (user.frozenBalance || 0)).toFixed(2));
-
-  // Update ticket sold count
-  ticket.soldCount += qty;
-
-  const now = new Date();
-  // Completed purchase record: Tickets are content only, NO profit/yield
-  const uniquePurchaseId = `PUR-${Date.now()}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
-  const newPurchase: TicketPurchase = {
-    id: uniquePurchaseId,
-    userId: user.id,
-    ticketId: ticket.id,
-    ticketName: ticket.name,
-    artist: ticket.artist,
-    image: ticket.image,
-    unitPrice: ticket.price,
-    quantity: qty,
-    totalAmount,
-    vipLevelAtPurchase: user.vipLevel,
-    vipRateAtPurchase: 0,
-    profitAmount: 0,
-    createdAt: now.toISOString(),
-    status: 'completed',
-    settledAt: now.toISOString()
-  };
-  purchases.unshift(newPurchase);
-
-  // Add Purchase Transaction record with unique ID and category in member ledger
-  const txId = `TXN-PUR-${Date.now()}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
-  const newTx: Transaction = {
-    id: txId,
-    userId: user.id,
-    type: 'ticket_purchase',
-    category: 'ticket_purchase',
-    amount: totalAmount,
-    previousBalance: prevAvailableBalance,
-    newBalance: user.balance,
-    vipLevel: user.vipLevel,
-    appliedRate: 0,
-    status: 'completed',
-    title: `Purchased ${qty}x ${ticket.name}`,
-    description: `Official event ticket booking of ${totalAmount.toLocaleString()} ETB confirmed for ${ticket.name}.`,
-    createdAt: now.toISOString()
-  };
-  transactions.unshift(newTx);
-
-  recalculateUserState(user.id);
-  persistDb(`Ticket Booked: ${ticket.name}`);
-
-  res.json({
-    success: true,
-    message: `Ticket #${uniquePurchaseId} reserved successfully! ${totalAmount.toLocaleString()} ETB deducted from Available Balance (Remaining Available: ${user.balance.toLocaleString()} ETB). Enjoy the event!`,
-    purchase: newPurchase,
-    newBalance: user.balance,
-    frozenBalance: user.frozenBalance,
-    totalAssets: user.totalAssets,
-    user
+  return res.status(403).json({
+    error: 'Ticket purchases are not available. The ticket catalog is view-only. Member income is exclusively generated through the Grab feature.'
   });
 });
 
