@@ -279,13 +279,25 @@ export const api = {
     return data;
   },
 
-  async grab(): Promise<{ success: boolean; message: string; totalCredited: number; totalProfit: number; baseBalance: number; appliedRate: number; vipLevel: number; newBalance: number; user: User }> {
+  async grab(currency?: 'ETB' | 'USD'): Promise<{ success: boolean; message: string; totalCredited: number; totalProfit: number; currency?: string; baseBalance: number; appliedRate: number; vipLevel: number; newBalance: number; user: User }> {
     const res = await fetch('/api/grab', {
       method: 'POST',
-      headers: getUserHeaders()
+      headers: getUserHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ currency })
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to execute Grab');
+    return data;
+  },
+
+  async switchCurrency(currency: 'ETB' | 'USD'): Promise<{ success: boolean; activeCurrency: 'ETB' | 'USD'; user: User }> {
+    const res = await fetch('/api/user/currency', {
+      method: 'POST',
+      headers: getUserHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ currency })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to switch currency');
     return data;
   },
 
@@ -337,9 +349,12 @@ export const api = {
     amount: number;
     referenceNumber: string;
     paymentSlipUrl: string;
+    currency?: 'ETB' | 'USD';
+    network?: string;
     bankName?: string;
     accountHolder?: string;
     accountNumber?: string;
+    txHash?: string;
   } | number, networkOrRef?: string, txHashOrSlip?: string): Promise<{ success: boolean; message: string; deposit: DepositRequest; user: User }> {
     let payload: any;
     if (typeof params === 'object') {
@@ -373,9 +388,12 @@ export const api = {
 
   async withdraw(params: {
     amount: number;
-    bankName: string;
-    accountHolder: string;
-    accountNumber: string;
+    currency?: 'ETB' | 'USD';
+    network?: string;
+    walletAddress?: string;
+    bankName?: string;
+    accountHolder?: string;
+    accountNumber?: string;
   } | number, walletOrBank?: string, networkOrHolder?: string): Promise<{ success: boolean; message: string; withdrawal: WithdrawalRequest; user: User }> {
     let payload: any;
     if (typeof params === 'object') {

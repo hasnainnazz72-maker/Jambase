@@ -119,11 +119,17 @@ const getInitialSeedDatabase = (): PlatformDatabaseSchema => {
     email: 'star@jambase.vip',
     avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&auto=format&fit=crop&q=80',
     phone: '+1 (555) 892-4410',
-    walletAddress: 'TQn9Y2khEsLJW1ChV8L5H09ZNmC9aJbmSe',
-    balance: 550.0,
+    walletAddress: '0xbd63907b714a667f5052c432cdc4ad3dc0d73658',
+    network: 'BEP20',
+    etbBalance: 2500.0,
+    etbFrozenBalance: 0.0,
+    usdBalance: 50.0,
+    usdFrozenBalance: 0.0,
+    activeCurrency: 'ETB',
+    balance: 2500.0,
     frozenBalance: 0.0,
-    totalAssets: 550.0,
-    vipLevel: 2,
+    totalAssets: 2500.0,
+    vipLevel: 1,
     referralCode: 'JAM888',
     validDirectMembersCount: 3,
     totalTeamMembersCount: 7,
@@ -142,7 +148,7 @@ const getInitialSeedDatabase = (): PlatformDatabaseSchema => {
     concertExpenditure: 0.0,
     financialExpenditure: 0.0,
     dailyTicketDate: todayInitialUtc,
-    dailyTicketStartingBalance: 550.0,
+    dailyTicketStartingBalance: 2500.0,
     dailyTicketSpent: 0.0,
     createdAt: new Date(Date.now() - 30 * 86400000).toISOString(),
     isAdmin: true
@@ -785,11 +791,35 @@ class DatabaseManager {
             needsSave = true;
           }
 
-          // Clean up any remaining legacy USD strings in user status
+          // Ensure strict currency and wallet separation across all accounts
           if (parsed.users) {
             for (const u of Object.values(parsed.users)) {
-              if (u.incomePauseReason && u.incomePauseReason.includes('$30')) {
-                u.incomePauseReason = 'Minimum 500 ETB Account Balance Required to Work and Earn VIP Yield';
+              if (u.etbBalance === undefined || u.etbBalance === null) {
+                // Initialize separate ETB balance: preserve existing balance if any, or default to 2500 for primary user
+                u.etbBalance = u.id === PRIMARY_USER_ID ? Math.max(2500, typeof u.balance === 'number' ? u.balance : 2500) : (typeof u.balance === 'number' ? u.balance : 2000.0);
+                needsSave = true;
+              }
+              if (u.etbFrozenBalance === undefined || u.etbFrozenBalance === null) {
+                u.etbFrozenBalance = typeof u.frozenBalance === 'number' ? u.frozenBalance : 0.0;
+                needsSave = true;
+              }
+              if (u.usdBalance === undefined || u.usdBalance === null) {
+                // Initialize separate USD balance: never merged or converted
+                u.usdBalance = u.id === PRIMARY_USER_ID ? 50.0 : 0.0;
+                needsSave = true;
+              }
+              if (u.usdFrozenBalance === undefined || u.usdFrozenBalance === null) {
+                u.usdFrozenBalance = 0.0;
+                needsSave = true;
+              }
+              if (!u.activeCurrency) {
+                u.activeCurrency = 'ETB';
+                needsSave = true;
+              }
+              if (u.incomePauseReason && (u.incomePauseReason.includes('$30') || u.incomePauseReason.includes('500 ETB'))) {
+                u.incomePauseReason = u.activeCurrency === 'USD'
+                  ? 'Minimum $10.00 USDT Balance Required to Work and Earn VIP Yield'
+                  : 'Minimum 2,000 ETB Account Balance Required to Work and Earn VIP Yield';
                 needsSave = true;
               }
             }
@@ -797,7 +827,7 @@ class DatabaseManager {
           if (parsed.referrals) {
             for (const r of parsed.referrals) {
               if (r.disqualifiedReason && r.disqualifiedReason.includes('$30')) {
-                r.disqualifiedReason = 'Minimum 500 ETB deposit/investment required to qualify as valid member.';
+                r.disqualifiedReason = 'Minimum 2,000 ETB deposit/investment required to qualify as valid member.';
                 needsSave = true;
               }
             }

@@ -25,6 +25,7 @@ import {
   TaskItem
 } from './types';
 import { api, IncomeResponse, FinanceResponse, TeamResponse } from './services/api';
+import { VIP_TIERS } from './data/seedData';
 
 export default function App() {
   const [isAdminRoute, setIsAdminRoute] = useState<boolean>(() => {
@@ -40,7 +41,7 @@ export default function App() {
   const [artists, setArtists] = useState<Artist[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [notices, setNotices] = useState<PlatformNotice[]>([]);
-  const [vipTiers, setVipTiers] = useState<VIPTier[]>([]);
+  const [vipTiers, setVipTiers] = useState<VIPTier[]>(VIP_TIERS);
   const [purchases, setPurchases] = useState<TicketPurchase[]>([]);
   const [tasks, setTasks] = useState<TaskItem[]>([]);
 
@@ -163,7 +164,7 @@ export default function App() {
       setArtists(artistsData || []);
       setCategories(categoriesData || []);
       setNotices(noticesData || []);
-      setVipTiers(tiersData || []);
+      setVipTiers(tiersData && tiersData.length > 0 ? tiersData : VIP_TIERS);
       setPurchases(purchasesData || []);
       setTasks(tasksData || []);
       setIncomeData(incomeRes || null);

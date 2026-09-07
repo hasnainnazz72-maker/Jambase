@@ -59,10 +59,11 @@ export const MineView: React.FC<MineViewProps> = ({
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
 
+  const activeTiers = (vipTiers && vipTiers.length > 0) ? vipTiers : VIP_TIERS;
   const currentLevel = user?.vipLevel || 1;
-  const currentTier = vipTiers.find(t => t.level === currentLevel) || vipTiers[0];
+  const currentTier = activeTiers.find(t => t.level === currentLevel) || activeTiers[0] || VIP_TIERS[0];
   const validCount = user?.validDirectMembersCount || 0;
-  const requiredCount = currentTier.minDirectMembers || 3;
+  const requiredCount = currentTier?.minDirectMembers ?? 3;
 
   // Personal income (total accumulated earnings from tickets + checkin)
   const personalIncome = (user?.totalEarnedIncome || 0).toFixed(2);
@@ -96,26 +97,32 @@ export const MineView: React.FC<MineViewProps> = ({
         </div>
       </div>
 
-      {/* 2. STATS SECTION: Personal Income & Available Balance (Exact 2-Column Look from Screenshot) */}
-      <div className="grid grid-cols-2 gap-4 py-4 px-2">
-        {/* Left: Personal Income */}
-        <div className="text-center">
-          <div className="text-3xl font-black text-[#E5A93C] tracking-tight">
-            {personalIncome}
+      {/* 2. STATS SECTION: ETB Balance & USD Balance (Completely Separate) */}
+      <div className="grid grid-cols-2 gap-3 py-3 px-1">
+        {/* Left: ETB Balance */}
+        <div className="p-3.5 rounded-2xl bg-[#111317] border border-neutral-800 text-center">
+          <div className="text-xl font-black text-[#E5A93C] tracking-tight">
+            {(user?.etbBalance ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
-          <div className="text-xs text-neutral-300 font-medium mt-1">
-            {t('mine.personalIncome', 'Personal income')}
+          <div className="text-[11px] text-neutral-300 font-semibold mt-0.5">
+            ETB Balance
           </div>
+          <span className="text-[9px] text-neutral-400 block mt-0.5">
+            {user?.activeCurrency === 'ETB' ? 'Active Work Wallet' : 'Ethiopian Bank'}
+          </span>
         </div>
 
-        {/* Right: Available Balance */}
-        <div className="text-center">
-          <div className="text-3xl font-black text-[#E5A93C] tracking-tight">
-            {availableBalance}
+        {/* Right: USD (USDT) Balance */}
+        <div className="p-3.5 rounded-2xl bg-[#111317] border border-neutral-800 text-center">
+          <div className="text-xl font-black text-green-400 tracking-tight">
+            ${(user?.usdBalance ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
-          <div className="text-xs text-neutral-300 font-medium mt-1">
-            {t('income.availableBalance', 'Available Balance')}
+          <div className="text-[11px] text-neutral-300 font-semibold mt-0.5">
+            USD Balance (USDT)
           </div>
+          <span className="text-[9px] text-neutral-400 block mt-0.5">
+            {user?.activeCurrency === 'USD' ? 'Active Work Wallet' : 'BEP20 / TRC20'}
+          </span>
         </div>
       </div>
 

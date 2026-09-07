@@ -20,8 +20,9 @@ export const MembershipLevelModal: React.FC<MembershipLevelModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
+  const activeTiers = (vipTiers && vipTiers.length > 0) ? vipTiers : VIP_TIERS;
   const currentLevel = user?.vipLevel || 1;
-  const currentTier = vipTiers.find(t => t.level === currentLevel) || vipTiers[0];
+  const currentTier = activeTiers.find(t => t.level === currentLevel) || activeTiers[0] || VIP_TIERS[0];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 animate-in fade-in duration-200">
@@ -72,7 +73,7 @@ export const MembershipLevelModal: React.FC<MembershipLevelModalProps> = ({
 
           {/* Tiers List */}
           <div className="space-y-2.5">
-            {vipTiers.map((tier) => {
+            {activeTiers.map((tier) => {
               const isCurrent = tier.level === currentLevel;
               const isUnlocked = currentLevel >= tier.level;
 

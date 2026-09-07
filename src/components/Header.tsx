@@ -120,13 +120,22 @@ export const Header: React.FC<HeaderProps> = ({
             </span>
           </button>
 
-          {/* Balance Pill */}
+          {/* Balance Pill (displays active currency balance separately) */}
           <div
             onClick={onOpenVIPModal}
             className="cursor-pointer flex items-center gap-1 px-2.5 py-1 rounded-lg bg-neutral-900 border border-neutral-700/60 text-xs font-bold text-[#E5A93C] hover:border-amber-400/50 transition-colors"
+            title={`Active: ${user?.activeCurrency || 'ETB'} Wallet`}
           >
-            <span>$</span>
-            <span>{user ? user.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '20,855.00'}</span>
+            <span>{user?.activeCurrency === 'USD' ? '$' : ''}</span>
+            <span>
+              {user
+                ? (user.activeCurrency === 'USD' ? (user.usdBalance ?? 0) : (user.etbBalance ?? 0)).toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                  })
+                : '0.00'}
+            </span>
+            <span className="text-[10px] text-neutral-400">{user?.activeCurrency === 'USD' ? 'USDT' : 'ETB'}</span>
           </div>
 
           {/* 24/7 VIP Customer Support / Service Button with Red Notification Dot */}

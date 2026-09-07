@@ -20,9 +20,19 @@ export interface User {
   phone?: string;
   walletAddress?: string;
   network?: string; // 'TRC20' | 'BEP20'
-  balance: number; // Available balance
-  frozenBalance: number; // In pending withdrawals or active locks
-  totalAssets: number; // balance + frozenBalance
+  
+  // Strictly Separated Wallets
+  etbBalance?: number; // Available balance in ETB
+  etbFrozenBalance?: number; // Frozen balance in ETB
+  usdBalance?: number; // Available balance in USD (USDT)
+  usdFrozenBalance?: number; // Frozen balance in USD (USDT)
+  activeCurrency?: 'ETB' | 'USD'; // Currently active working currency (default 'ETB')
+
+  // Working & Legacy references
+  balance: number; // Mirrors active currency balance
+  frozenBalance: number; // Mirrors active currency frozen balance
+  totalAssets: number; // Mirrors active currency total assets
+
   vipLevel: number;
   referralCode: string;
   referredBy?: string;
@@ -43,6 +53,19 @@ export interface User {
   todayTicketIncome: number;
   todayConcertIncome: number;
   todayFinancialIncome: number;
+
+  // Separated Accumulators
+  etbTotalEarnedIncome?: number;
+  usdTotalEarnedIncome?: number;
+  etbTotalDeposit?: number;
+  usdTotalDeposit?: number;
+  etbTotalWithdrawal?: number;
+  usdTotalWithdrawal?: number;
+  todayEtbProfit?: number;
+  todayUsdProfit?: number;
+  lastProfitClaimDate_ETB?: string;
+  lastProfitClaimDate_USD?: string;
+
   totalDeposit?: number;
   totalWithdrawal?: number;
   totalPurchases?: number;
@@ -133,6 +156,7 @@ export interface IncomeRecord {
   categoryType: 'ticket' | 'vip_profit' | 'team_commission' | 'concert' | 'financial' | 'task_reward';
   previousBalance: number;
   incomeAmount: number;
+  currency?: 'ETB' | 'USD';
   vipLevel: number;
   dailyRate: number; // VIP profit rate or commission rate (e.g. 0.025 for 2.5%, 0.16 for 16%)
   newBalance: number;
@@ -161,6 +185,7 @@ export interface Transaction {
   type: TransactionType;
   category?: 'vip_profit' | 'team_commission' | 'deposit' | 'withdrawal' | 'ticket_purchase' | 'task_reward' | 'admin_credit' | 'admin_debit';
   amount: number;
+  currency?: 'ETB' | 'USD';
   fee?: number;
   status: 'pending' | 'completed' | 'rejected' | 'failed';
   title: string;
@@ -169,6 +194,7 @@ export interface Transaction {
   appliedRate?: number;
   commissionTier?: 1 | 2 | 3;
   sourceMemberName?: string;
+  network?: string;
   txHash?: string;
   adminAction?: 'credit' | 'debit' | 'adjustment' | 'bonus' | 'status_change';
   adminReason?: string;
@@ -219,6 +245,7 @@ export interface WithdrawalRequest {
   userBalanceAtRequest?: number;
   currentUserBalance?: number;
   amount: number;
+  currency?: 'ETB' | 'USD';
   fee: number; // 7% service fee
   netAmount: number;
   bankName?: string;
@@ -246,6 +273,7 @@ export interface DepositRequest {
   userBalanceAtRequest?: number;
   currentUserBalance?: number;
   amount: number;
+  currency?: 'ETB' | 'USD';
   bankName?: string;
   accountHolder?: string;
   accountNumber?: string;
