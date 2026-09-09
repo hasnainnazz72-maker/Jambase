@@ -71,10 +71,10 @@ export const DepositHistoryModal: React.FC<DepositHistoryModalProps> = ({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="font-extrabold text-[#E5A93C] text-sm font-mono">
-                      +{dep.amount.toLocaleString()} ETB
+                      +${dep.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT
                     </span>
                     <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-neutral-800 text-neutral-400">
-                      {dep.bankName || 'CBE Bank'}
+                      {dep.bankName || dep.network || 'USDT'}
                     </span>
                   </div>
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#DC2626]/15 text-[#FDE047] border border-[#DC2626]/30 flex items-center gap-1">

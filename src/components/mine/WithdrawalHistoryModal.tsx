@@ -102,10 +102,10 @@ export const WithdrawalHistoryModal: React.FC<WithdrawalHistoryModalProps> = ({
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="font-extrabold text-white text-sm">
-                          {wd.amount.toLocaleString()} ETB
+                          ${wd.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT
                         </span>
                         <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-neutral-800 text-neutral-400">
-                          {wd.bankName || wd.network || 'CBE'}
+                          {wd.bankName || wd.network || 'USDT'}
                         </span>
                       </div>
                       <span
@@ -126,10 +126,10 @@ export const WithdrawalHistoryModal: React.FC<WithdrawalHistoryModalProps> = ({
 
                     <div className="grid grid-cols-2 gap-2 text-[11px] text-neutral-400 pt-1 border-t border-neutral-800/80">
                       <div>
-                        Platform Fee (7%): <strong className="text-neutral-200">{wd.fee.toLocaleString()} ETB</strong>
+                        Platform Fee (5%): <strong className="text-neutral-200">${wd.fee.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT</strong>
                       </div>
                       <div>
-                        Net Payout: <strong className="text-[#E5A93C] font-bold">{wd.netAmount.toLocaleString()} ETB</strong>
+                        Net Payout: <strong className="text-[#E5A93C] font-bold">${wd.netAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT</strong>
                       </div>
                     </div>
 

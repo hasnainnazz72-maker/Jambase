@@ -82,7 +82,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
     } catch {}
 
     const textToSpeak = notices[0]?.content ||
-      'Official HBO JAMBASE announcement: Commercial Bank of Ethiopia official recharge channel is active. Minimum recharge is 2000 ETB. Daily Grab income is active. All member earnings are exclusively generated through the Grab feature.';
+      'Official HBO JAMBASE announcement: USDT TRC20 and BEP20 crypto recharge channels are active. Minimum recharge is $30.00 USDT. Daily Grab income is active. All member earnings are exclusively generated through the Grab feature.';
 
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(textToSpeak);
@@ -284,9 +284,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
         {/* Center: Running Marquee Text running continuously */}
         <div className="flex-1 overflow-hidden mx-2.5 relative">
           <div className="whitespace-nowrap text-xs text-neutral-200 font-medium inline-block animate-marquee">
-            📢 {notices[0]?.title || 'Commercial Bank of Ethiopia (CBE) Official Recharge Channel Active'} •
-            🌟 Exclusive Member Income: Earn 1.9% to 5.0% Daily Compound Yield Exclusively via Grab •
-            💳 Instant ETB Bank Transfers • 24/7 VIP Support • Reset at 00:00 UTC
+            📢 {notices[0]?.title || 'USDT TRC20 & BEP20 Official Crypto Recharge Active'} •
+            🌟 Exclusive VIP Income: Earn 1.9% to 6.0% Daily Compound Yield Exclusively via Grab •
+            💳 Instant Crypto Withdrawals (5% Fee) • 24/7 VIP Support • Reset at 00:00 UTC
           </div>
         </div>
 
@@ -400,7 +400,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     Voucher:{ticket.voucherQty}
                   </span>
                   <span className="text-xs sm:text-sm font-bold text-red-600">
-                    {ticket.price.toLocaleString()} ETB
+                    ${ticket.price.toLocaleString()} USDT
                   </span>
                 </div>
 
@@ -450,10 +450,10 @@ export const HomeView: React.FC<HomeViewProps> = ({
             {/* Main Announcement Content */}
             <div className="space-y-2.5 max-h-60 overflow-y-auto p-1 text-xs leading-relaxed text-neutral-300">
               <h4 className="font-bold text-white text-sm">
-                {notices[0]?.title || 'Commercial Bank of Ethiopia (CBE) Official Recharge Channel Active'}
+                {notices[0]?.title || 'USDT TRC20 & BEP20 Official Crypto Recharge Active'}
               </h4>
               <p className="text-neutral-400">
-                {notices[0]?.content || 'Members can recharge their accounts directly in Ethiopian Birr (ETB) via CBE Bank Transfer. Minimum recharge is 2,000 ETB. Fast admin verification upon slip submission.'}
+                {notices[0]?.content || 'Members can recharge their accounts directly in USDT via TRC20 or BEP20 crypto transfer. Minimum recharge is $30.00 USDT. Fast admin verification upon TxID submission.'}
               </p>
 
               <div className="p-3 rounded-xl bg-neutral-900 border border-neutral-800 space-y-1">
@@ -461,7 +461,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   <Gift size={13} /> Member Income Rules:
                 </span>
                 <p className="text-[11px] text-neutral-400">
-                  Ticket purchase is closed. The only way to earn member income is through the <strong>Grab</strong> feature. Keep account balance at or above 500 ETB to generate daily dividends.
+                  Ticket purchase is closed. The only way to earn member income is through the <strong>Grab</strong> feature. Maintain account balance at or above $30.00 USDT to generate daily VIP dividends.
                 </p>
               </div>
             </div>

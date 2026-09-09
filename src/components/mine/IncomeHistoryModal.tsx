@@ -78,7 +78,7 @@ export const IncomeHistoryModal: React.FC<IncomeHistoryModalProps> = ({
               <div>
                 <span className="text-[11px] text-neutral-400 block font-medium">Total Earned Income</span>
                 <span className="text-2xl font-extrabold text-[#E5A93C]">
-                  {(user?.totalEarnedIncome ?? 84.50).toLocaleString()} ETB
+                  ${(user?.totalEarnedIncome ?? 84.50).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT
                 </span>
               </div>
               <div className="text-right">
@@ -93,13 +93,13 @@ export const IncomeHistoryModal: React.FC<IncomeHistoryModalProps> = ({
               <div className="p-2.5 rounded-xl bg-black/40 border border-neutral-800">
                 <span className="text-[10px] text-neutral-400 block">VIP Profit Ledger:</span>
                 <span className="font-extrabold text-[#E5A93C]">
-                  {(user?.totalVipProfit ?? vipProfitTotal ?? 54.50).toLocaleString()} ETB
+                  ${(user?.totalVipProfit ?? vipProfitTotal ?? 54.50).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT
                 </span>
               </div>
               <div className="p-2.5 rounded-xl bg-black/40 border border-neutral-800">
                 <span className="text-[10px] text-neutral-400 block">Team Commission Ledger:</span>
                 <span className="font-extrabold text-amber-400">
-                  {(user?.totalTeamCommission ?? teamCommissionTotal ?? 30.00).toLocaleString()} ETB
+                  ${(user?.totalTeamCommission ?? teamCommissionTotal ?? 30.00).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT
                 </span>
               </div>
             </div>
@@ -160,7 +160,7 @@ export const IncomeHistoryModal: React.FC<IncomeHistoryModalProps> = ({
                         </span>
                       </div>
                       <span className={`text-base font-extrabold ${isCommission ? 'text-amber-400' : 'text-[#E5A93C]'}`}>
-                        +{record.incomeAmount.toLocaleString()} ETB
+                        +${record.incomeAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT
                       </span>
                     </div>
 
@@ -172,10 +172,10 @@ export const IncomeHistoryModal: React.FC<IncomeHistoryModalProps> = ({
 
                     <div className="grid grid-cols-2 gap-2 text-[11px] text-neutral-400 pt-2 border-t border-neutral-800/80">
                       <div>
-                        Previous Balance: <strong className="text-neutral-300">{record.previousBalance.toLocaleString()} ETB</strong>
+                        Previous Balance: <strong className="text-neutral-300">${record.previousBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT</strong>
                       </div>
                       <div>
-                        New Balance: <strong className="text-[#E5A93C]">{record.newBalance.toLocaleString()} ETB</strong>
+                        New Balance: <strong className="text-[#E5A93C]">${record.newBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT</strong>
                       </div>
                     </div>
 

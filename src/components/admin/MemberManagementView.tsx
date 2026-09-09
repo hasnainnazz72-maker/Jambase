@@ -487,9 +487,9 @@ export const MemberManagementView: React.FC<MemberManagementViewProps> = ({ onRe
           <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Platform Available Funds</p>
           <div className="flex items-baseline gap-2 mt-2">
             <span className="text-2xl lg:text-3xl font-bold text-amber-400 tracking-tight">
-              {(summary?.totalPlatformBalance ?? members.reduce((sum, m) => sum + (m.balance || 0), 0)).toLocaleString()}
+              {(summary?.totalPlatformBalance ?? members.reduce((sum, m) => sum + (m.balance || 0), 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
-            <span className="text-xs text-slate-400 font-medium">ETB</span>
+            <span className="text-xs text-slate-400 font-medium">USDT</span>
           </div>
           <p className="text-xs text-slate-500 mt-1">Cumulative member balances</p>
         </div>
@@ -502,9 +502,9 @@ export const MemberManagementView: React.FC<MemberManagementViewProps> = ({ onRe
           <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Platform Assets</p>
           <div className="flex items-baseline gap-2 mt-2">
             <span className="text-2xl lg:text-3xl font-bold text-purple-400 tracking-tight">
-              {(summary?.totalPlatformAssets ?? members.reduce((sum, m) => sum + (m.totalAssets || (m.balance + m.frozenBalance) || 0), 0)).toLocaleString()}
+              {(summary?.totalPlatformAssets ?? members.reduce((sum, m) => sum + (m.totalAssets || (m.balance + m.frozenBalance) || 0), 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
-            <span className="text-xs text-slate-400 font-medium">ETB</span>
+            <span className="text-xs text-slate-400 font-medium">USDT</span>
           </div>
           <p className="text-xs text-slate-500 mt-1">Including ticket locks & pending</p>
         </div>
@@ -578,7 +578,7 @@ export const MemberManagementView: React.FC<MemberManagementViewProps> = ({ onRe
             >
               <option value="all" className="bg-slate-900 text-white">All Statuses</option>
               <option value="active" className="bg-slate-900 text-white">Active Only</option>
-              <option value="paused" className="bg-slate-900 text-white">Income Paused (&lt;2,000 ETB)</option>
+              <option value="paused" className="bg-slate-900 text-white">Income Paused (&lt;$30 USDT)</option>
               <option value="suspended" className="bg-slate-900 text-white">Suspended</option>
               <option value="frozen" className="bg-slate-900 text-white">Frozen</option>
             </select>
@@ -747,7 +747,7 @@ export const MemberManagementView: React.FC<MemberManagementViewProps> = ({ onRe
                         </div>
                         {(member.frozenBalance || 0) > 0 && (
                           <div className="text-[10px] text-purple-400 font-mono">
-                            +{member.frozenBalance.toLocaleString()} ETB lock
+                            +${member.frozenBalance.toFixed(2)} lock
                           </div>
                         )}
                       </td>
@@ -755,10 +755,10 @@ export const MemberManagementView: React.FC<MemberManagementViewProps> = ({ onRe
                       {/* Total Assets */}
                       <td className="py-3.5 px-4 text-right">
                         <div className="font-bold text-sm text-white font-mono">
-                          {(member.totalAssets ?? ((member.balance || 0) + (member.frozenBalance || 0))).toLocaleString()}
+                          ${(member.totalAssets ?? ((member.balance || 0) + (member.frozenBalance || 0))).toFixed(2)}
                         </div>
                         <div className="text-[10px] text-slate-400">
-                          ETB
+                          USDT
                         </div>
                       </td>
 
@@ -1016,14 +1016,14 @@ export const MemberManagementView: React.FC<MemberManagementViewProps> = ({ onRe
                         <span className="font-medium text-white">{detailData.user.phone || 'N/A'}</span>
                       </div>
                       <div className="flex justify-between py-1 border-b border-slate-800/60">
-                        <span className="text-slate-400">Bank Account / Details:</span>
+                        <span className="text-slate-400">Wallet Address (TRC20/BEP20):</span>
                         <span className="font-mono text-amber-300 font-medium truncate max-w-[200px]" title={detailData.user.walletAddress}>
-                          {detailData.user.walletAddress || 'Commercial Bank of Ethiopia'}
+                          {detailData.user.walletAddress || 'Not set'}
                         </span>
                       </div>
                       <div className="flex justify-between py-1 border-b border-slate-800/60">
                         <span className="text-slate-400">Currency:</span>
-                        <span className="font-medium text-emerald-400 font-bold">ETB (Ethiopian Birr)</span>
+                        <span className="font-medium text-emerald-400 font-bold">USD / USDT (Crypto)</span>
                       </div>
                       <div className="flex justify-between py-1 border-b border-slate-800/60">
                         <span className="text-slate-400">Current Password (Admin Reference):</span>
@@ -1122,7 +1122,7 @@ export const MemberManagementView: React.FC<MemberManagementViewProps> = ({ onRe
                                   isCredit ? 'text-emerald-400' : 'text-rose-400'
                                 }`}
                               >
-                                {isCredit ? '+' : '-'}{tx.amount.toLocaleString()} ETB
+                                {isCredit ? '+' : '-'}${tx.amount.toFixed(2)} USDT
                               </div>
                               <span
                                 className={`text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase ${
@@ -1178,7 +1178,7 @@ export const MemberManagementView: React.FC<MemberManagementViewProps> = ({ onRe
 
                           <div className="text-right">
                             <div className="font-bold text-amber-400 font-mono text-sm">
-                              +{inc.incomeAmount.toLocaleString()} ETB
+                              +${inc.incomeAmount.toFixed(2)} USDT
                             </div>
                             <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full font-semibold uppercase">
                               {inc.status}
@@ -1282,7 +1282,7 @@ export const MemberManagementView: React.FC<MemberManagementViewProps> = ({ onRe
 
                           <div className="text-right">
                             <div className="font-mono text-emerald-400 font-semibold">
-                              {r.balance.toLocaleString()} ETB
+                              ${r.balance.toFixed(2)} USDT
                             </div>
                             <span
                               className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
@@ -1394,20 +1394,20 @@ export const MemberManagementView: React.FC<MemberManagementViewProps> = ({ onRe
                 <div>
                   <span className="text-slate-400 block text-[11px]">Current Available Balance</span>
                   <span className="text-emerald-400 font-bold text-sm font-mono">
-                    {(balanceTargetUser.balance || 0).toLocaleString()} ETB
+                    ${(balanceTargetUser.balance || 0).toFixed(2)} USDT
                   </span>
                 </div>
                 <div className="text-right">
                   <span className="text-slate-400 block text-[11px]">Total Assets</span>
                   <span className="text-white font-bold text-sm font-mono">
-                    {(balanceTargetUser.totalAssets ?? (balanceTargetUser.balance + balanceTargetUser.frozenBalance)).toLocaleString()} ETB
+                    ${(balanceTargetUser.totalAssets ?? (balanceTargetUser.balance + balanceTargetUser.frozenBalance)).toFixed(2)} USDT
                   </span>
                 </div>
               </div>
 
               {/* Amount Input */}
               <div>
-                <label className="block text-slate-300 font-semibold mb-1.5">Adjustment Amount (ETB)</label>
+                <label className="block text-slate-300 font-semibold mb-1.5">Adjustment Amount (USDT)</label>
                 <div className="relative">
                   <DollarSign className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
@@ -1492,10 +1492,11 @@ export const MemberManagementView: React.FC<MemberManagementViewProps> = ({ onRe
                   <div className="flex justify-between">
                     <span className="text-slate-400">Projected New Balance:</span>
                     <span className="font-bold text-amber-400 font-mono">
+                      $
                       {balanceAction === 'add'
-                        ? (balanceTargetUser.balance + parseFloat(balanceAmount)).toLocaleString()
-                        : Math.max(0, balanceTargetUser.balance - parseFloat(balanceAmount)).toLocaleString()}{' '}
-                      ETB
+                        ? (balanceTargetUser.balance + parseFloat(balanceAmount)).toFixed(2)
+                        : Math.max(0, balanceTargetUser.balance - parseFloat(balanceAmount)).toFixed(2)}{' '}
+                      USDT
                     </span>
                   </div>
                   <p className="text-slate-500 text-[10px]">
@@ -1691,11 +1692,12 @@ export const MemberManagementView: React.FC<MemberManagementViewProps> = ({ onRe
                   onChange={(e) => setVipLevelValue(parseInt(e.target.value, 10))}
                   className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-amber-300 font-semibold focus:outline-none focus:border-amber-500"
                 >
-                  <option value="1">VIP 1 (1.90% Daily Profit, 2,000 – 49,999 ETB)</option>
-                  <option value="2">VIP 2 (2.20% Daily Profit, 50,000 – 199,999 ETB, 3 Direct)</option>
-                  <option value="3">VIP 3 (3.00% Daily Profit, 200,000 – 499,999 ETB, 10 Direct)</option>
-                  <option value="4">VIP 4 (4.00% Daily Profit, 500,000 – 1,999,999 ETB, 20 Direct)</option>
-                  <option value="5">VIP 5 (5.00% Daily Profit, 2,000,000 – 5,000,000 ETB, 50 Direct)</option>
+                  <option value="1">VIP 1: $30–$499 — 1.9% Daily Yield</option>
+                  <option value="2">VIP 2: $500–$1,999 — 2.5% Daily Yield (3 Valid Direct)</option>
+                  <option value="3">VIP 3: $2,000–$4,999 — 3.0% Daily Yield (5 Valid Direct)</option>
+                  <option value="4">VIP 4: $5,000–$20,000 — 4.0% Daily Yield (10 Valid Direct)</option>
+                  <option value="5">VIP 5: $20,000–$50,000 — 5.0% Daily Yield (20 Valid Direct)</option>
+                  <option value="6">VIP 6: $50,000–$500,000 — 6.0% Daily Yield (50 Valid Direct)</option>
                 </select>
               </div>
 
@@ -1867,7 +1869,7 @@ export const MemberManagementView: React.FC<MemberManagementViewProps> = ({ onRe
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Initial Deposit / Balance (ETB)</label>
+                  <label className="block text-slate-300 font-semibold mb-1">Initial Deposit / Balance (USDT)</label>
                   <input
                     type="number"
                     step="1"
@@ -1884,11 +1886,12 @@ export const MemberManagementView: React.FC<MemberManagementViewProps> = ({ onRe
                     onChange={(e) => setNewVipLevel(parseInt(e.target.value, 10))}
                     className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-amber-300 font-semibold text-xs"
                   >
-                    <option value="1">VIP 1 (1.90% Daily Yield, 2,000 ETB min)</option>
-                    <option value="2">VIP 2 (2.20% Daily Yield, 50,000 ETB min)</option>
-                    <option value="3">VIP 3 (3.00% Daily Yield, 200,000 ETB min)</option>
-                    <option value="4">VIP 4 (4.00% Daily Yield, 500,000 ETB min)</option>
-                    <option value="5">VIP 5 (5.00% Daily Yield, 2,000,000 ETB min)</option>
+                    <option value="1">VIP 1: $30–$499 — 1.9% Daily Yield</option>
+                    <option value="2">VIP 2: $500–$1,999 — 2.5% Daily Yield (3 Direct)</option>
+                    <option value="3">VIP 3: $2,000–$4,999 — 3.0% Daily Yield (5 Direct)</option>
+                    <option value="4">VIP 4: $5,000–$20,000 — 4.0% Daily Yield (10 Direct)</option>
+                    <option value="5">VIP 5: $20,000–$50,000 — 5.0% Daily Yield (20 Direct)</option>
+                    <option value="6">VIP 6: $50,000–$500,000 — 6.0% Daily Yield (50 Direct)</option>
                   </select>
                 </div>
               </div>

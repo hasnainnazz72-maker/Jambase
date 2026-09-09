@@ -798,11 +798,11 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
                     />
                   </div>
                   <div>
-                    <label className="text-neutral-400 block mb-1">Price (ETB)</label>
+                    <label className="text-neutral-400 block mb-1">Price (USDT)</label>
                     <input
                       type="number"
                       required
-                      min="500"
+                      min="10"
                       value={newTicket.price}
                       onChange={(e) => setNewTicket({ ...newTicket, price: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl bg-black border border-neutral-800 text-white"
@@ -869,7 +869,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
                     <div className="text-sm font-bold text-white truncate">{tkt.name}</div>
                     <div className="text-xs text-neutral-400">{tkt.artist}</div>
                     <div className="flex items-center justify-between mt-2 text-xs font-mono">
-                      <span className="text-[#E5A93C] font-bold">{tkt.price.toLocaleString()} ETB</span>
+                      <span className="text-[#E5A93C] font-bold">${tkt.price.toFixed(2)} USDT</span>
                       <span className="text-neutral-400">VIP {tkt.vipRequired} Req.</span>
                     </div>
                   </div>
@@ -985,19 +985,19 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
               </div>
               <div className="p-4 rounded-xl bg-black/50 border border-neutral-850 space-y-1">
                 <div className="text-neutral-400 font-medium">Minimum Active Yield Threshold</div>
-                <div className="text-white font-bold">500 ETB Total Assets</div>
+                <div className="text-white font-bold">$30 USDT Total Assets</div>
               </div>
               <div className="p-4 rounded-xl bg-black/50 border border-neutral-850 space-y-1">
                 <div className="text-neutral-400 font-medium">Minimum Withdrawal Limit</div>
-                <div className="text-white font-bold">500 ETB (CBE Bank)</div>
+                <div className="text-white font-bold">$10 USDT (TRC20 / BEP20)</div>
               </div>
               <div className="p-4 rounded-xl bg-black/50 border border-neutral-850 space-y-1">
                 <div className="text-neutral-400 font-medium">Minimum Recharge Limit</div>
-                <div className="text-white font-bold">2,000 ETB (CBE Bank Slip Verification)</div>
+                <div className="text-white font-bold">$30 USDT (Crypto Only)</div>
               </div>
               <div className="p-4 rounded-xl bg-black/50 border border-neutral-850 space-y-1">
                 <div className="text-neutral-400 font-medium">Official Payment Method</div>
-                <div className="text-white font-bold">Commercial Bank of Ethiopia (CBE)</div>
+                <div className="text-white font-bold">USDT (TRC20 & BEP20 Crypto)</div>
               </div>
             </div>
           </div>

@@ -25,28 +25,22 @@ export const GrabView: React.FC<GrabViewProps> = ({
   const [grabStatusText, setGrabStatusText] = useState('');
   const [utcCountdown, setUtcCountdown] = useState('');
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string; profit?: number } | null>(null);
-  const [switchingCurrency, setSwitchingCurrency] = useState(false);
 
-  const activeCurrency: 'ETB' | 'USD' = user?.activeCurrency || 'ETB';
-  const isUsd = activeCurrency === 'USD';
-
-  // Completely separate balances - NEVER merged or converted
-  const etbBalance = user?.etbBalance ?? 0;
-  const usdBalance = user?.usdBalance ?? 0;
-
-  // Active working balance
-  const workingBalance = isUsd ? usdBalance : etbBalance;
-  const minRequiredBalance = isUsd ? 10 : 2000;
-  const currencyUnit = isUsd ? 'USDT' : 'ETB';
+  // Unified USD/USDT Balance
+  const workingBalance = user?.balance ?? user?.usdBalance ?? 0;
+  const minRequiredBalance = 30; // VIP 1 minimum qualifying amount ($30)
+  const currencyUnit = 'USDT';
   const currentVipLevel = user?.vipLevel ?? 1;
 
-  // VIP Daily Rate mapping: VIP 1: 1.9%, VIP 2: 2.2%, VIP 3: 3.0%, VIP 4: 4.0%, VIP 5: 5.0%
+  // USD VIP Daily Rate mapping:
+  // VIP 1: 1.9%, VIP 2: 2.5%, VIP 3: 3.0%, VIP 4: 4.0%, VIP 5: 5.0%, VIP 6: 6.0%
   const rateMap: Record<number, number> = {
     1: 0.019,
-    2: 0.022,
+    2: 0.025,
     3: 0.03,
     4: 0.04,
-    5: 0.05
+    5: 0.05,
+    6: 0.06
   };
   const dailyRate = rateMap[currentVipLevel] || 0.019;
   const estimatedDailyProfit = Number((workingBalance * dailyRate).toFixed(2));
@@ -71,21 +65,6 @@ export const GrabView: React.FC<GrabViewProps> = ({
     return () => clearInterval(interval);
   }, []);
 
-  // Switch working wallet between ETB and USD
-  const handleSwitchCurrency = async (newCurrency: 'ETB' | 'USD') => {
-    if (activeCurrency === newCurrency || switchingCurrency) return;
-    setSwitchingCurrency(true);
-    setFeedback(null);
-    try {
-      await api.switchCurrency(newCurrency);
-      onRefresh();
-    } catch (err: any) {
-      setFeedback({ type: 'error', message: err.message || 'Failed to switch working wallet' });
-    } finally {
-      setSwitchingCurrency(false);
-    }
-  };
-
   const handleStartGrab = async () => {
     if (grabbing) return;
 
@@ -100,9 +79,7 @@ export const GrabView: React.FC<GrabViewProps> = ({
     if (workingBalance < minRequiredBalance) {
       setFeedback({
         type: 'error',
-        message: isUsd
-          ? 'USD users: minimum balance required to use Grab/Work is $10 USDT. Please recharge your USD wallet.'
-          : 'ETB users: minimum balance required to use Grab/Work is 2,000 ETB. Please recharge your ETB wallet.'
+        message: `Minimum balance required to perform Grab is $30.00 USDT (VIP 1). Please recharge your wallet.`
       });
       return;
     }
@@ -153,28 +130,21 @@ export const GrabView: React.FC<GrabViewProps> = ({
   };
 
   const vipTable = [
-    { level: 1, range: '2,000 – 49,999 ETB / $10 – $250 USDT', members: '0', rate: '1.9%' },
-    { level: 2, range: '50,000 – 199,999 ETB / $251 – $1,000 USDT', members: '3 direct', rate: '2.2%' },
-    { level: 3, range: '200,000 – 499,999 ETB / $1,001 – $2,500 USDT', members: '10 direct', rate: '3.0%' },
-    { level: 4, range: '500,000 – 1,999,999 ETB / $2,501 – $10,000 USDT', members: '20 direct', rate: '4.0%' },
-    { level: 5, range: '2,000,000+ ETB / $10,001+ USDT', members: '50 direct', rate: '5.0%' }
+    { level: 1, range: '$30 – $499 USDT', members: '0 required', rate: '1.9%' },
+    { level: 2, range: '$500 – $1,999 USDT', members: '3 valid direct members', rate: '2.5%' },
+    { level: 3, range: '$2,000 – $4,999 USDT', members: '5 valid direct members', rate: '3.0%' },
+    { level: 4, range: '$5,000 – $20,000 USDT', members: '10 valid direct members', rate: '4.0%' },
+    { level: 5, range: '$20,000 – $50,000 USDT', members: '20 valid direct members', rate: '5.0%' },
+    { level: 6, range: '$50,000 – $500,000 USDT', members: '50 valid direct members', rate: '6.0%' }
   ];
 
   return (
     <div id="grab-view-container" className="pb-28 space-y-4">
       {/* 1. Top Header Banner - HBO JAMBASE MUSIC VIP GRAB */}
-      <div className={`relative overflow-hidden rounded-3xl border p-5 shadow-2xl transition-all ${
-        isUsd
-          ? 'bg-gradient-to-br from-[#0e1929] via-[#0b1420] to-[#080d14] border-blue-500/50 shadow-blue-950/40'
-          : 'bg-gradient-to-br from-[#2a0808] via-[#160b0d] to-[#0d0d12] border-amber-500/50 shadow-red-950/40'
-      }`}>
+      <div className="relative overflow-hidden rounded-3xl border p-5 shadow-2xl transition-all bg-gradient-to-br from-[#1c0808] via-[#140b0f] to-[#0c0d12] border-amber-500/50 shadow-red-950/40">
         <div className="relative z-10 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className={`w-12 h-12 rounded-2xl border flex items-center justify-center shadow-lg ${
-              isUsd
-                ? 'bg-gradient-to-tr from-blue-700 via-blue-600 to-green-500 border-blue-400/60 shadow-blue-900/50'
-                : 'bg-gradient-to-tr from-red-700 via-red-600 to-amber-600 border-amber-400/60 shadow-red-900/50'
-            }`}>
+            <div className="w-12 h-12 rounded-2xl border flex items-center justify-center shadow-lg bg-gradient-to-tr from-red-700 via-red-600 to-amber-600 border-amber-400/60 shadow-red-900/50">
               <Gift size={24} className="text-amber-200 animate-pulse" />
             </div>
             <div>
@@ -197,58 +167,26 @@ export const GrabView: React.FC<GrabViewProps> = ({
           </div>
         </div>
 
-        {/* Currency Switcher Bar */}
-        <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between">
-          <span className="text-xs font-semibold text-neutral-300 flex items-center gap-1.5">
-            <Coins size={14} className={isUsd ? 'text-blue-400' : 'text-amber-400'} />
-            Working Currency:
-          </span>
-          <div className="flex items-center gap-1.5 bg-black/60 p-1 rounded-xl border border-neutral-800">
-            <button
-              onClick={() => handleSwitchCurrency('ETB')}
-              disabled={switchingCurrency}
-              className={`px-3 py-1 rounded-lg text-xs font-extrabold transition-all ${
-                activeCurrency === 'ETB'
-                  ? 'bg-gradient-to-r from-[#DC2626] to-[#B91C1C] text-white shadow-md border border-[#E5A93C]/40'
-                  : 'text-neutral-400 hover:text-white'
-              }`}
-            >
-              ETB Wallet ({etbBalance.toLocaleString()} ETB)
-            </button>
-            <button
-              onClick={() => handleSwitchCurrency('USD')}
-              disabled={switchingCurrency}
-              className={`px-3 py-1 rounded-lg text-xs font-extrabold transition-all ${
-                activeCurrency === 'USD'
-                  ? 'bg-gradient-to-r from-blue-700 to-blue-600 text-white shadow-md border border-blue-400/40'
-                  : 'text-neutral-400 hover:text-white'
-              }`}
-            >
-              USD Wallet (${usdBalance.toFixed(2)} USDT)
-            </button>
-          </div>
-        </div>
-
-        {/* Separate Working Balance Display */}
-        <div className="mt-3 grid grid-cols-2 gap-2 text-left">
-          <div className="p-2.5 rounded-xl bg-black/60 border border-neutral-800/80">
+        {/* Working Balance Display */}
+        <div className="mt-4 grid grid-cols-2 gap-2 text-left">
+          <div className="p-3 rounded-2xl bg-black/60 border border-neutral-800/80">
             <span className="text-[10px] font-semibold text-neutral-400 block">
-              Active {currencyUnit} Working Balance
+              Active USDT Working Balance
             </span>
-            <span className="text-sm font-black text-amber-300 mt-0.5 block">
-              {isUsd ? `$${workingBalance.toFixed(2)} USDT` : `${workingBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ETB`}
+            <span className="text-base font-black text-amber-300 mt-0.5 block">
+              ${workingBalance.toFixed(2)} USDT
             </span>
             <span className="text-[9px] text-neutral-400 mt-0.5 block">
-              Min. Required: {isUsd ? '$10.00 USDT' : '2,000 ETB'}
+              Min. Required: $30.00 USDT (VIP 1)
             </span>
           </div>
-          <div className="p-2.5 rounded-xl bg-black/60 border border-neutral-800/80">
+          <div className="p-3 rounded-2xl bg-black/60 border border-neutral-800/80">
             <span className="text-[10px] font-semibold text-neutral-400 block">Today's Grab Income</span>
-            <span className={`text-sm font-black mt-0.5 block ${todayProfit > 0 ? 'text-green-400' : 'text-neutral-400'}`}>
-              {todayProfit > 0 ? `+${todayProfit.toFixed(2)} ${currencyUnit}` : `0.00 ${currencyUnit}`}
+            <span className={`text-base font-black mt-0.5 block ${todayProfit > 0 ? 'text-green-400' : 'text-neutral-400'}`}>
+              {todayProfit > 0 ? `+$${todayProfit.toFixed(2)}` : '$0.00 USDT'}
             </span>
             <span className="text-[9px] text-neutral-400 mt-0.5 block">
-              Compounded to {currencyUnit} Balance
+              Compounded to USDT Balance
             </span>
           </div>
         </div>
@@ -291,7 +229,7 @@ export const GrabView: React.FC<GrabViewProps> = ({
                   <CheckCircle2 size={40} className="text-amber-400 mb-1" />
                   <span className="text-xs font-black text-white">Grab Completed</span>
                   <span className="text-[10px] text-amber-300 font-semibold mt-0.5">
-                    +{(todayProfit || estimatedDailyProfit).toFixed(2)} {currencyUnit}
+                    +${(todayProfit || estimatedDailyProfit).toFixed(2)} USDT
                   </span>
                 </div>
                 <div className="mt-3">
@@ -313,9 +251,7 @@ export const GrabView: React.FC<GrabViewProps> = ({
                       ? 'bg-neutral-800/80 border-2 border-neutral-700 opacity-80 cursor-not-allowed text-neutral-400'
                       : grabbing
                       ? 'bg-gradient-to-br from-red-800 to-amber-700 border-2 border-amber-400 animate-pulse text-white'
-                      : isUsd
-                      ? 'bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 border-4 border-blue-400/90 hover:border-blue-300 hover:scale-105 shadow-blue-900/60 text-white cursor-pointer'
-                      : 'bg-gradient-to-br from-red-600 via-red-700 to-amber-600 border-4 border-amber-400/90 hover:border-amber-300 hover:scale-105 shadow-red-900/60 text-white cursor-pointer'
+                      : 'bg-gradient-to-br from-[#DC2626] via-[#B91C1C] to-[#E5A93C] border-4 border-amber-400/90 hover:border-amber-300 hover:scale-105 shadow-red-900/60 text-white cursor-pointer'
                   }`}
                 >
                   <span className="absolute -inset-1 rounded-full bg-gradient-to-r from-red-600 to-amber-500 opacity-40 group-hover:opacity-75 blur-sm transition-opacity pointer-events-none" />
@@ -348,16 +284,14 @@ export const GrabView: React.FC<GrabViewProps> = ({
                 {workingBalance < minRequiredBalance && (
                   <div className="mt-3 space-y-2">
                     <p className="text-xs text-red-400 font-semibold leading-snug">
-                      {isUsd
-                        ? `USD balance ($${workingBalance.toFixed(2)}) is below the $10 USDT minimum requirement.`
-                        : `ETB balance (${workingBalance.toLocaleString()} ETB) is below the 2,000 ETB minimum requirement.`}
+                      USDT balance (${workingBalance.toFixed(2)}) is below the $30.00 USDT minimum requirement (VIP 1).
                     </p>
                     <button
                       onClick={() => onNavigateTab('finance')}
                       className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-red-700 to-red-600 hover:from-red-600 text-white text-xs font-bold shadow-md flex items-center gap-1.5 mx-auto"
                     >
                       <Wallet size={13} />
-                      Recharge {currencyUnit}
+                      Recharge USDT
                     </button>
                   </div>
                 )}
@@ -366,7 +300,7 @@ export const GrabView: React.FC<GrabViewProps> = ({
           </div>
 
           <p className="text-[11px] text-neutral-400 leading-relaxed">
-            Grab is the only source of member income. Profit is calculated strictly on your active <strong>{currencyUnit}</strong> balance according to your VIP rate and compounds daily.
+            Grab is the only source of member income. Profit is calculated strictly on your active <strong>USDT</strong> balance according to your VIP rate and compounds daily.
           </p>
         </div>
       </div>
@@ -431,14 +365,14 @@ export const GrabView: React.FC<GrabViewProps> = ({
       <div className="rounded-3xl bg-[#121319] border border-neutral-800/90 p-4 space-y-2.5 text-xs text-neutral-300">
         <div className="flex items-center gap-2 text-white font-bold pb-1 border-b border-neutral-800">
           <Shield size={15} className="text-amber-400" />
-          <span>Multi-Currency Grab System Rules</span>
+          <span>USD/USDT VIP Grab System Rules</span>
         </div>
         <ul className="space-y-1.5 text-[11px] text-neutral-400 leading-relaxed list-disc list-inside">
           <li><strong className="text-neutral-200">Exclusive Income:</strong> Grab is the ONLY source of member income.</li>
-          <li><strong className="text-neutral-200">Separate Wallets:</strong> ETB and USD wallets are completely separate with NO automatic conversion.</li>
-          <li><strong className="text-neutral-200">Thresholds:</strong> Minimum 2,000 ETB for ETB work; minimum $10 USDT for USD work.</li>
+          <li><strong className="text-neutral-200">Crypto Operations:</strong> Deposits and withdrawals are processed exclusively via USDT (TRC20 / BEP20).</li>
+          <li><strong className="text-neutral-200">VIP Thresholds:</strong> VIP 1 starts at $30 USDT (1.9% daily). Higher tiers require qualifying balance and valid direct members.</li>
           <li><strong className="text-neutral-200">Daily Cycle:</strong> 1 Grab task available per UTC day (resets 00:00:00 UTC).</li>
-          <li><strong className="text-neutral-200">Compounding:</strong> Profit is calculated on active wallet balance and credited directly.</li>
+          <li><strong className="text-neutral-200">Compounding:</strong> Profit is calculated on active balance and credited directly each day.</li>
           <li><strong className="text-neutral-200">Team Commission:</strong> Uplines earn commissions from direct team Grab income (Tier 1: 16%, Tier 2: 8%, Tier 3: 4%).</li>
         </ul>
       </div>

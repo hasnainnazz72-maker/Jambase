@@ -18,9 +18,9 @@ export const TaskView: React.FC<TaskViewProps> = ({ tasks = [], user, onRefresh 
   const safeTasks = tasks.length > 0 ? tasks : [
     {
       id: 'task-invite-5',
-      title: 'Invite 5 valid A-level direct members',
-      description: 'Invite 5 valid A-level direct members to claim 3,000 ETB reward',
-      rewardAmount: 3000,
+      title: 'Invite 5 valid members',
+      description: 'Invite 5 valid direct members (≥$30 USDT) to claim $15.00 USDT reward',
+      rewardAmount: 15,
       rewardType: 'balance',
       progress: Math.min(5, user?.validDirectMembersCount || 0),
       maxProgress: 5,
@@ -30,41 +30,54 @@ export const TaskView: React.FC<TaskViewProps> = ({ tasks = [], user, onRefresh 
       category: 'growth'
     },
     {
-      id: 'task-activate-10',
-      title: 'Activate 10 valid A-level direct members',
-      description: 'Activate 10 valid A-level direct members to claim 6,000 ETB reward',
-      rewardAmount: 6000,
+      id: 'task-invite-10',
+      title: 'Invite 10 valid members',
+      description: 'Invite 10 valid direct members (≥$30 USDT) to claim $50.00 USDT reward',
+      rewardAmount: 50,
       rewardType: 'balance',
       progress: Math.min(10, user?.validDirectMembersCount || 0),
       maxProgress: 10,
       isCompleted: (user?.validDirectMembersCount || 0) >= 10,
-      isClaimed: (user?.claimedTaskIds || []).includes('task-activate-10'),
+      isClaimed: (user?.claimedTaskIds || []).includes('task-invite-10'),
       icon: 'Users',
       category: 'growth'
     },
     {
-      id: 'task-activate-20',
-      title: 'Activate 20 valid A-level direct members',
-      description: 'Activate 20 valid A-level direct members to claim 20,000 ETB reward',
-      rewardAmount: 20000,
+      id: 'task-invite-20',
+      title: 'Invite 20 valid members',
+      description: 'Invite 20 valid direct members (≥$30 USDT) to claim $120.00 USDT reward',
+      rewardAmount: 120,
       rewardType: 'balance',
       progress: Math.min(20, user?.validDirectMembersCount || 0),
       maxProgress: 20,
       isCompleted: (user?.validDirectMembersCount || 0) >= 20,
-      isClaimed: (user?.claimedTaskIds || []).includes('task-activate-20'),
+      isClaimed: (user?.claimedTaskIds || []).includes('task-invite-20'),
       icon: 'Users',
       category: 'growth'
     },
     {
-      id: 'task-activate-50',
-      title: 'Activate 50 valid direct members',
-      description: 'Activate 50 valid direct members to claim 100,000 ETB reward',
-      rewardAmount: 100000,
+      id: 'task-invite-50',
+      title: 'Invite 50 valid members',
+      description: 'Invite 50 valid direct members (≥$30 USDT) to claim $300.00 USDT reward',
+      rewardAmount: 300,
       rewardType: 'balance',
       progress: Math.min(50, user?.validDirectMembersCount || 0),
       maxProgress: 50,
       isCompleted: (user?.validDirectMembersCount || 0) >= 50,
-      isClaimed: (user?.claimedTaskIds || []).includes('task-activate-50'),
+      isClaimed: (user?.claimedTaskIds || []).includes('task-invite-50'),
+      icon: 'Users',
+      category: 'growth'
+    },
+    {
+      id: 'task-invite-100',
+      title: 'Invite 100 valid members',
+      description: 'Invite 100 valid direct members (≥$30 USDT) to claim $1,000.00 USDT reward',
+      rewardAmount: 1000,
+      rewardType: 'balance',
+      progress: Math.min(100, user?.validDirectMembersCount || 0),
+      maxProgress: 100,
+      isCompleted: (user?.validDirectMembersCount || 0) >= 100,
+      isClaimed: (user?.claimedTaskIds || []).includes('task-invite-100'),
       icon: 'Users',
       category: 'growth'
     }
@@ -92,7 +105,7 @@ export const TaskView: React.FC<TaskViewProps> = ({ tasks = [], user, onRefresh 
       });
       setFeedback({
         type: 'success',
-        message: res.message || `Successfully claimed ${task.rewardAmount.toLocaleString()} ETB reward!`
+        message: res.message || `Successfully claimed $${task.rewardAmount.toFixed(2)} USDT reward!`
       });
       onRefresh();
     } catch (err: any) {
@@ -191,7 +204,7 @@ export const TaskView: React.FC<TaskViewProps> = ({ tasks = [], user, onRefresh 
                       {task.title}
                     </h4>
                     <p className="text-[11px] text-neutral-400 mt-0.5">
-                      Reward: <strong className="text-[#E5A93C] font-extrabold">+{task.rewardAmount.toLocaleString()} ETB</strong>
+                      Reward: <strong className="text-[#E5A93C] font-extrabold">+${task.rewardAmount.toFixed(2)} USDT</strong>
                     </p>
 
                     {/* Progress indicator */}
@@ -239,7 +252,7 @@ export const TaskView: React.FC<TaskViewProps> = ({ tasks = [], user, onRefresh 
                       ) : (
                         <>
                           <Gift size={14} />
-                          <span>Claim {task.rewardAmount.toLocaleString()} ETB</span>
+                          <span>Claim ${task.rewardAmount} USDT</span>
                         </>
                       )}
                     </button>
@@ -249,7 +262,7 @@ export const TaskView: React.FC<TaskViewProps> = ({ tasks = [], user, onRefresh 
                       id={`btn-locked-${task.id}`}
                       className="px-3.5 py-2 rounded-xl bg-neutral-900 border border-neutral-800 text-neutral-400 text-xs font-semibold hover:border-neutral-700 transition-colors"
                     >
-                      <span>Claim {task.rewardAmount.toLocaleString()} ETB</span>
+                      <span>Claim ${task.rewardAmount} USDT</span>
                     </button>
                   )}
                 </div>

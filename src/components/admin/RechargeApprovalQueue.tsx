@@ -64,7 +64,7 @@ export const RechargeApprovalQueue: React.FC<RechargeApprovalQueueProps> = ({
     try {
       await api.processDeposit(selectedForApproval.id, 'Approve', undefined, approvalNotes);
       onSetActionMsg({
-        text: `✓ Recharge request #${selectedForApproval.id} for ${selectedForApproval.amount.toLocaleString()} ETB has been APPROVED and credited to ${selectedForApproval.username}'s available balance!`
+        text: `✓ Recharge request #${selectedForApproval.id} for $${selectedForApproval.amount.toFixed(2)} USDT has been APPROVED and credited to ${selectedForApproval.username}'s available balance!`
       });
       setSelectedForApproval(null);
       setApprovalNotes('');
@@ -332,12 +332,12 @@ export const RechargeApprovalQueue: React.FC<RechargeApprovalQueueProps> = ({
 
                   <div className="text-right">
                     <span className="text-lg font-black text-white font-mono block">
-                      {dep.amount.toLocaleString()} <span className="text-xs text-neutral-400">ETB</span>
+                      ${dep.amount.toFixed(2)} <span className="text-xs text-neutral-400">USDT</span>
                     </span>
                     <span
                       className="inline-block px-2 py-0.2 text-[10px] font-extrabold rounded-md mt-0.5 bg-blue-500/15 text-blue-300 border border-blue-500/30"
                     >
-                      {dep.bankName || 'CBE Bank'}
+                      {dep.bankName || 'USDT'}
                     </span>
                   </div>
                 </div>
@@ -352,7 +352,7 @@ export const RechargeApprovalQueue: React.FC<RechargeApprovalQueueProps> = ({
                     </div>
                     <div className="text-[11px] font-mono">
                       <span className="text-neutral-400">Available: </span>
-                      <strong className="text-[#E5A93C]">{(dep.currentUserBalance ?? 0).toLocaleString()} ETB</strong>
+                      <strong className="text-[#E5A93C]">${(dep.currentUserBalance ?? 0).toFixed(2)} USDT</strong>
                     </div>
                   </div>
 
@@ -428,7 +428,7 @@ export const RechargeApprovalQueue: React.FC<RechargeApprovalQueueProps> = ({
                     </div>
                     <p className="text-[11px] text-neutral-400">
                       Approved by <strong className="text-neutral-200">{dep.approvedBy || 'Admin'}</strong> on{' '}
-                      {dep.processedAt ? new Date(dep.processedAt).toLocaleString() : 'Recent'}. Amount +{dep.amount.toLocaleString()} ETB added to Available Balance.
+                      {dep.processedAt ? new Date(dep.processedAt).toLocaleString() : 'Recent'}. Amount +${dep.amount.toFixed(2)} USDT added to Available Balance.
                     </p>
                   </div>
                 )}
@@ -530,7 +530,7 @@ export const RechargeApprovalQueue: React.FC<RechargeApprovalQueueProps> = ({
               <div className="flex justify-between items-center pt-1">
                 <span className="font-bold text-neutral-300 font-sans">AMOUNT TO CREDIT:</span>
                 <span className="font-mono font-black text-[#E5A93C] text-lg">
-                  +{selectedForApproval.amount.toLocaleString()} ETB
+                  +${selectedForApproval.amount.toFixed(2)} USDT
                 </span>
               </div>
             </div>
@@ -538,7 +538,7 @@ export const RechargeApprovalQueue: React.FC<RechargeApprovalQueueProps> = ({
             <div className="p-3 rounded-2xl bg-[#DC2626]/10 border border-[#DC2626]/30 text-xs text-neutral-300 flex items-start gap-2">
               <Info size={15} className="text-[#E5A93C] shrink-0 mt-0.5" />
               <span>
-                Approving will immediately credit <strong className="text-white">+{selectedForApproval.amount.toLocaleString()} ETB</strong> into {selectedForApproval.username}&apos;s Available Balance for trading and ticket purchases.
+                Approving will immediately credit <strong className="text-white">+${selectedForApproval.amount.toFixed(2)} USDT</strong> into {selectedForApproval.username}&apos;s Available Balance for trading and ticket purchases.
               </span>
             </div>
 
@@ -548,7 +548,7 @@ export const RechargeApprovalQueue: React.FC<RechargeApprovalQueueProps> = ({
                 type="text"
                 value={approvalNotes}
                 onChange={(e) => setApprovalNotes(e.target.value)}
-                placeholder="e.g. Verified transfer on CBE Portal / Slip confirmed"
+                placeholder="e.g. Verified blockchain transaction hash on explorer"
                 className="w-full px-3.5 py-2 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-white focus:outline-none focus:border-[#E5A93C]"
               />
             </div>
@@ -615,7 +615,7 @@ export const RechargeApprovalQueue: React.FC<RechargeApprovalQueueProps> = ({
               </div>
               <div className="flex justify-between">
                 <span className="text-neutral-400">Amount:</span>
-                <span className="font-mono text-white font-bold">{selectedForRejection.amount.toLocaleString()} ETB</span>
+                <span className="font-mono text-white font-bold">${selectedForRejection.amount.toFixed(2)} USDT</span>
               </div>
               <div className="space-y-1 pt-1 border-t border-neutral-850">
                 <span className="text-neutral-400">Submitted Reference:</span>

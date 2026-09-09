@@ -97,31 +97,31 @@ export const MineView: React.FC<MineViewProps> = ({
         </div>
       </div>
 
-      {/* 2. STATS SECTION: ETB Balance & USD Balance (Completely Separate) */}
+      {/* 2. STATS SECTION: Available Balance & Total Assets */}
       <div className="grid grid-cols-2 gap-3 py-3 px-1">
-        {/* Left: ETB Balance */}
+        {/* Left: Available Balance */}
         <div className="p-3.5 rounded-2xl bg-[#111317] border border-neutral-800 text-center">
           <div className="text-xl font-black text-[#E5A93C] tracking-tight">
-            {(user?.etbBalance ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            ${(user?.balance ?? user?.usdBalance ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <div className="text-[11px] text-neutral-300 font-semibold mt-0.5">
-            ETB Balance
+            Available Balance
           </div>
           <span className="text-[9px] text-neutral-400 block mt-0.5">
-            {user?.activeCurrency === 'ETB' ? 'Active Work Wallet' : 'Ethiopian Bank'}
+            USDT (TRC20 / BEP20)
           </span>
         </div>
 
-        {/* Right: USD (USDT) Balance */}
+        {/* Right: Total Assets */}
         <div className="p-3.5 rounded-2xl bg-[#111317] border border-neutral-800 text-center">
           <div className="text-xl font-black text-green-400 tracking-tight">
-            ${(user?.usdBalance ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            ${(user?.totalAssets ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <div className="text-[11px] text-neutral-300 font-semibold mt-0.5">
-            USD Balance (USDT)
+            Total Assets
           </div>
           <span className="text-[9px] text-neutral-400 block mt-0.5">
-            {user?.activeCurrency === 'USD' ? 'Active Work Wallet' : 'BEP20 / TRC20'}
+            VIP Tier Base
           </span>
         </div>
       </div>

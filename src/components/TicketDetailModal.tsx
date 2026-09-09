@@ -88,7 +88,7 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
         <div className="mt-4 p-4 rounded-2xl bg-[#0d0708] border border-neutral-800 space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xs text-neutral-400">Official Pass Valuation</span>
-            <span className="text-base font-extrabold text-[#E5A93C]">{ticket.price.toLocaleString()} ETB</span>
+            <span className="text-base font-extrabold text-[#E5A93C]">${ticket.price.toLocaleString()} USDT</span>
           </div>
 
           <div className="p-3 rounded-xl bg-neutral-900/80 border border-neutral-800 text-xs text-neutral-300 space-y-1.5">

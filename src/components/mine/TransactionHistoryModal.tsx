@@ -138,7 +138,7 @@ export const TransactionHistoryModal: React.FC<TransactionHistoryModalProps> = (
                       <span className={`text-sm font-extrabold font-mono ${
                         isCommission ? 'text-amber-400' : isPositive ? 'text-[#E5A93C]' : 'text-neutral-200'
                       }`}>
-                        {isPositive ? '+' : '-'}{Number(tx.amount || 0).toLocaleString()} ETB
+                        {isPositive ? '+' : '-'}${Number(tx.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT
                       </span>
                     </div>
                   </div>

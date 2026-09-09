@@ -279,18 +279,18 @@ export const api = {
     return data;
   },
 
-  async grab(currency?: 'ETB' | 'USD'): Promise<{ success: boolean; message: string; totalCredited: number; totalProfit: number; currency?: string; baseBalance: number; appliedRate: number; vipLevel: number; newBalance: number; user: User }> {
+  async grab(currency?: 'USD' | string): Promise<{ success: boolean; message: string; totalCredited: number; totalProfit: number; currency?: string; baseBalance: number; appliedRate: number; vipLevel: number; newBalance: number; user: User }> {
     const res = await fetch('/api/grab', {
       method: 'POST',
       headers: getUserHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ currency })
+      body: JSON.stringify({ currency: currency || 'USD' })
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to execute Grab');
     return data;
   },
 
-  async switchCurrency(currency: 'ETB' | 'USD'): Promise<{ success: boolean; activeCurrency: 'ETB' | 'USD'; user: User }> {
+  async switchCurrency(currency: 'USD' | string): Promise<{ success: boolean; activeCurrency: 'USD' | string; user: User }> {
     const res = await fetch('/api/user/currency', {
       method: 'POST',
       headers: getUserHeaders({ 'Content-Type': 'application/json' }),
@@ -349,7 +349,7 @@ export const api = {
     amount: number;
     referenceNumber: string;
     paymentSlipUrl: string;
-    currency?: 'ETB' | 'USD';
+    currency?: 'USD' | string;
     network?: string;
     bankName?: string;
     accountHolder?: string;
@@ -388,7 +388,7 @@ export const api = {
 
   async withdraw(params: {
     amount: number;
-    currency?: 'ETB' | 'USD';
+    currency?: 'USD' | string;
     network?: string;
     walletAddress?: string;
     bankName?: string;
@@ -690,6 +690,34 @@ export const api = {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to import database backup');
+    return data;
+  },
+
+  async getDeploymentVerification(): Promise<{
+    success: boolean;
+    manifest: any;
+    report: any;
+  }> {
+    const res = await fetch('/api/admin/system/deploy-verification', {
+      headers: getAdminHeaders()
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to fetch deployment verification status');
+    return data;
+  },
+
+  async runDeploymentVerification(): Promise<{
+    success: boolean;
+    manifest: any;
+    report: any;
+    message: string;
+  }> {
+    const res = await fetch('/api/admin/system/deploy-verification/run', {
+      method: 'POST',
+      headers: getAdminHeaders()
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to run deployment verification');
     return data;
   },
 

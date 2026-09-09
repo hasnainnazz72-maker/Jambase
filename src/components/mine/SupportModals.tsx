@@ -90,8 +90,8 @@ export const SupportModal: React.FC<SupportModalProps> = ({
       a: 'Daily income is calculated automatically at 00:00 UTC based on your Total Assets (Available + Frozen) multiplied by your active VIP Tier rate (1.9% for VIP 1 up to 6.0% for VIP 6).'
     },
     {
-      q: 'What is the 2,000 ETB minimum balance rule?',
-      a: 'To prevent idle accounts from generating yield, accounts must maintain at least 2,000 ETB in total assets. If your balance drops below 2,000 ETB, daily income is automatically paused until recharged.'
+      q: 'What is the $30 USDT minimum balance rule?',
+      a: 'To participate in VIP daily yield, accounts must maintain at least $30.00 USDT in total assets (VIP 1). If your balance drops below $30 USDT, daily income is paused until recharged.'
     },
     {
       q: 'How do multi-tier referral commissions work?',
@@ -99,11 +99,11 @@ export const SupportModal: React.FC<SupportModalProps> = ({
     },
     {
       q: 'What makes a direct member "Valid"?',
-      a: 'A direct member qualifies as a valid investor once they register via your invitation link, verify their account, and hold a minimum deposit/balance of at least 2,000 ETB.'
+      a: 'A direct member qualifies as a valid investor once they register via your invitation link, verify their account, and hold a minimum qualifying investment of at least $30 USDT.'
     },
     {
       q: 'What are the withdrawal limits and fees?',
-      a: 'The minimum withdrawal is 500 ETB via Commercial Bank of Ethiopia (CBE). Standard platform service fee is 7%. Funds are processed rapidly following administrative audit.'
+      a: 'The minimum withdrawal is $10.00 USDT via crypto transfer (TRC20 / BEP20). Standard platform service fee is 5%. Funds are processed rapidly following administrative audit.'
     }
   ];
 

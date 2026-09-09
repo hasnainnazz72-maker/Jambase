@@ -80,12 +80,12 @@ export const WelfareCenterModal: React.FC<WelfareCenterModalProps> = ({
                 <span className="text-xs font-bold text-white">Daily Attendance Reward</span>
               </div>
               <span className="px-2 py-0.5 rounded-full bg-[#DC2626]/15 text-[#FDE047] border border-[#DC2626]/30 text-[11px] font-black">
-                +10.00 ETB / Day
+                +$0.50 USDT / Day
               </span>
             </div>
 
             <p className="text-[11px] text-neutral-400 leading-relaxed">
-              Check in daily to claim your guaranteed <strong>10.00 ETB</strong> attendance credit directly to your Available Balance.
+              Check in daily to claim your guaranteed <strong>$0.50 USDT</strong> attendance credit directly to your Available Balance.
             </p>
 
             {/* Streak Counter */}
@@ -107,14 +107,14 @@ export const WelfareCenterModal: React.FC<WelfareCenterModalProps> = ({
               {alreadyClaimedToday ? (
                 <>
                   <CheckCircle2 size={16} className="text-[#E5A93C]" />
-                  <span>Claimed for Today (10.00 ETB)</span>
+                  <span>Claimed for Today ($0.50 USDT)</span>
                 </>
               ) : loading ? (
                 <span>Processing...</span>
               ) : (
                 <>
                   <Sparkles size={16} />
-                  <span>Claim Today's 10.00 ETB</span>
+                  <span>Claim Today's $0.50 USDT</span>
                 </>
               )}
             </button>
@@ -142,7 +142,7 @@ export const WelfareCenterModal: React.FC<WelfareCenterModalProps> = ({
             </div>
             <ul className="list-disc pl-4 space-y-1 text-neutral-400">
               <li>1 check-in available every 24 hours per verified account.</li>
-              <li>Attendance rewards add +10.00 ETB instantly to withdrawable balance.</li>
+              <li>Attendance rewards add +$0.50 USDT instantly to withdrawable balance.</li>
               <li>All primary daily income is derived from daily Grab orders.</li>
             </ul>
           </div>

@@ -4,57 +4,68 @@ export const VIP_TIERS: VIPTier[] = [
   {
     level: 1,
     name: 'VIP 1',
-    minBalance: 2000,
-    maxBalance: 49999,
+    minBalance: 30,
+    maxBalance: 499,
     minDirectMembers: 0,
     dailyRate: 0.019, // 1.9%
-    description: 'Basic tier with steady 1.9% daily compound profit. 2,000 – 49,999 ETB.',
+    description: 'VIP 1: $30–$499 with 1.9% daily profit. 0 direct members required.',
     color: '#E5A93C',
     badge: '★ VIP 1'
   },
   {
     level: 2,
     name: 'VIP 2',
-    minBalance: 50000,
-    maxBalance: 199999,
+    minBalance: 500,
+    maxBalance: 1999,
     minDirectMembers: 3,
-    dailyRate: 0.022, // 2.2%
-    description: 'Tier 2 with 2.2% daily compound profit. 50,000 – 199,999 ETB. Requires 3 valid direct members.',
+    dailyRate: 0.025, // 2.5%
+    description: 'VIP 2: $500–$1,999 with 2.5% daily profit. 3 valid direct members required.',
     color: '#F59E0B',
     badge: '★★ VIP 2'
   },
   {
     level: 3,
     name: 'VIP 3',
-    minBalance: 200000,
-    maxBalance: 499999,
-    minDirectMembers: 10,
+    minBalance: 2000,
+    maxBalance: 4999,
+    minDirectMembers: 5,
     dailyRate: 0.03, // 3.0%
-    description: 'Tier 3 with 3.0% daily compound profit. 200,000 – 499,999 ETB. Requires 10 valid direct members.',
+    description: 'VIP 3: $2,000–$4,999 with 3% daily profit. 5 valid direct members required.',
     color: '#F97316',
     badge: '★★★ VIP 3'
   },
   {
     level: 4,
     name: 'VIP 4',
-    minBalance: 500000,
-    maxBalance: 1999999,
-    minDirectMembers: 20,
+    minBalance: 5000,
+    maxBalance: 20000,
+    minDirectMembers: 10,
     dailyRate: 0.04, // 4.0%
-    description: 'Elite Tier with 4.0% daily compound profit. 500,000 – 1,999,999 ETB. Requires 20 valid direct members.',
+    description: 'VIP 4: $5,000–$20,000 with 4% daily profit. 10 valid direct members required.',
     color: '#EF4444',
     badge: '★★★★ VIP 4'
   },
   {
     level: 5,
     name: 'VIP 5',
-    minBalance: 2000000,
-    maxBalance: 5000000,
-    minDirectMembers: 50,
+    minBalance: 20000,
+    maxBalance: 50000,
+    minDirectMembers: 20,
     dailyRate: 0.05, // 5.0%
-    description: 'Executive Tier with 5.0% daily compound profit. 2,000,000 – 5,000,000 ETB. Requires 50 valid direct members.',
+    description: 'VIP 5: $20,000–$50,000 with 5% daily profit. 20 valid direct members required.',
     color: '#DC2626',
     badge: '👑 VIP 5'
+  },
+  {
+    level: 6,
+    name: 'VIP 6',
+    minBalance: 50000,
+    maxBalance: 500000,
+    minDirectMembers: 50,
+    dailyRate: 0.06, // 6.0%
+    description: 'VIP 6: $50,000–$500,000 with 6% daily profit. 50 valid direct members required.',
+    color: '#A855F7',
+    badge: '💎 VIP 6'
   }
 ];
 
@@ -130,11 +141,11 @@ export const INITIAL_ARTISTS: Artist[] = [
 
 export const INITIAL_TICKETS: Ticket[] = [
   {
-    id: 'tkt-etb-500',
+    id: 'tkt-usd-30',
     name: 'At Home with Chloe Flower',
     artist: 'Chloe Flower',
     category: 'Music',
-    price: 500,
+    price: 30,
     voucherQty: 1,
     image: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80',
     audioPreviewUrl: 'https://cdn.freesound.org/previews/573/573539_11861866-lq.mp3',
@@ -152,11 +163,11 @@ export const INITIAL_TICKETS: Ticket[] = [
     dailyYieldEst: 1.9
   },
   {
-    id: 'tkt-etb-1000',
+    id: 'tkt-usd-50',
     name: 'Turn It To Praise Live',
     artist: 'Joseph Seph',
     category: 'Live Show',
-    price: 1000,
+    price: 50,
     voucherQty: 1,
     image: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600&auto=format&fit=crop&q=80',
     audioPreviewUrl: 'https://cdn.freesound.org/previews/612/612080_11861866-lq.mp3',
@@ -173,11 +184,11 @@ export const INITIAL_TICKETS: Ticket[] = [
     dailyYieldEst: 1.9
   },
   {
-    id: 'tkt-etb-1500',
+    id: 'tkt-usd-100',
     name: 'Mine — Special Acoustic',
     artist: 'Audrey Chu',
     category: 'Music',
-    price: 1500,
+    price: 100,
     voucherQty: 1,
     image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&auto=format&fit=crop&q=80',
     audioPreviewUrl: 'https://cdn.freesound.org/previews/573/573539_11861866-lq.mp3',
@@ -194,11 +205,11 @@ export const INITIAL_TICKETS: Ticket[] = [
     dailyYieldEst: 1.9
   },
   {
-    id: 'tkt-etb-2000',
+    id: 'tkt-usd-200',
     name: 'Born Again Stadium Tour',
     artist: 'Rihanna',
     category: 'Concert',
-    price: 2000,
+    price: 200,
     voucherQty: 2,
     image: 'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?w=600&auto=format&fit=crop&q=80',
     audioPreviewUrl: 'https://cdn.freesound.org/previews/612/612093_11861866-lq.mp3',
@@ -216,11 +227,11 @@ export const INITIAL_TICKETS: Ticket[] = [
     dailyYieldEst: 2.1
   },
   {
-    id: 'tkt-etb-2500',
+    id: 'tkt-usd-500',
     name: 'LOST MY DOG Live Tour',
     artist: 'Quavo & Takeoff Tribute',
     category: 'Concert',
-    price: 2500,
+    price: 500,
     voucherQty: 2,
     image: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=600&auto=format&fit=crop&q=80',
     audioPreviewUrl: 'https://cdn.freesound.org/previews/612/612080_11861866-lq.mp3',
@@ -237,11 +248,11 @@ export const INITIAL_TICKETS: Ticket[] = [
     dailyYieldEst: 2.2
   },
   {
-    id: 'tkt-etb-3000',
+    id: 'tkt-usd-1000',
     name: 'Welcome to Walkerworld',
     artist: 'Alan Walker',
     category: 'Festival',
-    price: 3000,
+    price: 1000,
     voucherQty: 3,
     image: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600&auto=format&fit=crop&q=80',
     audioPreviewUrl: 'https://cdn.freesound.org/previews/612/612093_11861866-lq.mp3',
@@ -259,11 +270,11 @@ export const INITIAL_TICKETS: Ticket[] = [
     dailyYieldEst: 2.5
   },
   {
-    id: 'tkt-etb-5000',
+    id: 'tkt-usd-2000',
     name: 'After Hours Til Dawn Stadium Show',
     artist: 'The Weeknd',
     category: 'Premium Concert',
-    price: 5000,
+    price: 2000,
     voucherQty: 4,
     image: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=600&auto=format&fit=crop&q=80',
     audioPreviewUrl: 'https://cdn.freesound.org/previews/573/573539_11861866-lq.mp3',
@@ -281,11 +292,11 @@ export const INITIAL_TICKETS: Ticket[] = [
     dailyYieldEst: 3.0
   },
   {
-    id: 'tkt-etb-8000',
+    id: 'tkt-usd-5000',
     name: 'Silk Sonic Las Vegas Residency',
     artist: 'Bruno Mars',
     category: 'VIP Event',
-    price: 8000,
+    price: 5000,
     voucherQty: 5,
     image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&auto=format&fit=crop&q=80',
     audioPreviewUrl: 'https://cdn.freesound.org/previews/612/612080_11861866-lq.mp3',
@@ -303,7 +314,7 @@ export const INITIAL_TICKETS: Ticket[] = [
     dailyYieldEst: 4.0
   },
   {
-    id: 'tkt-etb-10000',
+    id: 'tkt-usd-10000',
     name: 'Royal Diamond Stadium Gala',
     artist: 'Ariana Grande',
     category: 'International Event',
@@ -329,9 +340,9 @@ export const INITIAL_TICKETS: Ticket[] = [
 export const INITIAL_TASKS: TaskItem[] = [
   {
     id: 'task-invite-5',
-    title: 'Invite 5 valid A-level direct members',
-    description: 'Invite 5 valid A-level direct members to claim 3,000 ETB reward',
-    rewardAmount: 3000.0,
+    title: 'Invite 5 valid members',
+    description: 'Invite 5 valid members (≥$30 USDT) to claim $15.00 USDT reward',
+    rewardAmount: 15.0,
     rewardType: 'balance',
     progress: 0,
     maxProgress: 5,
@@ -341,10 +352,10 @@ export const INITIAL_TASKS: TaskItem[] = [
     category: 'growth'
   },
   {
-    id: 'task-activate-10',
-    title: 'Activate 10 valid A-level direct members',
-    description: 'Activate 10 valid A-level direct members to claim 6,000 ETB reward',
-    rewardAmount: 6000.0,
+    id: 'task-invite-10',
+    title: 'Invite 10 valid members',
+    description: 'Invite 10 valid members (≥$30 USDT) to claim $50.00 USDT reward',
+    rewardAmount: 50.0,
     rewardType: 'balance',
     progress: 0,
     maxProgress: 10,
@@ -354,10 +365,10 @@ export const INITIAL_TASKS: TaskItem[] = [
     category: 'growth'
   },
   {
-    id: 'task-activate-20',
-    title: 'Activate 20 valid A-level direct members',
-    description: 'Activate 20 valid A-level direct members to claim 20,000 ETB reward',
-    rewardAmount: 20000.0,
+    id: 'task-invite-20',
+    title: 'Invite 20 valid members',
+    description: 'Invite 20 valid members (≥$30 USDT) to claim $120.00 USDT reward',
+    rewardAmount: 120.0,
     rewardType: 'balance',
     progress: 0,
     maxProgress: 20,
@@ -367,13 +378,26 @@ export const INITIAL_TASKS: TaskItem[] = [
     category: 'growth'
   },
   {
-    id: 'task-activate-50',
-    title: 'Activate 50 valid direct members',
-    description: 'Activate 50 valid direct members to claim 100,000 ETB reward',
-    rewardAmount: 100000.0,
+    id: 'task-invite-50',
+    title: 'Invite 50 valid members',
+    description: 'Invite 50 valid members (≥$30 USDT) to claim $300.00 USDT reward',
+    rewardAmount: 300.0,
     rewardType: 'balance',
     progress: 0,
     maxProgress: 50,
+    isCompleted: false,
+    isClaimed: false,
+    icon: 'Users',
+    category: 'growth'
+  },
+  {
+    id: 'task-invite-100',
+    title: 'Invite 100 valid members',
+    description: 'Invite 100 valid members (≥$30 USDT) to claim $1,000.00 USDT reward',
+    rewardAmount: 1000.0,
+    rewardType: 'balance',
+    progress: 0,
+    maxProgress: 100,
     isCompleted: false,
     isClaimed: false,
     icon: 'Users',
@@ -384,22 +408,22 @@ export const INITIAL_TASKS: TaskItem[] = [
 export const INITIAL_NOTICES: PlatformNotice[] = [
   {
     id: 'n-1',
-    title: 'Commercial Bank of Ethiopia (CBE) Official Recharge Channel Active',
-    content: 'Members can recharge their accounts directly in Ethiopian Birr (ETB) via CBE Bank Transfer. Minimum recharge is 2,000 ETB. Fast admin verification upon slip submission.',
+    title: 'Official USDT TRC20 and BEP20 Payment Channels Active',
+    content: 'Members can recharge and withdraw securely using USDT on Tron (TRC20) and BNB Smart Chain (BEP20). Fast on-chain transaction verification and manual Admin safety checks.',
     date: '2026-08-28',
     type: 'reward'
   },
   {
     id: 'n-2',
-    title: 'Tier VIP Commission Chart: Level 1 (16%), Level 2 (8%), Level 3 (4%) in ETB.',
-    content: 'Invite your friends to join HBO JAMBASE MUSIC and earn generous daily multi-tier subordinate income dividends in ETB in real time.',
+    title: 'USD VIP Structure & Daily Multi-Tier Commissions Active',
+    content: 'VIP 1 ($30–$499 @ 1.9%) up to VIP 6 ($50,000–$500,000 @ 6.0%). Earn 16% (Level 1), 8% (Level 2), and 4% (Level 3) subordinate dividends in USDT in real time.',
     date: '2026-08-27',
     type: 'upgrade'
   },
   {
     id: 'n-3',
-    title: 'System Notice: Daily income engine executes at 00:00 UTC with compound profit.',
-    content: 'Minimum balance required for daily yield is 500 ETB. Ensure your available + frozen asset balance remains above 500 ETB to maintain uninterrupted daily income.',
+    title: 'System Notice: 24-Hour Daily Income Engine Executes at 00:00 UTC',
+    content: 'Minimum balance required for daily yield is $30.00 USDT (VIP 1). Ensure your available balance remains above $30.00 USDT to maintain uninterrupted daily income.',
     date: '2026-08-26',
     type: 'system'
   }

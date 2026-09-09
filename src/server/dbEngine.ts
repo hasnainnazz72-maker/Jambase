@@ -121,14 +121,12 @@ const getInitialSeedDatabase = (): PlatformDatabaseSchema => {
     phone: '+1 (555) 892-4410',
     walletAddress: '0xbd63907b714a667f5052c432cdc4ad3dc0d73658',
     network: 'BEP20',
-    etbBalance: 2500.0,
-    etbFrozenBalance: 0.0,
     usdBalance: 50.0,
     usdFrozenBalance: 0.0,
-    activeCurrency: 'ETB',
-    balance: 2500.0,
+    activeCurrency: 'USD',
+    balance: 50.0,
     frozenBalance: 0.0,
-    totalAssets: 2500.0,
+    totalAssets: 50.0,
     vipLevel: 1,
     referralCode: 'JAM888',
     validDirectMembersCount: 3,
@@ -328,10 +326,10 @@ const getInitialSeedDatabase = (): PlatformDatabaseSchema => {
       userId: PRIMARY_USER_ID,
       type: 'ticket_purchase',
       category: 'ticket_purchase',
-      amount: 1500,
+      amount: 90,
       status: 'completed',
       title: 'Purchased 3x At Home with Chloe Flower',
-      description: 'Order #tkt-1 executed at 500 ETB each',
+      description: 'Order #tkt-1 executed at $30.00 USDT each',
       createdAt: new Date(Date.now() - 3 * 86400000).toISOString()
     },
     {
@@ -339,12 +337,12 @@ const getInitialSeedDatabase = (): PlatformDatabaseSchema => {
       userId: PRIMARY_USER_ID,
       type: 'vip_profit',
       category: 'vip_profit',
-      amount: 137.5,
+      amount: 1.25,
       vipLevel: 2,
       appliedRate: 0.025,
       status: 'completed',
       title: 'VIP 2 Profit Yield: At Home with Chloe Flower',
-      description: '+137.50 ETB VIP 2 yield (2.50%) credited to Available Balance',
+      description: '+$1.25 USDT VIP 2 yield (2.50%) credited to Available Balance',
       createdAt: new Date(Date.now() - 24 * 3600000).toISOString()
     },
     {
@@ -352,13 +350,13 @@ const getInitialSeedDatabase = (): PlatformDatabaseSchema => {
       userId: PRIMARY_USER_ID,
       type: 'team_commission',
       category: 'team_commission',
-      amount: 320.00,
+      amount: 32.00,
       commissionTier: 1,
       appliedRate: 0.16,
       sourceMemberName: 'CryptoBeats_Alex',
       status: 'completed',
       title: 'Team Commission: Tier 1 (Direct A - 16%)',
-      description: '+320.00 ETB commission from CryptoBeats_Alex',
+      description: '+$32.00 USDT commission from CryptoBeats_Alex',
       createdAt: new Date(Date.now() - 36 * 3600000).toISOString()
     }
   ];
@@ -368,17 +366,14 @@ const getInitialSeedDatabase = (): PlatformDatabaseSchema => {
       id: 'WD-8819',
       userId: PRIMARY_USER_ID,
       username: 'VIP_StarMusician',
-      amount: 2000.0,
-      fee: 100.0,
-      netAmount: 1900.0,
-      bankName: 'Commercial Bank of Ethiopia',
-      accountHolder: 'Riyad Adem',
-      accountNumber: '1000707299577',
-      walletAddress: '1000707299577',
-      network: 'CBE',
+      amount: 50.0,
+      fee: 3.5,
+      netAmount: 46.5,
+      walletAddress: '0xbd63907b714a667f5052c432cdc4ad3dc0d73658',
+      network: 'BEP20',
       status: 'Pending',
       createdAt: new Date(Date.now() - 4 * 3600000).toISOString(),
-      txId: 'WD-8819-ETB'
+      txId: 'WD-8819-USDT'
     }
   ];
 
@@ -387,12 +382,10 @@ const getInitialSeedDatabase = (): PlatformDatabaseSchema => {
       id: 'DEP-401',
       userId: PRIMARY_USER_ID,
       username: 'VIP_StarMusician',
-      amount: 5000.0,
-      network: 'CBE',
-      bankName: 'Commercial Bank of Ethiopia',
-      referenceNumber: 'CBE-DEP-40192',
-      walletAddress: '1000707299577',
-      txHash: 'CBE-DEP-40192',
+      amount: 100.0,
+      network: 'BEP20',
+      walletAddress: '0xbd63907b714a667f5052c432cdc4ad3dc0d73658',
+      txHash: '0x9a8f273b182046ca94c14838f714a667f5052c432cdc4ad3dc0d73658',
       status: 'Completed',
       createdAt: new Date(Date.now() - 20 * 86400000).toISOString()
     }
@@ -772,9 +765,9 @@ class DatabaseManager {
             needsSave = true;
           }
 
-          // Ensure default tickets in ETB (migrating if older USD tickets exist)
-          if (!parsed.tickets || parsed.tickets.length === 0 || parsed.tickets.some(t => t.price < 500 || !t.id.startsWith('tkt-etb'))) {
-            console.log('[VIP Migration] Migrating platform tickets to ETB-only catalog (500 to 10,000 ETB)...');
+          // Ensure default tickets in USD (migrating if older ETB tickets exist)
+          if (!parsed.tickets || parsed.tickets.length === 0 || parsed.tickets.some(t => t.id.startsWith('tkt-etb'))) {
+            console.log('[VIP Migration] Migrating platform tickets to USD/USDT catalog ($30 to $10,000 USDT)...');
             parsed.tickets = [...INITIAL_TICKETS];
             needsSave = true;
           }
@@ -786,48 +779,42 @@ class DatabaseManager {
             parsed.artists = [...INITIAL_ARTISTS];
             needsSave = true;
           }
-          if (!parsed.notices || parsed.notices.length === 0 || parsed.notices.some(n => n.content.includes('$') || n.title.includes('$'))) {
+          if (!parsed.notices || parsed.notices.length === 0 || parsed.notices.some(n => n.content.includes('ETB') || n.title.includes('ETB') || n.title.includes('CBE'))) {
             parsed.notices = [...INITIAL_NOTICES];
             needsSave = true;
           }
 
-          // Ensure strict currency and wallet separation across all accounts
+          // Ensure strict currency and wallet separation across all accounts without EVER resetting or modifying existing balances
           if (parsed.users) {
             for (const u of Object.values(parsed.users)) {
-              if (u.etbBalance === undefined || u.etbBalance === null) {
-                // Initialize separate ETB balance: preserve existing balance if any, or default to 2500 for primary user
-                u.etbBalance = u.id === PRIMARY_USER_ID ? Math.max(2500, typeof u.balance === 'number' ? u.balance : 2500) : (typeof u.balance === 'number' ? u.balance : 2000.0);
+              // Protected LIVE Financial Data: If already a valid number, preserve exactly!
+              if (typeof u.usdBalance !== 'number' || isNaN(u.usdBalance) || (u.usdBalance === 0 && typeof u.balance === 'number' && u.balance > 0)) {
+                u.usdBalance = typeof u.balance === 'number' && !isNaN(u.balance) && u.balance > 0 ? u.balance : (u.id === PRIMARY_USER_ID ? 50.0 : 0.0);
                 needsSave = true;
               }
-              if (u.etbFrozenBalance === undefined || u.etbFrozenBalance === null) {
-                u.etbFrozenBalance = typeof u.frozenBalance === 'number' ? u.frozenBalance : 0.0;
-                needsSave = true;
-              }
-              if (u.usdBalance === undefined || u.usdBalance === null) {
-                // Initialize separate USD balance: never merged or converted
-                u.usdBalance = u.id === PRIMARY_USER_ID ? 50.0 : 0.0;
-                needsSave = true;
-              }
-              if (u.usdFrozenBalance === undefined || u.usdFrozenBalance === null) {
+              if (typeof u.usdFrozenBalance !== 'number' || isNaN(u.usdFrozenBalance)) {
                 u.usdFrozenBalance = 0.0;
                 needsSave = true;
               }
-              if (!u.activeCurrency) {
-                u.activeCurrency = 'ETB';
+              if (u.activeCurrency !== 'USD') {
+                u.activeCurrency = 'USD';
                 needsSave = true;
               }
-              if (u.incomePauseReason && (u.incomePauseReason.includes('$30') || u.incomePauseReason.includes('500 ETB'))) {
-                u.incomePauseReason = u.activeCurrency === 'USD'
-                  ? 'Minimum $10.00 USDT Balance Required to Work and Earn VIP Yield'
-                  : 'Minimum 2,000 ETB Account Balance Required to Work and Earn VIP Yield';
+              u.balance = u.usdBalance;
+              u.frozenBalance = u.usdFrozenBalance || 0;
+              u.totalAssets = Number((u.balance + u.frozenBalance).toFixed(2));
+
+              if (u.incomePauseReason && (u.incomePauseReason.includes('ETB') || u.incomePauseReason.includes('$10'))) {
+                u.incomePauseReason = u.balance < 30 ? 'Minimum $30.00 Account Balance Required to Work and Earn VIP Yield' : undefined;
+                u.isIncomePaused = u.balance < 30;
                 needsSave = true;
               }
             }
           }
           if (parsed.referrals) {
             for (const r of parsed.referrals) {
-              if (r.disqualifiedReason && r.disqualifiedReason.includes('$30')) {
-                r.disqualifiedReason = 'Minimum 2,000 ETB deposit/investment required to qualify as valid member.';
+              if (r.disqualifiedReason && r.disqualifiedReason.includes('ETB')) {
+                r.disqualifiedReason = 'Minimum $30.00 USDT deposit/investment required to qualify as valid member.';
                 needsSave = true;
               }
             }

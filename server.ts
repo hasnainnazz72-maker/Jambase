@@ -22,6 +22,11 @@ import {
   TaskItem,
   ReferralMember
 } from './src/types';
+import {
+  createPreDeploymentSnapshot,
+  verifyPostDeployment,
+  getVerificationStatus
+} from './src/server/deployGuard';
 
 const app = express();
 const PORT = 3000;
@@ -107,24 +112,9 @@ function persistDb(reason?: string, triggerBackup: boolean = false) {
   dbManager.save(reason, triggerBackup);
 }
 
-export const CBE_BANK_DETAILS = {
-  bankName: 'Commercial Bank of Ethiopia (CBE)',
-  accountHolder: 'Riyad Adem',
-  accountNumber: '1000707299577',
-  minDeposit: 2000,
-  minWithdrawal: 500
-};
-
 export const PLATFORM_WALLETS = {
   BEP20: '0xbd63907b714a667f5052c432cdc4ad3dc0d73658',
   TRC20: 'TETttTRj6ZX5gAm79RgDgDm6WHeMrnDjdy',
-  CBE: {
-    bankName: 'Commercial Bank of Ethiopia (CBE)',
-    accountHolder: 'Riyad Adem',
-    accountNumber: '1000707299577',
-    minDeposit: 2000,
-    minWithdrawal: 500
-  },
   USDT: {
     minDeposit: 10,
     minWithdrawal: 10,
@@ -145,7 +135,8 @@ function creditTeamCommission(
   sourceMemberName: string,
   tierLevel: 1 | 2 | 3,
   baseYieldAmount: number,
-  notes?: string
+  notes?: string,
+  currency: 'USD' | 'ETB' = 'USD'
 ) {
   const user = users[userId];
   if (!user) return null;
@@ -158,18 +149,28 @@ function creditTeamCommission(
   if (commissionAmount <= 0) return null;
 
   const randomSuffix = crypto.randomBytes(3).toString('hex').toUpperCase();
-  const txId = `TXN-COMM-${Date.now()}-${randomSuffix}`;
-  const incId = `INC-COMM-${Date.now()}-${randomSuffix}`;
-  const prevBalance = user.balance;
+  const txId = `TXN-COMM-${currency}-${Date.now()}-${randomSuffix}`;
+  const incId = `INC-COMM-${currency}-${Date.now()}-${randomSuffix}`;
+  const isUsd = currency === 'USD';
+  const prevBalance = isUsd ? (user.usdBalance || 0) : (user.etbBalance || 0);
 
-  // Strictly Additive Balance & Cumulative Commission Updates
-  user.balance = Number((user.balance + commissionAmount).toFixed(2));
+  // Strictly Additive Balance & Cumulative Commission Updates in respective wallet
+  if (isUsd) {
+    user.usdBalance = Number(((user.usdBalance || 0) + commissionAmount).toFixed(2));
+    if (user.activeCurrency === 'USD') user.balance = user.usdBalance;
+  } else {
+    user.etbBalance = Number(((user.etbBalance || 0) + commissionAmount).toFixed(2));
+    if (user.activeCurrency === 'ETB') user.balance = user.etbBalance;
+  }
+  const newWorkingBalance = isUsd ? user.usdBalance : user.etbBalance;
+
   user.totalTeamCommission = Number(((user.totalTeamCommission || 0) + commissionAmount).toFixed(2));
   user.todayTeamCommission = Number(((user.todayTeamCommission || 0) + commissionAmount).toFixed(2));
   user.totalEarnedIncome = Number(((user.totalEarnedIncome || 0) + commissionAmount).toFixed(2));
   user.totalAssets = Number((user.balance + user.frozenBalance).toFixed(2));
 
   const tierLabel = tierLevel === 1 ? 'Tier 1 (Direct A - 16%)' : tierLevel === 2 ? 'Tier 2 (Sub-tier B - 8%)' : 'Tier 3 (Sub-tier C - 4%)';
+  const unitLabel = isUsd ? 'USDT' : 'ETB';
 
   // 1. Separate Income Record for Team Commission Ledger
   const incRecord: IncomeRecord = {
@@ -179,16 +180,17 @@ function creditTeamCommission(
     categoryType: 'team_commission',
     previousBalance: prevBalance,
     incomeAmount: commissionAmount,
+    currency,
     vipLevel: user.vipLevel,
     dailyRate: commissionRate,
-    newBalance: user.balance,
+    newBalance: newWorkingBalance,
     timestamp: new Date().toISOString(),
     status: 'credited',
     transactionId: txId,
     commissionTier: tierLevel,
     sourceMemberName,
     sourceMemberId,
-    notes: notes || `Earned +${commissionAmount.toFixed(2)} ETB commission (${(commissionRate * 100).toFixed(0)}%) from ${sourceMemberName}'s activity.`
+    notes: notes || `Earned +${commissionAmount.toFixed(2)} ${unitLabel} commission (${(commissionRate * 100).toFixed(0)}%) from ${sourceMemberName}'s activity.`
   };
   incomeRecords.unshift(incRecord);
 
@@ -199,9 +201,12 @@ function creditTeamCommission(
     type: 'team_commission',
     category: 'team_commission',
     amount: commissionAmount,
+    currency,
+    previousBalance: prevBalance,
+    newBalance: newWorkingBalance,
     status: 'completed',
-    title: `Team Commission: ${tierLabel}`,
-    description: `+${commissionAmount.toFixed(2)} ETB commission from ${sourceMemberName} (Rate: ${(commissionRate * 100).toFixed(0)}%)`,
+    title: `Team Commission: ${tierLabel} (${unitLabel})`,
+    description: `+${commissionAmount.toFixed(2)} ${unitLabel} commission from ${sourceMemberName} (Rate: ${(commissionRate * 100).toFixed(0)}%)`,
     commissionTier: tierLevel,
     appliedRate: commissionRate,
     sourceMemberName,
@@ -209,7 +214,7 @@ function creditTeamCommission(
   };
   transactions.unshift(txRecord);
 
-  persistDb(`Team Commission Credited: +${commissionAmount.toFixed(2)} ETB from ${sourceMemberName}`);
+  persistDb(`Team Commission Credited: +${commissionAmount.toFixed(2)} ${unitLabel} from ${sourceMemberName}`);
   return { commissionAmount, txId, incId, incRecord, txRecord };
 }
 
@@ -223,7 +228,7 @@ function creditTeamCommission(
  * 2. NO commissions calculated from deposits/recharges.
  * 3. NO automatic first-deposit rewards to member or inviter.
  */
-function distributeTicketProfitTeamCommissions(sourceUserId: string, ticketProfit: number, ticketName?: string) {
+function distributeTicketProfitTeamCommissions(sourceUserId: string, ticketProfit: number, ticketName?: string, currency: 'USD' | 'ETB' = 'USD') {
   if (!ticketProfit || ticketProfit <= 0) return;
   const sourceUser = users[sourceUserId];
   if (!sourceUser) return;
@@ -237,7 +242,8 @@ function distributeTicketProfitTeamCommissions(sourceUserId: string, ticketProfi
       sourceUser.username,
       1,
       ticketProfit,
-      `A-Level 16% Team Commission from ${sourceUser.username}'s ticket profit (${ticketName || 'Daily Ticket Yield'})`
+      `A-Level 16% Team Commission from ${sourceUser.username}'s ticket profit (${ticketName || 'Daily Ticket Yield'})`,
+      currency
     );
 
     // Level B (Tier 2 inviter - 8%)
@@ -250,7 +256,8 @@ function distributeTicketProfitTeamCommissions(sourceUserId: string, ticketProfi
         sourceUser.username,
         2,
         ticketProfit,
-        `B-Level 8% Team Commission from ${sourceUser.username}'s ticket profit (${ticketName || 'Daily Ticket Yield'})`
+        `B-Level 8% Team Commission from ${sourceUser.username}'s ticket profit (${ticketName || 'Daily Ticket Yield'})`,
+        currency
       );
 
       // Level C (Tier 3 inviter - 4%)
@@ -263,7 +270,8 @@ function distributeTicketProfitTeamCommissions(sourceUserId: string, ticketProfi
           sourceUser.username,
           3,
           ticketProfit,
-          `C-Level 4% Team Commission from ${sourceUser.username}'s ticket profit (${ticketName || 'Daily Ticket Yield'})`
+          `C-Level 4% Team Commission from ${sourceUser.username}'s ticket profit (${ticketName || 'Daily Ticket Yield'})`,
+          currency
         );
       }
     }
@@ -378,7 +386,7 @@ function getReferralsForUser(user: User): ReferralMember[] {
       if (matchUser) {
         r.balance = matchUser.balance || 0;
         r.totalDeposit = (matchUser as any).totalDeposit !== undefined ? (matchUser as any).totalDeposit : r.totalDeposit;
-        if (r.balance >= 2000 || r.totalDeposit >= 2000) {
+        if (r.balance >= 30 || r.totalDeposit >= 30) {
           r.isValid = true;
           r.disqualifiedReason = undefined;
         }
@@ -395,7 +403,7 @@ function getReferralsForUser(user: User): ReferralMember[] {
       (user.referralCode && regUser.referredBy && regUser.referredBy.trim().toUpperCase() === user.referralCode.trim().toUpperCase());
 
     if (isDirect && !seenUsernames.has(regUser.username.toLowerCase())) {
-      const isQual = (regUser.balance >= 2000 || ((regUser as any).totalDeposit || 0) >= 2000);
+      const isQual = ((regUser.balance || 0) >= 30 || ((regUser as any).totalDeposit || 0) >= 30);
       const newRef: ReferralMember = {
         id: `ref-${regUser.id}`,
         userId: user.id,
@@ -408,7 +416,7 @@ function getReferralsForUser(user: User): ReferralMember[] {
         totalPurchases: (regUser as any).recordExpenditure || 0,
         balance: regUser.balance || 0,
         isValid: isQual,
-        disqualifiedReason: isQual ? undefined : 'Pending initial recharge of 2,000 ETB+',
+        disqualifiedReason: isQual ? undefined : 'Pending initial recharge of $30.00 USDT+',
         level: 1
       };
       referrals.push(newRef);
@@ -422,12 +430,12 @@ function getReferralsForUser(user: User): ReferralMember[] {
 
 /**
  * Recalculate user's VIP level, valid direct members count, daily ticket balance cycle, and income pause state
- * VIP 1: 500–4,999.99 ETB, 0 direct members, 1.9%
- * VIP 2: 5,000–19,999.99 ETB, min 3 direct members, 2.5%
- * VIP 3: 20,000–49,999.99 ETB, min 5 direct members, 3.0%
- * VIP 4: 50,000–99,999.99 ETB, min 10 direct members, 4.0%
- * VIP 5: 100,000–299,999.99 ETB, min 20 direct members, 5.0%
- * VIP 6: 300,000–1,000,000 ETB, min 50 direct members, 6.0%
+ * VIP 1: $30–$499 — 1.9% daily profit
+ * VIP 2: $500–$1,999 — 2.5% daily profit — 3 valid direct members required
+ * VIP 3: $2,000–$4,999 — 3.0% daily profit — 5 valid direct members required
+ * VIP 4: $5,000–$20,000 — 4.0% daily profit — 10 valid direct members required
+ * VIP 5: $20,000–$50,000 — 5.0% daily profit — 20 valid direct members required
+ * VIP 6: $50,000–$500,000 — 6.0% daily profit — 50 valid direct members required
  * 
  * NOTE: User balance, accumulated VIP profits, accumulated team commission, income records,
  * and transaction history are NEVER overwritten or reset!
@@ -438,27 +446,18 @@ function recalculateUserState(userId: string = PRIMARY_USER_ID) {
   const user = users[userId];
   if (!user) return null;
 
-  // 1. Ensure separate ETB and USD wallet fields exist and are never merged
-  if (user.etbBalance === undefined || user.etbBalance === null) {
-    user.etbBalance = user.id === PRIMARY_USER_ID ? Math.max(2500, typeof user.balance === 'number' ? user.balance : 2500) : (typeof user.balance === 'number' ? user.balance : 2000.0);
+  // 1. Ensure USD wallet fields exist and are never merged or reset
+  if (typeof user.usdBalance !== 'number' || isNaN(user.usdBalance) || (user.usdBalance === 0 && typeof user.balance === 'number' && user.balance > 0)) {
+    user.usdBalance = typeof user.balance === 'number' && !isNaN(user.balance) && user.balance > 0 ? user.balance : (user.id === PRIMARY_USER_ID ? 50.0 : 0.0);
   }
-  if (user.etbFrozenBalance === undefined || user.etbFrozenBalance === null) {
-    user.etbFrozenBalance = typeof user.frozenBalance === 'number' ? user.frozenBalance : 0.0;
-  }
-  if (user.usdBalance === undefined || user.usdBalance === null) {
-    user.usdBalance = user.id === PRIMARY_USER_ID ? 50.0 : 0.0;
-  }
-  if (user.usdFrozenBalance === undefined || user.usdFrozenBalance === null) {
+  if (typeof user.usdFrozenBalance !== 'number' || isNaN(user.usdFrozenBalance)) {
     user.usdFrozenBalance = 0.0;
   }
-  if (!user.activeCurrency) {
-    user.activeCurrency = 'ETB';
-  }
+  user.activeCurrency = 'USD';
 
-  // Synchronize top-level balance/frozenBalance/totalAssets based strictly on activeCurrency
-  const isUsd = user.activeCurrency === 'USD';
-  user.balance = isUsd ? user.usdBalance : user.etbBalance;
-  user.frozenBalance = isUsd ? user.usdFrozenBalance : user.etbFrozenBalance;
+  // Synchronize top-level balance/frozenBalance/totalAssets
+  user.balance = user.usdBalance;
+  user.frozenBalance = user.usdFrozenBalance;
   user.totalAssets = Number((user.balance + user.frozenBalance).toFixed(2));
 
   // Initialize separated ledger cumulative metrics safely if not yet set
@@ -466,14 +465,14 @@ function recalculateUserState(userId: string = PRIMARY_USER_ID) {
     const vipSum = incomeRecords
       .filter(r => r.userId === user.id && (r.categoryType === 'vip_profit' || r.categoryType === 'ticket'))
       .reduce((sum, r) => sum + (r.incomeAmount || 0), 0);
-    user.totalVipProfit = Number(vipSum.toFixed(2)) || (user.id === PRIMARY_USER_ID ? 54.50 : 0.0);
+    user.totalVipProfit = Number(vipSum.toFixed(2)) || (user.id === PRIMARY_USER_ID ? 1.25 : 0.0);
   }
 
   if (user.totalTeamCommission === undefined || user.totalTeamCommission === null) {
     const commSum = incomeRecords
       .filter(r => r.userId === user.id && r.categoryType === 'team_commission')
       .reduce((sum, r) => sum + (r.incomeAmount || 0), 0);
-    user.totalTeamCommission = Number(commSum.toFixed(2)) || (user.id === PRIMARY_USER_ID ? 30.00 : 0.0);
+    user.totalTeamCommission = Number(commSum.toFixed(2)) || (user.id === PRIMARY_USER_ID ? 32.00 : 0.0);
   }
 
   if (user.todayVipProfit === undefined || user.todayVipProfit === null) {
@@ -508,39 +507,26 @@ function recalculateUserState(userId: string = PRIMARY_USER_ID) {
 
   // Calculate valid direct members and total team metrics from real referral relationships
   const userReferrals = getReferralsForUser(user);
-  const validDirectMembers = userReferrals.filter(r => (r.userId === user.id || (!r.userId && user.id === PRIMARY_USER_ID)) && r.level === 1 && r.isValid && (r.totalDeposit >= 2000 || r.balance >= 2000)).length;
+  const validDirectMembers = userReferrals.filter(r => (r.userId === user.id || (!r.userId && user.id === PRIMARY_USER_ID)) && r.level === 1 && r.isValid && ((r.totalDeposit || 0) >= 30 || (r.balance || 0) >= 30)).length;
   user.validDirectMembersCount = validDirectMembers;
   user.totalTeamMembersCount = userReferrals.length;
   user.totalTeamDeposit = userReferrals.reduce((sum, r) => sum + (r.totalDeposit || 0), 0);
 
-  // Determine VIP level based on active wallet funds and valid direct members
+  // Determine VIP level based on qualifying USD funds and valid direct members
+  const qualifyingFunds = (user.usdBalance || user.balance || 0) + (user.usdFrozenBalance || user.frozenBalance || 0);
   let computedVIP = 1;
-  if (isUsd) {
-    const usdFunds = user.usdBalance + (user.usdFrozenBalance || 0);
-    if (usdFunds >= 10000 && validDirectMembers >= 50) {
-      computedVIP = 5;
-    } else if (usdFunds >= 2500 && validDirectMembers >= 20) {
-      computedVIP = 4;
-    } else if (usdFunds >= 1000 && validDirectMembers >= 10) {
-      computedVIP = 3;
-    } else if (usdFunds >= 250 && validDirectMembers >= 3) {
-      computedVIP = 2;
-    } else {
-      computedVIP = 1;
-    }
+  if (qualifyingFunds >= 50000 && validDirectMembers >= 50) {
+    computedVIP = 6;
+  } else if (qualifyingFunds >= 20000 && validDirectMembers >= 20) {
+    computedVIP = 5;
+  } else if (qualifyingFunds >= 5000 && validDirectMembers >= 10) {
+    computedVIP = 4;
+  } else if (qualifyingFunds >= 2000 && validDirectMembers >= 5) {
+    computedVIP = 3;
+  } else if (qualifyingFunds >= 500 && validDirectMembers >= 3) {
+    computedVIP = 2;
   } else {
-    const etbFunds = user.etbBalance + (user.etbFrozenBalance || 0);
-    if (etbFunds >= 2000000 && validDirectMembers >= 50) {
-      computedVIP = 5;
-    } else if (etbFunds >= 500000 && validDirectMembers >= 20) {
-      computedVIP = 4;
-    } else if (etbFunds >= 200000 && validDirectMembers >= 10) {
-      computedVIP = 3;
-    } else if (etbFunds >= 50000 && validDirectMembers >= 3) {
-      computedVIP = 2;
-    } else {
-      computedVIP = 1;
-    }
+    computedVIP = 1;
   }
 
   // If user has customVipOverride set by Admin, honor it (or take higher of computed or override)
@@ -551,25 +537,13 @@ function recalculateUserState(userId: string = PRIMARY_USER_ID) {
   }
 
   // MINIMUM BALANCE REQUIREMENT FOR WORK / GRAB:
-  // USD users: minimum balance required to use Grab/Work = $10 USDT.
-  // ETB users: minimum balance required to use Grab/Work = 2,000 ETB.
-  // If the member has less than the required minimum balance in their respective wallet, Grab/Work must be disabled.
-  if (isUsd) {
-    if (user.usdBalance < 10) {
-      user.isIncomePaused = true;
-      user.incomePauseReason = 'Minimum $10.00 USDT Balance Required to Work and Earn VIP Yield';
-    } else {
-      user.isIncomePaused = false;
-      user.incomePauseReason = undefined;
-    }
+  // USD users: minimum balance required to use Grab/Work = $30 USDT (VIP 1 minimum).
+  if (user.balance < 30) {
+    user.isIncomePaused = true;
+    user.incomePauseReason = 'Minimum $30.00 USDT Balance Required to Work and Earn VIP Yield';
   } else {
-    if (user.etbBalance < 2000) {
-      user.isIncomePaused = true;
-      user.incomePauseReason = 'Minimum 2,000 ETB Balance Required to Work and Earn VIP Yield';
-    } else {
-      user.isIncomePaused = false;
-      user.incomePauseReason = undefined;
-    }
+    user.isIncomePaused = false;
+    user.incomePauseReason = undefined;
   }
 
   return user;
@@ -674,69 +648,48 @@ const handleDailyProfitClaim = (req: express.Request, res: express.Response) => 
   const user = recalculateUserState(targetId);
   if (!user) return res.status(404).json({ error: 'User not found' });
 
-  const currency: 'ETB' | 'USD' = (req.body && (req.body.currency === 'USD' || req.body.currency === 'ETB'))
-    ? req.body.currency
-    : (user.activeCurrency || 'ETB');
-
-  const isUsd = currency === 'USD';
+  const currency = 'USD';
   const todayUtc = new Date().toISOString().slice(0, 10);
 
-  // Check 24-hr UTC cycle for selected currency
-  const alreadyClaimed = isUsd
-    ? (user.lastProfitClaimDate_USD === todayUtc)
-    : (user.lastProfitClaimDate_ETB === todayUtc || (user.lastProfitClaimDate === todayUtc && user.activeCurrency === 'ETB'));
+  // Check 24-hr UTC cycle
+  const alreadyClaimed = user.lastProfitClaimDate_USD === todayUtc || user.lastProfitClaimDate === todayUtc;
 
   if (alreadyClaimed) {
     return res.status(400).json({
-      error: `Daily income can be earned only once a day. You have already claimed your ${currency} Grab income for UTC ${todayUtc}. Next daily Grab unlocks at 00:00 UTC.`
+      error: `Daily income can be earned only once a day. You have already claimed your Grab income for UTC ${todayUtc}. Next daily Grab unlocks at 00:00 UTC.`
     });
   }
 
-  // Minimum balance verification:
-  // USD users: minimum balance required to use Grab/Work = $10 USDT.
-  // ETB users: minimum balance required to use Grab/Work = 2,000 ETB.
-  if (isUsd) {
-    if (user.usdBalance < 10) {
-      return res.status(400).json({
-        error: `Minimum $10.00 USDT Available Balance is required to use Grab/Work. Your current USD balance is $${user.usdBalance.toFixed(2)} USDT. Grab is disabled.`
-      });
-    }
-  } else {
-    if (user.etbBalance < 2000) {
-      return res.status(400).json({
-        error: `Minimum 2,000 ETB Available Balance is required to use Grab/Work. Your current ETB balance is ${user.etbBalance.toLocaleString()} ETB. Grab is disabled.`
-      });
-    }
+  // Minimum balance verification: $30 USDT minimum for VIP 1
+  if (user.balance < 30) {
+    return res.status(400).json({
+      error: `Minimum $30.00 USDT Available Balance is required to use Grab/Work. Your current balance is $${user.balance.toFixed(2)} USDT. Grab is disabled.`
+    });
   }
 
   // Find VIP tier and rate
   const tier = VIP_TIERS.find(t => t.level === user.vipLevel) || VIP_TIERS[0];
-  const appliedRate = tier.dailyRate; // e.g. 0.019 (1.9%) for VIP1
+  const appliedRate = tier.dailyRate; // e.g. 0.019 (1.9%) for VIP 1, 0.025 (2.5%) for VIP 2
 
-  // PROFIT ONLY ON AVAILABLE BALANCE of the chosen currency
-  const baseAvailableBalance = isUsd ? Number(user.usdBalance.toFixed(2)) : Number(user.etbBalance.toFixed(2));
+  // PROFIT ONLY ON AVAILABLE BALANCE
+  const baseAvailableBalance = Number(user.balance.toFixed(2));
   const dailyProfit = Number((baseAvailableBalance * appliedRate).toFixed(2));
 
   if (dailyProfit <= 0) {
     return res.status(400).json({
-      error: `${currency} available balance is insufficient to generate profit.`
+      error: 'Available balance is insufficient to generate profit.'
     });
   }
 
   const prevBalance = baseAvailableBalance;
 
-  // STRICT SEPARATION: Credit only the respective wallet!
-  if (isUsd) {
-    user.usdBalance = Number((user.usdBalance + dailyProfit).toFixed(2));
-    user.todayUsdProfit = dailyProfit;
-    user.usdTotalEarnedIncome = Number(((user.usdTotalEarnedIncome || 0) + dailyProfit).toFixed(2));
-    user.lastProfitClaimDate_USD = todayUtc;
-  } else {
-    user.etbBalance = Number((user.etbBalance + dailyProfit).toFixed(2));
-    user.todayEtbProfit = dailyProfit;
-    user.etbTotalEarnedIncome = Number(((user.etbTotalEarnedIncome || 0) + dailyProfit).toFixed(2));
-    user.lastProfitClaimDate_ETB = todayUtc;
-  }
+  // Credit USD/USDT wallet
+  user.usdBalance = Number((user.usdBalance + dailyProfit).toFixed(2));
+  user.balance = user.usdBalance;
+  user.totalAssets = Number((user.balance + user.frozenBalance).toFixed(2));
+  user.todayUsdProfit = dailyProfit;
+  user.usdTotalEarnedIncome = Number(((user.usdTotalEarnedIncome || 0) + dailyProfit).toFixed(2));
+  user.lastProfitClaimDate_USD = todayUtc;
 
   user.todayVipProfit = dailyProfit;
   user.todayTicketIncome = dailyProfit;
@@ -753,26 +706,26 @@ const handleDailyProfitClaim = (req: express.Request, res: express.Response) => 
   });
 
   const randomSuffix = crypto.randomBytes(3).toString('hex').toUpperCase();
-  const txId = `TXN-GRAB-${currency}-${Date.now()}-${randomSuffix}`;
-  const incId = `INC-GRAB-${currency}-${todayUtc}-${randomSuffix}`;
-  const newWorkingBalance = isUsd ? user.usdBalance : user.etbBalance;
+  const txId = `TXN-GRAB-USD-${Date.now()}-${randomSuffix}`;
+  const incId = `INC-GRAB-USD-${todayUtc}-${randomSuffix}`;
+  const newWorkingBalance = user.balance;
 
   // 1. Add Dedicated VIP Grab Income Record
   incomeRecords.unshift({
     id: incId,
     userId: user.id,
-    ticketName: `VIP ${user.vipLevel} Daily Grab Revenue (${(appliedRate * 100).toFixed(1)}%) - ${currency}`,
+    ticketName: `VIP ${user.vipLevel} Daily Grab Revenue (${(appliedRate * 100).toFixed(1)}%) - USDT`,
     categoryType: 'vip_profit',
     previousBalance: prevBalance,
     incomeAmount: dailyProfit,
-    currency,
+    currency: 'USD',
     vipLevel: user.vipLevel,
     dailyRate: appliedRate,
     newBalance: newWorkingBalance,
     timestamp: new Date().toISOString(),
     status: 'credited',
     transactionId: txId,
-    notes: `Daily VIP ${user.vipLevel} Grab (${(appliedRate * 100).toFixed(1)}%) earned on ${isUsd ? `$${baseAvailableBalance.toFixed(2)} USDT` : `${baseAvailableBalance.toLocaleString()} ETB`} available balance. Compounded to: ${isUsd ? `$${newWorkingBalance.toFixed(2)} USDT` : `${newWorkingBalance.toLocaleString()} ETB`}.`
+    notes: `Daily VIP ${user.vipLevel} Grab (${(appliedRate * 100).toFixed(1)}%) earned on $${baseAvailableBalance.toFixed(2)} USDT available balance. Compounded to: $${newWorkingBalance.toFixed(2)} USDT.`
   });
 
   // 2. Add Dedicated VIP Grab Transaction in Ledger
@@ -782,29 +735,29 @@ const handleDailyProfitClaim = (req: express.Request, res: express.Response) => 
     type: 'vip_profit',
     category: 'vip_profit',
     amount: dailyProfit,
-    currency,
+    currency: 'USD',
     vipLevel: user.vipLevel,
     appliedRate: appliedRate,
     previousBalance: prevBalance,
     newBalance: newWorkingBalance,
     status: 'completed',
-    title: `VIP ${user.vipLevel} Daily Grab Revenue (${currency})`,
-    description: `+${isUsd ? `$${dailyProfit.toFixed(2)} USDT` : `${dailyProfit.toFixed(2)} ETB`} earned (${(appliedRate * 100).toFixed(1)}% on ${isUsd ? `$${baseAvailableBalance.toFixed(2)} USDT` : `${baseAvailableBalance.toLocaleString()} ETB`}). Compounded in ${currency} wallet.`,
+    title: `VIP ${user.vipLevel} Daily Grab Revenue (USDT)`,
+    description: `+$${dailyProfit.toFixed(2)} USDT earned (${(appliedRate * 100).toFixed(1)}% on $${baseAvailableBalance.toFixed(2)} USDT). Compounded in USDT wallet.`,
     createdAt: new Date().toISOString()
   });
 
   // Distribute Team Commission strictly from daily Grab profit
-  distributeTicketProfitTeamCommissions(user.id, dailyProfit, `VIP ${user.vipLevel} Grab Revenue (${currency})`);
+  distributeTicketProfitTeamCommissions(user.id, dailyProfit, `VIP ${user.vipLevel} Grab Revenue (USDT)`, 'USD');
 
   recalculateUserState(user.id);
-  persistDb(`Daily VIP Grab Claimed: +${dailyProfit} ${currency} by ${user.username}`);
+  persistDb(`Daily VIP Grab Claimed: +$${dailyProfit} USDT by ${user.username}`);
 
   res.json({
     success: true,
-    message: `Grab Order Completed! Successfully earned +${isUsd ? `$${dailyProfit.toFixed(2)} USDT` : `${dailyProfit.toFixed(2)} ETB`} daily VIP ${user.vipLevel} Grab revenue on your ${isUsd ? `$${baseAvailableBalance.toFixed(2)} USDT` : `${baseAvailableBalance.toLocaleString()} ETB`} balance! Your ${currency} balance has been compounded.`,
+    message: `Grab Order Completed! Successfully earned +$${dailyProfit.toFixed(2)} USDT daily VIP ${user.vipLevel} Grab revenue on your $${baseAvailableBalance.toFixed(2)} USDT balance! Your balance has been compounded.`,
     totalCredited: dailyProfit,
     totalProfit: dailyProfit,
-    currency,
+    currency: 'USD',
     baseBalance: baseAvailableBalance,
     appliedRate,
     vipLevel: user.vipLevel,
@@ -1094,24 +1047,19 @@ app.post('/api/finance/deposit', (req, res) => {
   const depAmount = parseFloat(amount);
   const isUsd = currency === 'USD';
 
-  if (isUsd) {
-    if (isNaN(depAmount) || depAmount < 10) {
-      return res.status(400).json({ error: 'Minimum recharge amount for USDT is $10.00 USDT' });
-    }
-    const cleanNetwork = (network || '').toUpperCase();
-    if (cleanNetwork !== 'BEP20' && cleanNetwork !== 'TRC20') {
-      return res.status(400).json({ error: 'Please select a valid network: BEP20 (USDT) or TRC20 (USDT)' });
-    }
-  } else {
-    if (isNaN(depAmount) || depAmount < 2000) {
-      return res.status(400).json({ error: 'Minimum recharge amount is 2,000 ETB' });
-    }
+  if (isNaN(depAmount) || depAmount < 10) {
+    return res.status(400).json({ error: 'Minimum recharge amount for USDT is $10.00 USDT ($30.00 USDT minimum for VIP 1)' });
+  }
+
+  const cleanNetwork = (network || 'TRC20').toUpperCase();
+  if (cleanNetwork !== 'BEP20' && cleanNetwork !== 'TRC20') {
+    return res.status(400).json({ error: 'Please select a valid network: BEP20 (USDT) or TRC20 (USDT)' });
   }
 
   const cleanRef = (referenceNumber || txHash || '').trim();
   if (!cleanRef) {
     return res.status(400).json({
-      error: isUsd ? 'Blockchain TxID / Transaction Hash is required' : 'Transaction / Reference Number is required'
+      error: 'Blockchain TxID / Transaction Hash is required'
     });
   }
 
@@ -1120,10 +1068,7 @@ app.post('/api/finance/deposit', (req, res) => {
     return res.status(400).json({ error: 'Payment slip receipt upload is required' });
   }
 
-  const cleanNetwork = isUsd ? (network?.toUpperCase() || 'TRC20') : 'CBE Bank Transfer';
-  const platformAddress = isUsd
-    ? (cleanNetwork === 'BEP20' ? PLATFORM_WALLETS.BEP20 : PLATFORM_WALLETS.TRC20)
-    : CBE_BANK_DETAILS.accountNumber;
+  const platformAddress = cleanNetwork === 'BEP20' ? PLATFORM_WALLETS.BEP20 : PLATFORM_WALLETS.TRC20;
 
   const newDeposit: DepositRequest = {
     id: `DEP-${Date.now().toString().slice(-6)}`,
@@ -1131,13 +1076,13 @@ app.post('/api/finance/deposit', (req, res) => {
     username: user.username,
     userEmail: user.email,
     userPhone: user.phone,
-    userBalanceAtRequest: isUsd ? user.usdBalance : user.etbBalance,
-    currentUserBalance: isUsd ? user.usdBalance : user.etbBalance,
+    userBalanceAtRequest: user.balance,
+    currentUserBalance: user.balance,
     amount: depAmount,
-    currency: isUsd ? 'USD' : 'ETB',
+    currency: 'USD',
     network: cleanNetwork,
-    bankName: isUsd ? `USDT (${cleanNetwork})` : (bankName || CBE_BANK_DETAILS.bankName),
-    accountHolder: isUsd ? `${cleanNetwork} USDT Deposit` : (accountHolder || CBE_BANK_DETAILS.accountHolder),
+    bankName: `USDT (${cleanNetwork})`,
+    accountHolder: `${cleanNetwork} USDT Deposit`,
     accountNumber: platformAddress,
     referenceNumber: cleanRef,
     paymentSlipUrl: cleanSlip,
@@ -1157,25 +1102,23 @@ app.post('/api/finance/deposit', (req, res) => {
     type: 'deposit',
     category: 'deposit',
     amount: depAmount,
-    currency: isUsd ? 'USD' : 'ETB',
+    currency: 'USD',
     network: cleanNetwork,
-    previousBalance: isUsd ? user.usdBalance : user.etbBalance,
-    newBalance: isUsd ? user.usdBalance : user.etbBalance,
+    previousBalance: user.balance,
+    newBalance: user.balance,
     status: 'pending', // STRICTLY PENDING
-    title: isUsd ? `USDT (${cleanNetwork}) Recharge Request` : `CBE Bank Recharge Request`,
-    description: isUsd
-      ? `Recharge request of $${depAmount.toFixed(2)} USDT via ${cleanNetwork} (TxID: ${cleanRef}). Pending manual Admin review and on-chain verification.`
-      : `Recharge request of ${depAmount.toLocaleString()} ETB via CBE Bank (Ref: ${cleanRef}). Pending manual Admin review and verification.`,
+    title: `USDT (${cleanNetwork}) Recharge Request`,
+    description: `Recharge request of $${depAmount.toFixed(2)} USDT via ${cleanNetwork} (TxID: ${cleanRef}). Pending manual Admin review and on-chain verification.`,
     txHash: cleanRef,
     createdAt: new Date().toISOString()
   });
 
   recalculateUserState(user.id);
-  persistDb(`Recharge Request Submitted (Pending Admin Approval): ${depAmount} ${isUsd ? 'USD' : 'ETB'} by ${user.username}`);
+  persistDb(`Recharge Request Submitted (Pending Admin Approval): $${depAmount} USDT by ${user.username}`);
 
   res.json({
     success: true,
-    message: `Recharge request of ${isUsd ? `$${depAmount.toFixed(2)} USDT` : `${depAmount.toLocaleString()} ETB`} submitted successfully! Status is Pending manual Admin review and approval.`,
+    message: `Recharge request of $${depAmount.toFixed(2)} USDT submitted successfully! Status is Pending manual Admin review and approval.`,
     deposit: newDeposit,
     user
   });
@@ -1183,16 +1126,13 @@ app.post('/api/finance/deposit', (req, res) => {
 
 // POST Create Withdrawal Request
 // Checks available balance, reserves/freezes requested amount while strictly Pending Admin approval
-// Supports BEP20 (USDT), TRC20 (USDT), and ETB bank withdrawal
+// Pure Crypto-Only: Supports BEP20 (USDT) and TRC20 (USDT) with a 5% platform service fee
 app.post('/api/finance/withdraw', (req, res) => {
   const {
     amount,
-    currency = 'ETB',
-    network,
-    walletAddress,
-    bankName,
-    accountHolder,
-    accountNumber
+    currency = 'USD',
+    network = 'TRC20',
+    walletAddress
   } = req.body;
 
   const targetId = resolveUserId(req);
@@ -1200,84 +1140,61 @@ app.post('/api/finance/withdraw', (req, res) => {
   if (!user) return res.status(404).json({ error: 'User not found' });
 
   const wdAmount = parseFloat(amount);
-  const isUsd = currency === 'USD';
-
-  if (isUsd) {
-    if (isNaN(wdAmount) || wdAmount < 10) {
-      return res.status(400).json({ error: 'Minimum withdrawal amount for USDT is $10.00 USDT' });
-    }
-    if ((user.usdBalance || 0) < wdAmount) {
-      return res.status(400).json({
-        error: `Insufficient USD available balance ($${(user.usdBalance || 0).toFixed(2)} USDT). Cannot withdraw $${wdAmount.toFixed(2)} USDT.`
-      });
-    }
-    const cleanAddress = (walletAddress || '').trim();
-    if (!cleanAddress) {
-      return res.status(400).json({ error: 'Destination USDT wallet address is required' });
-    }
-    const cleanNetwork = (network || '').toUpperCase();
-    if (cleanNetwork !== 'BEP20' && cleanNetwork !== 'TRC20') {
-      return res.status(400).json({ error: 'Please select a valid network: BEP20 (USDT) or TRC20 (USDT)' });
-    }
-  } else {
-    if (isNaN(wdAmount) || wdAmount < 500) {
-      return res.status(400).json({ error: 'Minimum withdrawal amount is 500 ETB' });
-    }
-    if ((user.etbBalance || 0) < wdAmount) {
-      return res.status(400).json({
-        error: `Insufficient available ETB balance (${(user.etbBalance || 0).toLocaleString()} ETB). Cannot withdraw ${wdAmount.toLocaleString()} ETB.`
-      });
-    }
-    const cleanBank = (bankName || '').trim();
-    const cleanHolder = (accountHolder || '').trim();
-    const cleanAccount = (accountNumber || '').trim();
-    if (!cleanBank || !cleanHolder || !cleanAccount) {
-      return res.status(400).json({
-        error: 'Bank Name, Account Holder Name, and Account Number are required for ETB bank withdrawal'
-      });
-    }
+  if (isNaN(wdAmount) || wdAmount < 10) {
+    return res.status(400).json({ error: 'Minimum withdrawal amount is $10.00 USDT' });
   }
 
-  // 7% platform service fee calculation
-  const fee = Number((wdAmount * 0.07).toFixed(2));
+  const availableBal = typeof user.usdBalance === 'number' ? user.usdBalance : (user.balance || 0);
+  if (availableBal < wdAmount) {
+    return res.status(400).json({
+      error: `Insufficient available balance ($${availableBal.toFixed(2)} USDT). Cannot withdraw $${wdAmount.toFixed(2)} USDT.`
+    });
+  }
+
+  const cleanAddress = (walletAddress || '').trim();
+  if (!cleanAddress) {
+    return res.status(400).json({ error: 'Destination USDT wallet address is required' });
+  }
+
+  const cleanNetwork = (network || 'TRC20').toUpperCase();
+  if (cleanNetwork !== 'BEP20' && cleanNetwork !== 'TRC20') {
+    return res.status(400).json({ error: 'Please select a valid network: BEP20 (USDT) or TRC20 (USDT)' });
+  }
+
+  // 5% platform service fee calculation
+  const fee = Number((wdAmount * 0.05).toFixed(2));
   const netAmount = Number((wdAmount - fee).toFixed(2));
 
-  // Reserve/Freeze funds safely from available balance in respective wallet
-  let previousBalance: number;
-  if (isUsd) {
-    previousBalance = user.usdBalance;
-    user.usdBalance = Number((user.usdBalance - wdAmount).toFixed(2));
-    user.usdFrozenBalance = Number(((user.usdFrozenBalance || 0) + wdAmount).toFixed(2));
-  } else {
-    previousBalance = user.etbBalance;
-    user.etbBalance = Number((user.etbBalance - wdAmount).toFixed(2));
-    user.etbFrozenBalance = Number(((user.etbFrozenBalance || 0) + wdAmount).toFixed(2));
-  }
+  // Reserve/Freeze funds safely from available balance
+  const previousBalance = availableBal;
+  user.usdBalance = Number((availableBal - wdAmount).toFixed(2));
+  user.usdFrozenBalance = Number(((user.usdFrozenBalance || 0) + wdAmount).toFixed(2));
+  user.balance = user.usdBalance;
+  user.frozenBalance = user.usdFrozenBalance;
+  user.totalAssets = Number((user.balance + user.frozenBalance).toFixed(2));
 
   const txId = `WD-${Math.floor(1000 + Math.random() * 9000)}`;
-  const cleanNetwork = isUsd ? (network?.toUpperCase() || 'TRC20') : (bankName || 'Commercial Bank of Ethiopia (CBE)');
-  const cleanDest = isUsd ? walletAddress.trim() : (accountNumber || '').trim();
 
   const newWd: WithdrawalRequest = {
     id: txId,
     userId: user.id,
     username: user.username,
     userEmail: user.email || `${user.username.toLowerCase()}@member.jambase.vip`,
-    userPhone: user.phone || '+251 91 123 4567',
+    userPhone: user.phone || '',
     userBalanceAtRequest: previousBalance,
-    currentUserBalance: isUsd ? user.usdBalance : user.etbBalance,
+    currentUserBalance: user.usdBalance,
     amount: wdAmount,
-    currency: isUsd ? 'USD' : 'ETB',
+    currency: 'USD',
     fee,
     netAmount,
-    bankName: isUsd ? `USDT (${cleanNetwork})` : bankName,
-    accountHolder: isUsd ? `${user.username} (${cleanNetwork})` : accountHolder,
-    accountNumber: cleanDest,
-    walletAddress: cleanDest,
+    bankName: `USDT (${cleanNetwork})`,
+    accountHolder: `${user.username} (${cleanNetwork})`,
+    accountNumber: cleanAddress,
+    walletAddress: cleanAddress,
     network: cleanNetwork,
     status: 'Pending', // STRICTLY PENDING: Must be manually approved or rejected by Admin
     createdAt: new Date().toISOString(),
-    txId: `${txId}-${isUsd ? 'USD' : 'ETB'}`
+    txId: `${txId}-USD`
   };
 
   withdrawals.unshift(newWd);
@@ -1288,25 +1205,23 @@ app.post('/api/finance/withdraw', (req, res) => {
     type: 'withdrawal',
     category: 'withdrawal',
     amount: wdAmount,
-    currency: isUsd ? 'USD' : 'ETB',
+    currency: 'USD',
     fee,
     network: cleanNetwork,
     previousBalance,
-    newBalance: isUsd ? user.usdBalance : user.etbBalance,
+    newBalance: user.usdBalance,
     status: 'pending', // STRICTLY PENDING
-    title: isUsd ? `USDT (${cleanNetwork}) Withdrawal Request` : `ETB Bank Withdrawal Request`,
-    description: isUsd
-      ? `Net payout: $${netAmount.toFixed(2)} USDT (Fee: $${fee.toFixed(2)} USDT [7%]) to ${cleanNetwork} (${cleanDest}). Reserved in frozen balance pending Admin review.`
-      : `Net payout: ${netAmount.toLocaleString()} ETB (Fee: ${fee.toFixed(2)} ETB [7%]) to ${cleanNetwork} (${cleanDest}). Reserved in frozen balance pending Admin review.`,
+    title: `USDT (${cleanNetwork}) Withdrawal Request`,
+    description: `Net payout: $${netAmount.toFixed(2)} USDT (5% Fee: $${fee.toFixed(2)} USDT) to ${cleanNetwork} (${cleanAddress}). Reserved in frozen balance pending Admin review.`,
     createdAt: new Date().toISOString()
   });
 
   recalculateUserState(user.id);
-  persistDb(`Withdrawal Requested (Pending Admin Approval): ${wdAmount} ${isUsd ? 'USD' : 'ETB'} by ${user.username}`);
+  persistDb(`Withdrawal Requested (Pending Admin Approval): $${wdAmount} USDT by ${user.username}`);
 
   res.json({
     success: true,
-    message: `Withdrawal request for ${isUsd ? `$${wdAmount.toFixed(2)} USDT` : `${wdAmount.toLocaleString()} ETB`} submitted successfully. Funds held in frozen balance pending Admin review.`,
+    message: `Withdrawal request for $${wdAmount.toFixed(2)} USDT submitted successfully. Funds held in frozen balance pending Admin review.`,
     withdrawal: newWd,
     user
   });
@@ -1349,9 +1264,9 @@ app.get('/api/tasks', (req, res) => {
   const dynamicTasks: TaskItem[] = [
     {
       id: 'task-invite-5',
-      title: 'Invite 5 valid A-level direct members',
-      description: 'Invite 5 valid A-level direct members to claim 3,000 ETB reward',
-      rewardAmount: 3000,
+      title: 'Invite 5 Valid Members',
+      description: 'Invite 5 valid direct members ($30+ USDT) to claim $15.00 USDT reward',
+      rewardAmount: 15,
       rewardType: 'balance',
       progress: Math.min(5, validDirectCount),
       maxProgress: 5,
@@ -1361,41 +1276,54 @@ app.get('/api/tasks', (req, res) => {
       category: 'growth'
     },
     {
-      id: 'task-activate-10',
-      title: 'Activate 10 valid A-level direct members',
-      description: 'Activate 10 valid A-level direct members to claim 6,000 ETB reward',
-      rewardAmount: 6000,
+      id: 'task-invite-10',
+      title: 'Invite 10 Valid Members',
+      description: 'Invite 10 valid direct members ($30+ USDT) to claim $50.00 USDT reward',
+      rewardAmount: 50,
       rewardType: 'balance',
       progress: Math.min(10, validDirectCount),
       maxProgress: 10,
       isCompleted: validDirectCount >= 10,
-      isClaimed: claimedIds.includes('task-activate-10'),
+      isClaimed: claimedIds.includes('task-invite-10'),
       icon: 'Users',
       category: 'growth'
     },
     {
-      id: 'task-activate-20',
-      title: 'Activate 20 valid A-level direct members',
-      description: 'Activate 20 valid A-level direct members to claim 20,000 ETB reward',
-      rewardAmount: 20000,
+      id: 'task-invite-20',
+      title: 'Invite 20 Valid Members',
+      description: 'Invite 20 valid direct members ($30+ USDT) to claim $120.00 USDT reward',
+      rewardAmount: 120,
       rewardType: 'balance',
       progress: Math.min(20, validDirectCount),
       maxProgress: 20,
       isCompleted: validDirectCount >= 20,
-      isClaimed: claimedIds.includes('task-activate-20'),
+      isClaimed: claimedIds.includes('task-invite-20'),
       icon: 'Users',
       category: 'growth'
     },
     {
-      id: 'task-activate-50',
-      title: 'Activate 50 valid direct members',
-      description: 'Activate 50 valid direct members to claim 100,000 ETB reward',
-      rewardAmount: 100000,
+      id: 'task-invite-50',
+      title: 'Invite 50 Valid Members',
+      description: 'Invite 50 valid direct members ($30+ USDT) to claim $300.00 USDT reward',
+      rewardAmount: 300,
       rewardType: 'balance',
       progress: Math.min(50, validDirectCount),
       maxProgress: 50,
       isCompleted: validDirectCount >= 50,
-      isClaimed: claimedIds.includes('task-activate-50'),
+      isClaimed: claimedIds.includes('task-invite-50'),
+      icon: 'Users',
+      category: 'growth'
+    },
+    {
+      id: 'task-invite-100',
+      title: 'Invite 100 Valid Members',
+      description: 'Invite 100 valid direct members ($30+ USDT) to claim $1,000.00 USDT reward',
+      rewardAmount: 1000,
+      rewardType: 'balance',
+      progress: Math.min(100, validDirectCount),
+      maxProgress: 100,
+      isCompleted: validDirectCount >= 100,
+      isClaimed: claimedIds.includes('task-invite-100'),
       icon: 'Users',
       category: 'growth'
     }
@@ -1404,7 +1332,7 @@ app.get('/api/tasks', (req, res) => {
   res.json(dynamicTasks);
 });
 
-// POST Task Claim - Claim 3,000 / 6,000 / 20,000 / 100,000 ETB reward when condition is completed
+// POST Task Claim - Claim $15 / $50 / $120 / $300 / $1,000 USDT reward when condition is completed
 app.post('/api/tasks/claim', (req, res) => {
   const { taskId } = req.body;
   const targetId = resolveUserId(req);
@@ -1428,34 +1356,40 @@ app.post('/api/tasks/claim', (req, res) => {
 
   if (taskId === 'task-invite-5') {
     requiredMembers = 5;
-    rewardAmount = 3000;
-    taskTitle = 'Invite 5 valid A-level direct members';
-  } else if (taskId === 'task-activate-10') {
+    rewardAmount = 15;
+    taskTitle = 'Invite 5 Valid Members';
+  } else if (taskId === 'task-invite-10') {
     requiredMembers = 10;
-    rewardAmount = 6000;
-    taskTitle = 'Activate 10 valid A-level direct members';
-  } else if (taskId === 'task-activate-20') {
+    rewardAmount = 50;
+    taskTitle = 'Invite 10 Valid Members';
+  } else if (taskId === 'task-invite-20') {
     requiredMembers = 20;
-    rewardAmount = 20000;
-    taskTitle = 'Activate 20 valid A-level direct members';
-  } else if (taskId === 'task-activate-50') {
+    rewardAmount = 120;
+    taskTitle = 'Invite 20 Valid Members';
+  } else if (taskId === 'task-invite-50') {
     requiredMembers = 50;
-    rewardAmount = 100000;
-    taskTitle = 'Activate 50 valid direct members';
+    rewardAmount = 300;
+    taskTitle = 'Invite 50 Valid Members';
+  } else if (taskId === 'task-invite-100') {
+    requiredMembers = 100;
+    rewardAmount = 1000;
+    taskTitle = 'Invite 100 Valid Members';
   } else {
     return res.status(400).json({ error: 'Invalid task ID' });
   }
 
   if (validDirectCount < requiredMembers) {
     return res.status(400).json({
-      error: `Required condition not yet met! You have ${validDirectCount} / ${requiredMembers} valid direct members. Condition requires ${requiredMembers} active direct members.`
+      error: `Required condition not yet met! You have ${validDirectCount} / ${requiredMembers} valid direct members. Condition requires ${requiredMembers} active direct members ($30+ USDT).`
     });
   }
 
-  // Grant reward to available balance
+  // Grant reward to USD available balance
   user.claimedTaskIds.push(taskId);
-  user.balance = Number((user.balance + rewardAmount).toFixed(2));
+  user.usdBalance = Number(((user.usdBalance || 0) + rewardAmount).toFixed(2));
+  user.balance = user.usdBalance;
   user.totalEarnedIncome = Number(((user.totalEarnedIncome || 0) + rewardAmount).toFixed(2));
+  user.totalAssets = Number((user.balance + user.frozenBalance).toFixed(2));
 
   // Add transaction
   transactions.unshift({
@@ -1463,9 +1397,10 @@ app.post('/api/tasks/claim', (req, res) => {
     userId: user.id,
     type: 'task_reward',
     amount: rewardAmount,
+    currency: 'USD',
     status: 'completed',
     title: `Task Reward: ${taskTitle}`,
-    description: `Claimed +${rewardAmount.toLocaleString()} ETB directly to available balance`,
+    description: `Claimed +$${rewardAmount.toFixed(2)} USDT directly to available balance`,
     createdAt: new Date().toISOString()
   });
 
@@ -1477,13 +1412,14 @@ app.post('/api/tasks/claim', (req, res) => {
     categoryType: 'ticket',
     previousBalance: Number((user.balance - rewardAmount).toFixed(2)),
     incomeAmount: rewardAmount,
+    currency: 'USD',
     vipLevel: user.vipLevel,
     dailyRate: 0,
     newBalance: user.balance,
     timestamp: new Date().toISOString(),
     status: 'credited',
     transactionId: `TXN-TASK-${Date.now()}`,
-    notes: `Task Milestone Reward: ${taskTitle} (+${rewardAmount.toLocaleString()} ETB)`
+    notes: `Task Milestone Reward: ${taskTitle} (+$${rewardAmount.toFixed(2)} USDT)`
   });
 
   recalculateUserState(user.id);
@@ -1491,13 +1427,13 @@ app.post('/api/tasks/claim', (req, res) => {
 
   res.json({
     success: true,
-    message: `Congratulations! Successfully claimed ${rewardAmount.toLocaleString()} ETB reward for ${taskTitle}!`,
+    message: `Congratulations! Successfully claimed $${rewardAmount.toFixed(2)} USDT reward for ${taskTitle}!`,
     rewardAmount,
     user
   });
 });
 
-// POST Daily Attendance Check-in (Welfare Center: Claim 10.00 ETB once daily)
+// POST Daily Attendance Check-in (Welfare Center: Claim 1.00 USDT once daily)
 app.post('/api/welfare/attendance', (req, res) => {
   const targetId = resolveUserId(req);
   const user = users[targetId] || users[PRIMARY_USER_ID];
@@ -1506,24 +1442,27 @@ app.post('/api/welfare/attendance', (req, res) => {
   const todayStr = new Date().toISOString().slice(0, 10);
   if (user.lastAttendanceClaimDate === todayStr) {
     return res.status(400).json({ 
-      error: 'Today\'s daily attendance reward (10.00 ETB) has already been claimed. Please come back tomorrow!' 
+      error: 'Today\'s daily attendance reward ($1.00 USDT) has already been claimed. Please come back tomorrow!' 
     });
   }
 
   user.lastAttendanceClaimDate = todayStr;
   user.attendanceStreak = (user.attendanceStreak || 0) + 1;
-  const rewardAmount = 10.00;
-  user.balance = Number((user.balance + rewardAmount).toFixed(2));
+  const rewardAmount = 1.00;
+  user.usdBalance = Number(((user.usdBalance || 0) + rewardAmount).toFixed(2));
+  user.balance = user.usdBalance;
   user.totalEarnedIncome = Number(((user.totalEarnedIncome || 0) + rewardAmount).toFixed(2));
+  user.totalAssets = Number((user.balance + user.frozenBalance).toFixed(2));
 
   transactions.unshift({
     id: `TXN-ATTEND-${Date.now()}`,
     userId: user.id,
     type: 'deposit',
     amount: rewardAmount,
+    currency: 'USD',
     status: 'completed',
     title: 'Daily Attendance Reward',
-    description: `Claimed +10.00 ETB daily check-in bonus (Streak Day ${user.attendanceStreak})`,
+    description: `Claimed +$1.00 USDT daily check-in bonus (Streak Day ${user.attendanceStreak})`,
     createdAt: new Date().toISOString()
   });
 
@@ -1532,8 +1471,8 @@ app.post('/api/welfare/attendance', (req, res) => {
 
   res.json({
     success: true,
-    message: 'Successfully claimed 10.00 ETB Daily Attendance Reward!',
-    rewardAmount: 10.00,
+    message: 'Successfully claimed $1.00 USDT Daily Attendance Reward!',
+    rewardAmount: 1.00,
     attendanceStreak: user.attendanceStreak,
     user
   });
@@ -1579,7 +1518,7 @@ app.post('/api/auth/register', (req, res) => {
     }
   }
 
-  // Create clean fresh slate user record
+  // Create clean fresh slate user record in USD
   const newUser: User & { password?: string; inviterId?: string } = {
     id: cleanUserId,
     username: cleanUsername,
@@ -1590,11 +1529,9 @@ app.post('/api/auth/register', (req, res) => {
     walletAddress: '',
     balance: 0.0,
     frozenBalance: 0.0,
-    etbBalance: 0.0,
-    etbFrozenBalance: 0.0,
     usdBalance: 0.0,
     usdFrozenBalance: 0.0,
-    activeCurrency: 'ETB',
+    activeCurrency: 'USD',
     totalAssets: 0.0,
     vipLevel: 1,
     referralCode: `JB${Math.floor(100000 + Math.random() * 900000)}`,
@@ -1604,7 +1541,7 @@ app.post('/api/auth/register', (req, res) => {
     totalTeamMembersCount: 0,
     totalTeamDeposit: 0.0,
     isIncomePaused: true,
-    incomePauseReason: 'Minimum 500 ETB Account Balance Required to Work and Buy Tickets',
+    incomePauseReason: 'Minimum $30.00 USDT Account Balance Required to Work and Earn VIP Yield',
     autoCompound: true,
     totalEarnedIncome: 0.0,
     todayTicketIncome: 0.0,
@@ -1634,7 +1571,7 @@ app.post('/api/auth/register', (req, res) => {
       totalPurchases: 0,
       balance: 0,
       isValid: false,
-      disqualifiedReason: 'Pending initial recharge of 2,000 ETB+',
+      disqualifiedReason: 'Pending initial recharge of $30.00 USDT+',
       level: 1
     };
     referrals.push(directRef);
@@ -1654,7 +1591,7 @@ app.post('/api/auth/register', (req, res) => {
         totalPurchases: 0,
         balance: 0,
         isValid: false,
-        disqualifiedReason: 'Pending initial recharge of 2,000 ETB+',
+        disqualifiedReason: 'Pending initial recharge of $30.00 USDT+',
         level: 2
       });
       recalculateUserState(lvl2User.id);
@@ -1674,7 +1611,7 @@ app.post('/api/auth/register', (req, res) => {
           totalPurchases: 0,
           balance: 0,
           isValid: false,
-          disqualifiedReason: 'Pending initial recharge of 2,000 ETB+',
+          disqualifiedReason: 'Pending initial recharge of $30.00 USDT+',
           level: 3
         });
         recalculateUserState(lvl3User.id);
@@ -1689,7 +1626,7 @@ app.post('/api/auth/register', (req, res) => {
 
   res.json({
     success: true,
-    message: 'Account registered successfully! Welcome to JAMBASE. Please recharge at least 2,000 ETB to activate your VIP level and start earning yields.',
+    message: 'Account registered successfully! Welcome to HBO JAMBASE MUSIC. Please recharge at least $30.00 USDT to activate your VIP 1 level and start earning yields.',
     user: users[cleanUserId],
     token: `jwt-${cleanUserId}-${Date.now()}`
   });
@@ -1904,7 +1841,8 @@ app.get('/api/admin/overview', requireAdminAuth, (req, res) => {
     depositsList: enrichedDeposits,
     referralsList: referrals,
     ticketsList: tickets,
-    membersList: allUsersList
+    membersList: allUsersList,
+    deployVerification: getVerificationStatus()
   });
 });
 
@@ -2070,7 +2008,7 @@ app.get('/api/admin/members/:id', requireAdminAuth, (req, res) => {
 // POST Admin Adjust Member Balance (Add / Deduct Funds with Full Ledger Transparency)
 app.post('/api/admin/members/:id/balance', requireAdminAuth, (req, res) => {
   const { id } = req.params;
-  const { action, amount, type, reason, adminOperator } = req.body;
+  const { action, amount, type, reason, adminOperator, currency } = req.body;
   const user = users[id];
 
   if (!user) return res.status(404).json({ error: 'Member not found' });
@@ -2080,36 +2018,47 @@ app.post('/api/admin/members/:id/balance', requireAdminAuth, (req, res) => {
     return res.status(400).json({ error: 'Please enter a valid balance adjustment amount greater than 0.' });
   }
 
-  const previousBalance = user.balance || 0;
+  const targetCurrency: 'ETB' | 'USD' = (currency === 'USD' || currency === 'ETB') ? currency : (user.activeCurrency || 'ETB');
+  const isUsd = targetCurrency === 'USD';
+  const unitLabel = isUsd ? 'USDT' : 'ETB';
+  const previousBalance = isUsd ? (user.usdBalance || 0) : (user.etbBalance || 0);
   const randomSuffix = crypto.randomBytes(3).toString('hex').toUpperCase();
   const operatorName = adminOperator || 'SuperAdmin';
-  const actionReason = reason?.trim() || (action === 'add' ? 'Admin Balance Credit' : 'Admin Balance Debit');
+  const actionReason = reason?.trim() || (action === 'add' ? `Admin ${unitLabel} Balance Credit` : `Admin ${unitLabel} Balance Debit`);
   const nowIso = new Date().toISOString();
 
   let transaction: Transaction;
 
   if (action === 'add') {
-    user.balance = Number((user.balance + numAmount).toFixed(2));
+    if (isUsd) {
+      user.usdBalance = Number(((user.usdBalance || 0) + numAmount).toFixed(2));
+      if (user.activeCurrency === 'USD') user.balance = user.usdBalance;
+    } else {
+      user.etbBalance = Number(((user.etbBalance || 0) + numAmount).toFixed(2));
+      if (user.activeCurrency === 'ETB') user.balance = user.etbBalance;
+    }
     user.totalAssets = Number((user.balance + (user.frozenBalance || 0)).toFixed(2));
 
-    // If account was paused due to low balance and balance is now >= 500 ETB, unpause automatically
-    if (user.isIncomePaused && user.totalAssets >= 500) {
+    const threshold = isUsd ? 30 : 2000;
+    const currentWorkingBal = isUsd ? user.usdBalance : user.etbBalance;
+    if (user.isIncomePaused && currentWorkingBal >= threshold) {
       user.isIncomePaused = false;
       user.incomePauseReason = undefined;
     }
 
-    const txId = `TXN-ADM-CR-${Date.now()}-${randomSuffix}`;
+    const txId = `TXN-ADM-CR-${targetCurrency}-${Date.now()}-${randomSuffix}`;
     transaction = {
       id: txId,
       userId: user.id,
       type: 'deposit',
       category: 'admin_credit',
       amount: numAmount,
+      currency: targetCurrency,
       previousBalance,
-      newBalance: user.balance,
+      newBalance: currentWorkingBal,
       status: 'completed',
-      title: `Admin Balance Credit: +${numAmount.toLocaleString()} ETB`,
-      description: `+${numAmount.toLocaleString()} ETB credited to Available Balance by ${operatorName}. Reason: ${actionReason}`,
+      title: `Admin Balance Credit: +${numAmount.toLocaleString()} ${unitLabel}`,
+      description: `+${numAmount.toLocaleString()} ${unitLabel} credited to Available Balance by ${operatorName}. Reason: ${actionReason}`,
       adminAction: 'credit',
       adminReason: actionReason,
       adminOperator: operatorName,
@@ -2118,42 +2067,53 @@ app.post('/api/admin/members/:id/balance', requireAdminAuth, (req, res) => {
     };
 
     transactions.unshift(transaction);
-    persistDb(`Admin Balance Credit: +${numAmount} ETB to ${user.username} (#${txId})`);
+    persistDb(`Admin Balance Credit: +${numAmount} ${unitLabel} to ${user.username} (#${txId})`);
 
     return res.json({
       success: true,
-      message: `Successfully credited +${numAmount.toLocaleString()} ETB to ${user.username}'s available balance.`,
+      message: `Successfully credited +${numAmount.toLocaleString()} ${unitLabel} to ${user.username}'s available balance.`,
       user,
       transaction
     });
   } else if (action === 'deduct') {
-    if (numAmount > user.balance) {
+    const availableForDeduct = isUsd ? (user.usdBalance || 0) : (user.etbBalance || 0);
+    if (numAmount > availableForDeduct) {
       return res.status(400).json({
-        error: `Insufficient available balance! User ${user.username} has ${user.balance.toLocaleString()} ETB available, cannot deduct ${numAmount.toLocaleString()} ETB.`
+        error: `Insufficient available balance! User ${user.username} has ${availableForDeduct.toLocaleString()} ${unitLabel} available, cannot deduct ${numAmount.toLocaleString()} ${unitLabel}.`
       });
     }
 
-    user.balance = Number((user.balance - numAmount).toFixed(2));
+    if (isUsd) {
+      user.usdBalance = Number(((user.usdBalance || 0) - numAmount).toFixed(2));
+      if (user.activeCurrency === 'USD') user.balance = user.usdBalance;
+    } else {
+      user.etbBalance = Number(((user.etbBalance || 0) - numAmount).toFixed(2));
+      if (user.activeCurrency === 'ETB') user.balance = user.etbBalance;
+    }
     user.totalAssets = Number((user.balance + (user.frozenBalance || 0)).toFixed(2));
 
-    // If total assets drop below 500 ETB, pause income automatically
-    if (user.totalAssets < 500) {
+    const threshold = isUsd ? 30 : 2000;
+    const currentWorkingBal = isUsd ? user.usdBalance : user.etbBalance;
+    if (currentWorkingBal < threshold) {
       user.isIncomePaused = true;
-      user.incomePauseReason = 'Minimum 500 ETB Account Balance Required to Work and Earn VIP Yield';
+      user.incomePauseReason = isUsd
+        ? 'Minimum $30.00 USDT Balance Required to Work and Earn VIP Yield'
+        : 'Minimum 2,000 ETB Account Balance Required to Work and Earn VIP Yield';
     }
 
-    const txId = `TXN-ADM-DR-${Date.now()}-${randomSuffix}`;
+    const txId = `TXN-ADM-DR-${targetCurrency}-${Date.now()}-${randomSuffix}`;
     transaction = {
       id: txId,
       userId: user.id,
       type: 'withdrawal',
       category: 'admin_debit',
       amount: numAmount,
+      currency: targetCurrency,
       previousBalance,
-      newBalance: user.balance,
+      newBalance: currentWorkingBal,
       status: 'completed',
-      title: `Admin Balance Deduction: -${numAmount.toLocaleString()} ETB`,
-      description: `-${numAmount.toLocaleString()} ETB debited from Available Balance by ${operatorName}. Reason: ${actionReason}`,
+      title: `Admin Balance Deduction: -${numAmount.toLocaleString()} ${unitLabel}`,
+      description: `-${numAmount.toLocaleString()} ${unitLabel} debited from Available Balance by ${operatorName}. Reason: ${actionReason}`,
       adminAction: 'debit',
       adminReason: actionReason,
       adminOperator: operatorName,
@@ -2162,11 +2122,11 @@ app.post('/api/admin/members/:id/balance', requireAdminAuth, (req, res) => {
     };
 
     transactions.unshift(transaction);
-    persistDb(`Admin Balance Deduction: -$${numAmount.toFixed(2)} from ${user.username} (#${txId})`);
+    persistDb(`Admin Balance Deduction: -${numAmount.toLocaleString()} ${unitLabel} from ${user.username} (#${txId})`);
 
     return res.json({
       success: true,
-      message: `Successfully deducted -$${numAmount.toFixed(2)} USDT from ${user.username}'s available balance.`,
+      message: `Successfully deducted -${numAmount.toLocaleString()} ${unitLabel} from ${user.username}'s available balance.`,
       user,
       transaction
     });
@@ -2282,11 +2242,9 @@ app.post('/api/admin/members/create', requireAdminAuth, (req, res) => {
     network: 'TRC20',
     balance: initBal,
     frozenBalance: 0.0,
-    etbBalance: initBal,
-    etbFrozenBalance: 0.0,
-    usdBalance: 0.0,
+    usdBalance: initBal,
     usdFrozenBalance: 0.0,
-    activeCurrency: 'ETB',
+    activeCurrency: 'USD',
     totalAssets: initBal,
     vipLevel: vLevel,
     referralCode: referralCode?.trim() || `JB${Math.floor(100000 + Math.random() * 900000)}`,
@@ -2394,7 +2352,7 @@ app.post('/api/admin/deposits/:id/action', requireAdminAuth, (req, res) => {
 
     // Restore active income status if minimum threshold is reached
     const workingBalance = isUsd ? user.usdBalance : user.etbBalance;
-    const minRequired = isUsd ? 10 : 2000;
+    const minRequired = isUsd ? 30 : 2000;
     if (user.isIncomePaused && workingBalance >= minRequired) {
       user.isIncomePaused = false;
       user.incomePauseReason = undefined;
@@ -2528,11 +2486,11 @@ app.post('/api/admin/withdrawals/:id/action', requireAdminAuth, (req, res) => {
 
     // Check minimum threshold for current currency
     const workingBalance = isUsd ? user.usdBalance : user.etbBalance;
-    const minRequired = isUsd ? 10 : 2000;
+    const minRequired = isUsd ? 30 : 2000;
     if (workingBalance < minRequired) {
       user.isIncomePaused = true;
       user.incomePauseReason = isUsd
-        ? 'Minimum $10.00 USDT Balance Required to Work and Earn VIP Yield'
+        ? 'Minimum $30.00 USDT Balance Required to Work and Earn VIP Yield'
         : 'Minimum 2,000 ETB Balance Required to Work and Earn VIP Yield';
     }
 
@@ -2564,7 +2522,7 @@ app.post('/api/admin/withdrawals/:id/action', requireAdminAuth, (req, res) => {
     }
 
     const workingBalance = isUsd ? user.usdBalance : user.etbBalance;
-    const minRequired = isUsd ? 10 : 2000;
+    const minRequired = isUsd ? 30 : 2000;
     if (user.isIncomePaused && workingBalance >= minRequired) {
       user.isIncomePaused = false;
       user.incomePauseReason = undefined;
@@ -2829,11 +2787,45 @@ app.post('/api/admin/backups/import', requireAdminAuth, (req, res) => {
   });
 });
 
+// GET Post/Pre-Deployment Financial Verification Status
+app.get('/api/admin/system/deploy-verification', requireAdminAuth, (req, res) => {
+  const status = getVerificationStatus();
+  res.json({
+    success: true,
+    ...status
+  });
+});
+
+// POST Run Manual Pre-Deployment Live Backup & Verification Audit
+app.post('/api/admin/system/deploy-verification/run', requireAdminAuth, (req, res) => {
+  const manifest = createPreDeploymentSnapshot('Manual Financial Verification & Backup Run from Admin Portal');
+  const report = verifyPostDeployment();
+  res.json({
+    success: true,
+    manifest,
+    report,
+    message: report?.message || 'Deployment verification completed.'
+  });
+});
+
 // User: Update Profile
 app.put('/api/user/profile', (req, res) => {
   const targetId = resolveUserId(req);
   const user = users[targetId] || users[PRIMARY_USER_ID];
   if (!user) return res.status(404).json({ error: 'User not found' });
+
+  // CRITICAL FINANCIAL SECURITY: Explicitly reject any attempt to pass protected financial fields
+  const forbiddenFields = [
+    'balance', 'etbBalance', 'usdBalance', 'frozenBalance', 'etbFrozenBalance',
+    'usdFrozenBalance', 'totalAssets', 'vipLevel', 'totalDeposit', 'totalWithdrawal',
+    'totalEarnedIncome', 'todayEarnedIncome', 'totalVipProfit', 'totalTeamCommission'
+  ];
+  for (const field of forbiddenFields) {
+    if (req.body[field] !== undefined) {
+      console.warn(`[SECURITY ALERT] Rejected unauthorized attempt by user ${user.id} to tamper with financial field: ${field}`);
+      return res.status(403).json({ error: 'Security violation: Members cannot manipulate financial balances, assets, or VIP tiers.' });
+    }
+  }
 
   const { username, email, phone, walletAddress, avatar } = req.body;
   if (username) user.username = username;
@@ -2852,6 +2844,19 @@ app.put('/api/user/security', (req, res) => {
   const targetId = resolveUserId(req);
   const user = users[targetId] || users[PRIMARY_USER_ID];
   if (!user) return res.status(404).json({ error: 'User not found' });
+
+  // CRITICAL FINANCIAL SECURITY: Explicitly reject any attempt to pass protected financial fields
+  const forbiddenFields = [
+    'balance', 'etbBalance', 'usdBalance', 'frozenBalance', 'etbFrozenBalance',
+    'usdFrozenBalance', 'totalAssets', 'vipLevel', 'totalDeposit', 'totalWithdrawal',
+    'totalEarnedIncome', 'todayEarnedIncome', 'totalVipProfit', 'totalTeamCommission'
+  ];
+  for (const field of forbiddenFields) {
+    if (req.body[field] !== undefined) {
+      console.warn(`[SECURITY ALERT] Rejected unauthorized attempt by user ${user.id} to tamper with financial field: ${field}`);
+      return res.status(403).json({ error: 'Security violation: Members cannot manipulate financial balances, assets, or VIP tiers.' });
+    }
+  }
 
   const { autoCompound } = req.body;
   if (autoCompound !== undefined) user.autoCompound = Boolean(autoCompound);
@@ -2905,6 +2910,14 @@ async function startServer() {
     app.get('*', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
+  }
+
+  // CRITICAL BALANCE & FINANCIAL DATA SECURITY: Automated verification on every server start / reload
+  try {
+    const postReport = verifyPostDeployment();
+    console.log(`[DeployGuard] Server start verification: ${postReport.status}. Protected ${postReport.currentMemberCount} members (${postReport.currentTotalEtb.toLocaleString()} ETB, $${postReport.currentTotalUsd.toFixed(2)} USDT).`);
+  } catch (e) {
+    console.error('[DeployGuard] Server start verification exception:', e);
   }
 
   app.listen(PORT, '0.0.0.0', () => {

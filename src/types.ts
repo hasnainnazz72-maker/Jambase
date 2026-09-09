@@ -21,17 +21,15 @@ export interface User {
   walletAddress?: string;
   network?: string; // 'TRC20' | 'BEP20'
   
-  // Strictly Separated Wallets
-  etbBalance?: number; // Available balance in ETB
-  etbFrozenBalance?: number; // Frozen balance in ETB
+  // Pure USD/USDT Balances
   usdBalance?: number; // Available balance in USD (USDT)
   usdFrozenBalance?: number; // Frozen balance in USD (USDT)
-  activeCurrency?: 'ETB' | 'USD'; // Currently active working currency (default 'ETB')
+  activeCurrency?: 'USD' | string; // Active currency (default USD)
 
-  // Working & Legacy references
-  balance: number; // Mirrors active currency balance
-  frozenBalance: number; // Mirrors active currency frozen balance
-  totalAssets: number; // Mirrors active currency total assets
+  // Primary balance references (in USD/USDT)
+  balance: number; // Available balance in USD/USDT
+  frozenBalance: number; // Frozen balance in USD/USDT
+  totalAssets: number; // Total assets in USD/USDT
 
   vipLevel: number;
   referralCode: string;
@@ -54,16 +52,11 @@ export interface User {
   todayConcertIncome: number;
   todayFinancialIncome: number;
 
-  // Separated Accumulators
-  etbTotalEarnedIncome?: number;
+  // Historical USD Accumulators
   usdTotalEarnedIncome?: number;
-  etbTotalDeposit?: number;
   usdTotalDeposit?: number;
-  etbTotalWithdrawal?: number;
   usdTotalWithdrawal?: number;
-  todayEtbProfit?: number;
   todayUsdProfit?: number;
-  lastProfitClaimDate_ETB?: string;
   lastProfitClaimDate_USD?: string;
 
   totalDeposit?: number;
@@ -245,8 +238,8 @@ export interface WithdrawalRequest {
   userBalanceAtRequest?: number;
   currentUserBalance?: number;
   amount: number;
-  currency?: 'ETB' | 'USD';
-  fee: number; // 7% service fee
+  currency?: 'USD' | string;
+  fee: number; // 5% service fee
   netAmount: number;
   bankName?: string;
   accountHolder?: string;
