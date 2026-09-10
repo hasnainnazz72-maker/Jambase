@@ -103,6 +103,20 @@ export const setAdminToken = (token: string) => {
 export const getAdminToken = () => adminAuthToken;
 
 let memberUserId: string = (typeof window !== 'undefined' && localStorage.getItem('jambase_member_user_id')) || '';
+let memberAuthToken: string = (typeof window !== 'undefined' && localStorage.getItem('jambase_member_token')) || '';
+
+export const setMemberToken = (token: string) => {
+  memberAuthToken = token;
+  if (typeof window !== 'undefined') {
+    if (token) {
+      localStorage.setItem('jambase_member_token', token);
+    } else {
+      localStorage.removeItem('jambase_member_token');
+    }
+  }
+};
+
+export const getMemberToken = () => memberAuthToken;
 
 export const setMemberUserId = (userId: string) => {
   memberUserId = userId;
@@ -117,8 +131,61 @@ export const setMemberUserId = (userId: string) => {
 
 export const getMemberUserId = () => memberUserId;
 
+/**
+ * Persists an authenticated user session to localStorage.
+ * Ensures the session survives page reloads, referral link clicks, and browser restarts.
+ */
+export const setMemberSession = (user: User, token?: string) => {
+  if (!user || !user.id) return;
+  setMemberUserId(user.id);
+  const finalToken = token || `jwt-${user.id}-${Date.now()}`;
+  setMemberToken(finalToken);
+
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('jambase_member_authenticated', 'true');
+      localStorage.setItem('jambase_member_username', user.username || '');
+      localStorage.setItem('jambase_member_user', JSON.stringify(user));
+      // Clear pending referral code once registration/login completes so it cannot overwrite existing user
+      localStorage.removeItem('jambase_locked_referral');
+    } catch {}
+  }
+};
+
+/**
+ * Checks synchronously whether a valid active user session is present on this device.
+ */
+export const hasActiveMemberSession = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  try {
+    const uid = localStorage.getItem('jambase_member_user_id') || memberUserId;
+    const isAuth = localStorage.getItem('jambase_member_authenticated');
+    const token = localStorage.getItem('jambase_member_token') || memberAuthToken;
+
+    if (isAuth === 'false') return false;
+    if (uid && uid.trim().length > 0) return true;
+    if (token && token.trim().length > 0) return true;
+    return false;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Clears all active member session data upon logout.
+ */
 export const clearMemberSession = () => {
   setMemberUserId('');
+  setMemberToken('');
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.removeItem('jambase_member_user_id');
+      localStorage.removeItem('jambase_member_token');
+      localStorage.removeItem('jambase_member_authenticated');
+      localStorage.removeItem('jambase_member_username');
+      localStorage.removeItem('jambase_member_user');
+    } catch {}
+  }
 };
 
 const getUserHeaders = (extra: Record<string, string> = {}) => {
@@ -129,6 +196,10 @@ const getUserHeaders = (extra: Record<string, string> = {}) => {
   const uid = getMemberUserId();
   if (uid) {
     headers['X-User-Id'] = uid;
+  }
+  const token = getMemberToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
   }
   return headers;
 };
@@ -600,7 +671,7 @@ export const api = {
     return data;
   },
 
-  async registerUser(regData: { username: string; countryCode: string; phone: string; password: string; referralCode?: string }): Promise<{ success: boolean; message: string; user: User }> {
+  async registerUser(regData: { username: string; countryCode: string; phone: string; password: string; referralCode?: string }): Promise<{ success: boolean; message: string; user: User; token?: string }> {
     const res = await fetch('/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -609,12 +680,12 @@ export const api = {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Registration failed');
     if (data.user?.id) {
-      setMemberUserId(data.user.id);
+      setMemberSession(data.user, data.token);
     }
     return data;
   },
 
-  async loginUser(loginData: { username: string; password: string }): Promise<{ success: boolean; message: string; user: User }> {
+  async loginUser(loginData: { username: string; password: string }): Promise<{ success: boolean; message: string; user: User; token?: string }> {
     const res = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -623,9 +694,34 @@ export const api = {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Login failed');
     if (data.user?.id) {
-      setMemberUserId(data.user.id);
+      setMemberSession(data.user, data.token);
     }
     return data;
+  },
+
+  async verifyMemberSession(): Promise<{ authenticated: boolean; user: User | null }> {
+    if (!hasActiveMemberSession()) {
+      return { authenticated: false, user: null };
+    }
+    try {
+      const res = await fetch('/api/auth/session', {
+        headers: getUserHeaders()
+      });
+      if (!res.ok) {
+        return { authenticated: false, user: null };
+      }
+      const data = await res.json();
+      if (data.authenticated && data.user) {
+        setMemberSession(data.user);
+        return { authenticated: true, user: data.user };
+      } else {
+        clearMemberSession();
+        return { authenticated: false, user: null };
+      }
+    } catch {
+      // Network interruption fallback: keep active session so user is not logged out during connectivity glitches
+      return { authenticated: true, user: null };
+    }
   },
 
   logoutUser() {

@@ -1775,6 +1775,42 @@ app.post('/api/auth/login', (req, res) => {
   });
 });
 
+// GET Current Member Authenticated Session Validation
+app.get('/api/auth/session', (req, res) => {
+  const headerUserId = req.headers['x-user-id'] as string;
+  const authHeader = req.headers['authorization'] || '';
+  let tokenUserId = '';
+
+  if (authHeader.startsWith('Bearer jwt-')) {
+    const raw = authHeader.slice(7);
+    const lastDash = raw.lastIndexOf('-');
+    if (lastDash > 4) {
+      tokenUserId = raw.substring(4, lastDash);
+    }
+  }
+
+  const candidateId = (headerUserId && users[headerUserId])
+    ? headerUserId
+    : (tokenUserId && users[tokenUserId])
+      ? tokenUserId
+      : null;
+
+  if (candidateId && users[candidateId]) {
+    const user = recalculateUserState(candidateId);
+    return res.json({
+      success: true,
+      authenticated: true,
+      user
+    });
+  }
+
+  return res.json({
+    success: false,
+    authenticated: false,
+    user: null
+  });
+});
+
 // ==========================================
 // ADMIN CONTROL APIs
 // ==========================================

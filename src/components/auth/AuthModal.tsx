@@ -50,13 +50,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const isCodeLocked = Boolean(isReferralLocked || effectiveLockedCode);
 
   useEffect(() => {
+    if (isOpen) {
+      setMode(initialMode || 'register');
+      setErrorMsg(null);
+    }
     if (effectiveLockedCode) {
       setReferralCode(effectiveLockedCode);
-      if (initialMode === 'register' || isReferralLocked) {
-        setMode('register');
-      }
     }
-  }, [effectiveLockedCode, initialMode, isReferralLocked, isOpen]);
+  }, [isOpen, initialMode, effectiveLockedCode]);
 
   // Generate random 4-character alphanumeric captcha
   const generateCaptcha = () => {

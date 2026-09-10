@@ -10,7 +10,7 @@ import {
   Globe
 } from 'lucide-react';
 import { User, VIPTier, PlatformNotice } from '../../types';
-import { TeamResponse, FinanceResponse, IncomeResponse } from '../../services/api';
+import { api, TeamResponse, FinanceResponse, IncomeResponse } from '../../services/api';
 import { VIP_TIERS } from '../../data/seedData';
 import { TeamReportModal } from '../mine/TeamReportModal';
 import { TransactionHistoryModal } from '../mine/TransactionHistoryModal';
@@ -33,6 +33,7 @@ interface MineViewProps {
   onRefresh: () => void;
   onNavigateTab: (tab: any) => void;
   onOpenAuthModal?: (mode?: 'login' | 'register') => void;
+  onLogout?: () => void;
 }
 
 export const MineView: React.FC<MineViewProps> = ({
@@ -44,7 +45,8 @@ export const MineView: React.FC<MineViewProps> = ({
   notices,
   onRefresh,
   onNavigateTab,
-  onOpenAuthModal
+  onOpenAuthModal,
+  onLogout
 }) => {
   const { t, currentLanguageOption } = useLanguage();
 
@@ -280,9 +282,13 @@ export const MineView: React.FC<MineViewProps> = ({
       <div className="pt-6 pb-2 text-center">
         <button
           onClick={() => {
-            if (onOpenAuthModal) {
+            if (onLogout) {
+              onLogout();
+            } else if (onOpenAuthModal) {
+              api.logoutUser();
               onOpenAuthModal('login');
             } else {
+              api.logoutUser();
               setShowAuthModal(true);
             }
           }}

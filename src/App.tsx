@@ -24,7 +24,15 @@ import {
   TicketPurchase,
   TaskItem
 } from './types';
-import { api, IncomeResponse, FinanceResponse, TeamResponse } from './services/api';
+import {
+  api,
+  IncomeResponse,
+  FinanceResponse,
+  TeamResponse,
+  hasActiveMemberSession,
+  setMemberSession,
+  clearMemberSession
+} from './services/api';
 import { VIP_TIERS } from './data/seedData';
 
 export default function App() {
@@ -63,8 +71,8 @@ export default function App() {
   const [lockedReferralCode, setLockedReferralCode] = useState<string>('');
   const [isReferralLocked, setIsReferralLocked] = useState<boolean>(false);
 
-  // Automatic Referral Link and URL routing detection
-  useEffect(() => {
+  // Check and process referral link and authentication state
+  const handleRoutingAndReferral = useCallback(() => {
     if (typeof window === 'undefined') return;
 
     // Detect referral query parameter from window.location.search or hash
@@ -84,6 +92,37 @@ export default function App() {
     const hash = window.location.hash.toLowerCase();
     const isExplicitRegister = pathname === '/register' || hash.startsWith('#/register') || hash === '#register';
 
+    // REQUIREMENT 3 & 5: Check existing valid authentication session FIRST!
+    const isAuthenticated = hasActiveMemberSession();
+
+    if (isAuthenticated) {
+      // User is already logged in!
+      // - Detect the existing valid authentication session first
+      // - Keep the user logged in
+      // - Open their existing account/home/dashboard directly
+      // - Do NOT show the Registration page
+      // - Do NOT require them to log in again
+      // - Do NOT overwrite existing sponsor/referral relationship
+      setShowAuthModal(false);
+
+      // Clean referral query param from address bar so it doesn't linger or re-trigger
+      if (refParam || isExplicitRegister) {
+        try {
+          const cleanPath = isExplicitRegister ? '/' : window.location.pathname;
+          let cleanHash = window.location.hash;
+          if (cleanHash.includes('?')) {
+            cleanHash = cleanHash.split('?')[0];
+          }
+          if (isExplicitRegister) {
+            cleanHash = '';
+          }
+          window.history.replaceState(null, '', (cleanPath === '/register' ? '/' : cleanPath) + cleanHash);
+        } catch (e) {}
+      }
+      return;
+    }
+
+    // REQUIREMENT 1: User does NOT have an active account/session (first time visitor or logged out)
     if (refParam && refParam.trim()) {
       const cleanRef = refParam.trim().toUpperCase();
       try {
@@ -109,12 +148,15 @@ export default function App() {
     }
   }, []);
 
-  // Sync URL route changes (e.g. /admin vs /)
+  // Sync URL route changes and referral detection
   useEffect(() => {
+    handleRoutingAndReferral();
+
     const handleLocationChange = () => {
       const path = window.location.pathname.toLowerCase();
       const hash = window.location.hash.toLowerCase();
       setIsAdminRoute(path.startsWith('/admin') || hash.startsWith('#/admin') || hash === '#admin');
+      handleRoutingAndReferral();
     };
 
     window.addEventListener('popstate', handleLocationChange);
@@ -123,11 +165,19 @@ export default function App() {
       window.removeEventListener('popstate', handleLocationChange);
       window.removeEventListener('hashchange', handleLocationChange);
     };
-  }, []);
+  }, [handleRoutingAndReferral]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  const handleLogout = () => {
+    api.logoutUser();
+    setUser(null);
+    showToast('Signed out successfully.');
+    setAuthModalMode('login');
+    setShowAuthModal(true);
   };
 
   // Primary data fetcher for public member site
@@ -160,6 +210,9 @@ export default function App() {
       ]);
 
       setUser(userData || null);
+      if (userData && hasActiveMemberSession()) {
+        setMemberSession(userData);
+      }
       setTickets(ticketsData || []);
       setArtists(artistsData || []);
       setCategories(categoriesData || []);
@@ -170,8 +223,11 @@ export default function App() {
       setIncomeData(incomeRes || null);
       setFinanceData(financeRes || null);
       setTeamData(teamRes || null);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to load initial data from server', err);
+      if (err?.message?.includes('User not found') || err?.message?.includes('unauthorized')) {
+        clearMemberSession();
+      }
     }
   }, []);
 
@@ -285,6 +341,7 @@ export default function App() {
                 setAuthModalMode(mode || 'register');
                 setShowAuthModal(true);
               }}
+              onLogout={handleLogout}
             />
           )}
         </main>
@@ -337,12 +394,25 @@ export default function App() {
         {/* Global Authentication & Referral Modal */}
         <AuthModal
           isOpen={showAuthModal}
-          onClose={() => setShowAuthModal(false)}
+          onClose={() => {
+            setShowAuthModal(false);
+            try {
+              if (window.location.pathname.toLowerCase() === '/register' || window.location.hash.toLowerCase().includes('register')) {
+                window.history.replaceState(null, '', '/');
+              }
+            } catch (e) {}
+          }}
           onSuccess={(authenticatedUser) => {
             setUser(authenticatedUser);
+            setMemberSession(authenticatedUser);
             setShowAuthModal(false);
+            setLockedReferralCode('');
+            setIsReferralLocked(false);
             showToast(`Welcome ${authenticatedUser.username}! Successfully authenticated.`);
             setCurrentTab('mine');
+            try {
+              window.history.replaceState(null, '', '/');
+            } catch (e) {}
             loadAllData();
           }}
           initialMode={authModalMode}
