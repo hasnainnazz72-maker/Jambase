@@ -26,7 +26,9 @@ export const GrabView: React.FC<GrabViewProps> = ({
   const [utcCountdown, setUtcCountdown] = useState('');
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string; profit?: number } | null>(null);
 
-  // Unified USD/USDT Balance
+  // Unified USD/USDT Balance & Active Currency
+  const activeCurrency = user?.activeCurrency || 'USD';
+  const isUsd = true;
   const workingBalance = user?.balance ?? user?.usdBalance ?? 0;
   const minRequiredBalance = 30; // VIP 1 minimum qualifying amount ($30)
   const currencyUnit = 'USDT';
@@ -107,7 +109,7 @@ export const GrabView: React.FC<GrabViewProps> = ({
         particleCount: 100,
         spread: 75,
         origin: { y: 0.6 },
-        colors: isUsd ? ['#3B82F6', '#10B981', '#F59E0B', '#60A5FA'] : ['#DC2626', '#EF4444', '#F59E0B', '#EAB308', '#FFD700']
+        colors: ['#F59E0B', '#10B981', '#EAB308', '#EF4444', '#FFD700', '#3B82F6']
       });
 
       const profitEarned = res.totalProfit || estimatedDailyProfit;

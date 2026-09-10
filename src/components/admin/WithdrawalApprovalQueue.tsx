@@ -20,7 +20,8 @@ import {
   Info,
   X,
   AlertTriangle,
-  Building2
+  Building2,
+  Coins
 } from 'lucide-react';
 import { WithdrawalRequest } from '../../types';
 import { api } from '../../services/api';

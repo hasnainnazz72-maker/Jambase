@@ -59,6 +59,15 @@ export interface User {
   todayUsdProfit?: number;
   lastProfitClaimDate_USD?: string;
 
+  // Optional legacy database fields for backward-compatibility
+  etbBalance?: number;
+  etbFrozenBalance?: number;
+  etbTotalDeposit?: number;
+  etbTotalWithdrawal?: number;
+  etbTotalEarnedIncome?: number;
+  todayEtbProfit?: number;
+  lastProfitClaimDate_ETB?: string;
+
   totalDeposit?: number;
   totalWithdrawal?: number;
   totalPurchases?: number;
