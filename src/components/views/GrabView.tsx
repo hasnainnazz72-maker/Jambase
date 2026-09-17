@@ -30,7 +30,7 @@ export const GrabView: React.FC<GrabViewProps> = ({
   const activeCurrency = user?.activeCurrency || 'USD';
   const isUsd = true;
   const workingBalance = user?.balance ?? user?.usdBalance ?? 0;
-  const minRequiredBalance = 30; // VIP 1 minimum qualifying amount ($30)
+  const minRequiredBalance = 10; // VIP 1 minimum qualifying amount ($10)
   const currencyUnit = 'USDT';
   const currentVipLevel = user?.vipLevel ?? 1;
 
@@ -81,7 +81,7 @@ export const GrabView: React.FC<GrabViewProps> = ({
     if (workingBalance < minRequiredBalance) {
       setFeedback({
         type: 'error',
-        message: `Minimum balance required to perform Grab is $30.00 USDT (VIP 1). Please recharge your wallet.`
+        message: `Minimum balance required to perform Grab is $10.00 USDT (VIP 1). Please recharge your wallet.`
       });
       return;
     }
@@ -179,7 +179,7 @@ export const GrabView: React.FC<GrabViewProps> = ({
               ${workingBalance.toFixed(2)} USDT
             </span>
             <span className="text-[9px] text-neutral-400 mt-0.5 block">
-              Min. Required: $30.00 USDT (VIP 1)
+              Min. Required: $10.00 USDT (VIP 1)
             </span>
           </div>
           <div className="p-3 rounded-2xl bg-black/60 border border-neutral-800/80">
@@ -286,7 +286,7 @@ export const GrabView: React.FC<GrabViewProps> = ({
                 {workingBalance < minRequiredBalance && (
                   <div className="mt-3 space-y-2">
                     <p className="text-xs text-red-400 font-semibold leading-snug">
-                      USDT balance (${workingBalance.toFixed(2)}) is below the $30.00 USDT minimum requirement (VIP 1).
+                      USDT balance (${workingBalance.toFixed(2)}) is below the $10.00 USDT minimum requirement (VIP 1).
                     </p>
                     <button
                       onClick={() => onNavigateTab('finance')}
@@ -372,7 +372,7 @@ export const GrabView: React.FC<GrabViewProps> = ({
         <ul className="space-y-1.5 text-[11px] text-neutral-400 leading-relaxed list-disc list-inside">
           <li><strong className="text-neutral-200">Exclusive Income:</strong> Grab is the ONLY source of member income.</li>
           <li><strong className="text-neutral-200">Crypto Operations:</strong> Deposits and withdrawals are processed exclusively via USDT (TRC20 / BEP20).</li>
-          <li><strong className="text-neutral-200">VIP Thresholds:</strong> VIP 1 starts at $30 USDT (1.9% daily). Higher tiers require qualifying balance and valid direct members.</li>
+          <li><strong className="text-neutral-200">VIP Thresholds:</strong> VIP 1 starts at $10 USDT (1.9% daily). Higher tiers require qualifying balance and valid direct members.</li>
           <li><strong className="text-neutral-200">Daily Cycle:</strong> 1 Grab task available per UTC day (resets 00:00:00 UTC).</li>
           <li><strong className="text-neutral-200">Compounding:</strong> Profit is calculated on active balance and credited directly each day.</li>
           <li><strong className="text-neutral-200">Team Commission:</strong> Uplines earn commissions from direct team Grab income (Tier 1: 16%, Tier 2: 8%, Tier 3: 4%).</li>

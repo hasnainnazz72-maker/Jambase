@@ -90,8 +90,8 @@ export const SupportModal: React.FC<SupportModalProps> = ({
       a: 'Daily income is calculated automatically at 00:00 UTC based on your Total Assets (Available + Frozen) multiplied by your active VIP Tier rate (1.9% for VIP 1 up to 6.0% for VIP 6).'
     },
     {
-      q: 'What is the $30 USDT minimum balance rule?',
-      a: 'To participate in VIP daily yield, accounts must maintain at least $30.00 USDT in total assets (VIP 1). If your balance drops below $30 USDT, daily income is paused until recharged.'
+      q: 'What is the $10 USDT minimum balance rule?',
+      a: 'To participate in VIP daily yield, accounts must maintain at least $10.00 USDT in total assets (VIP 1). If your balance drops below $10 USDT, daily income is paused until recharged.'
     },
     {
       q: 'How do multi-tier referral commissions work?',

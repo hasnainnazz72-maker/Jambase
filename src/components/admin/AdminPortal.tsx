@@ -985,7 +985,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
               </div>
               <div className="p-4 rounded-xl bg-black/50 border border-neutral-850 space-y-1">
                 <div className="text-neutral-400 font-medium">Minimum Active Yield Threshold</div>
-                <div className="text-white font-bold">$30 USDT Total Assets</div>
+                <div className="text-white font-bold">$10 USDT Total Assets</div>
               </div>
               <div className="p-4 rounded-xl bg-black/50 border border-neutral-850 space-y-1">
                 <div className="text-neutral-400 font-medium">Minimum Withdrawal Limit</div>
@@ -993,7 +993,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
               </div>
               <div className="p-4 rounded-xl bg-black/50 border border-neutral-850 space-y-1">
                 <div className="text-neutral-400 font-medium">Minimum Recharge Limit</div>
-                <div className="text-white font-bold">$30 USDT (Crypto Only)</div>
+                <div className="text-white font-bold">$10 USDT (Crypto Only)</div>
               </div>
               <div className="p-4 rounded-xl bg-black/50 border border-neutral-850 space-y-1">
                 <div className="text-neutral-400 font-medium">Official Payment Method</div>

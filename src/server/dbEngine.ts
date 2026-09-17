@@ -535,7 +535,7 @@ const getInitialSeedDatabase = (): PlatformDatabaseSchema => {
       totalTeamMembersCount: 0,
       totalTeamDeposit: 20.0,
       isIncomePaused: true,
-      incomePauseReason: 'Minimum $30.00 Account Balance Required to Work and Earn VIP Yield',
+      incomePauseReason: 'Minimum $10.00 Account Balance Required to Work and Earn VIP Yield',
       autoCompound: true,
       totalEarnedIncome: 1.20,
       totalVipProfit: 1.20,
@@ -804,9 +804,9 @@ class DatabaseManager {
               u.frozenBalance = u.usdFrozenBalance || 0;
               u.totalAssets = Number((u.balance + u.frozenBalance).toFixed(2));
 
-              if (u.incomePauseReason && (u.incomePauseReason.includes('ETB') || u.incomePauseReason.includes('$10'))) {
-                u.incomePauseReason = u.balance < 30 ? 'Minimum $30.00 Account Balance Required to Work and Earn VIP Yield' : undefined;
-                u.isIncomePaused = u.balance < 30;
+              if (u.incomePauseReason && (u.incomePauseReason.includes('ETB') || u.incomePauseReason.includes('$30') || u.incomePauseReason.includes('$10'))) {
+                u.incomePauseReason = u.balance < 10 ? 'Minimum $10.00 Account Balance Required to Work and Earn VIP Yield' : undefined;
+                u.isIncomePaused = u.balance < 10;
                 needsSave = true;
               }
             }

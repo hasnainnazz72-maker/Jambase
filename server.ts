@@ -430,7 +430,7 @@ function getReferralsForUser(user: User): ReferralMember[] {
 
 /**
  * Recalculate user's VIP level, valid direct members count, daily ticket balance cycle, and income pause state
- * VIP 1: $30–$499 — 1.9% daily profit
+ * VIP 1: $10–$499 — 1.9% daily profit
  * VIP 2: $500–$1,999 — 2.5% daily profit — 3 valid direct members required
  * VIP 3: $2,000–$4,999 — 3.0% daily profit — 5 valid direct members required
  * VIP 4: $5,000–$20,000 — 4.0% daily profit — 10 valid direct members required
@@ -537,10 +537,10 @@ function recalculateUserState(userId: string = PRIMARY_USER_ID) {
   }
 
   // MINIMUM BALANCE REQUIREMENT FOR WORK / GRAB:
-  // USD users: minimum balance required to use Grab/Work = $30 USDT (VIP 1 minimum).
-  if (user.balance < 30) {
+  // USD users: minimum balance required to use Grab/Work = $10 USDT (VIP 1 minimum: $10–$499).
+  if (user.balance < 10) {
     user.isIncomePaused = true;
-    user.incomePauseReason = 'Minimum $30.00 USDT Balance Required to Work and Earn VIP Yield';
+    user.incomePauseReason = 'Minimum $10.00 USDT Balance Required to Work and Earn VIP Yield';
   } else {
     user.isIncomePaused = false;
     user.incomePauseReason = undefined;
@@ -660,10 +660,10 @@ const handleDailyProfitClaim = (req: express.Request, res: express.Response) => 
     });
   }
 
-  // Minimum balance verification: $30 USDT minimum for VIP 1
-  if (user.balance < 30) {
+  // Minimum balance verification: $10 USDT minimum for VIP 1 and Grab
+  if (user.balance < 10) {
     return res.status(400).json({
-      error: `Minimum $30.00 USDT Available Balance is required to use Grab/Work. Your current balance is $${user.balance.toFixed(2)} USDT. Grab is disabled.`
+      error: `Minimum $10.00 USDT Available Balance is required to use Grab/Work. Your current balance is $${user.balance.toFixed(2)} USDT. Grab is disabled for any amount below $10.00 USDT.`
     });
   }
 
@@ -1048,7 +1048,7 @@ app.post('/api/finance/deposit', (req, res) => {
   const isUsd = currency === 'USD';
 
   if (isNaN(depAmount) || depAmount < 10) {
-    return res.status(400).json({ error: 'Minimum recharge amount for USDT is $10.00 USDT ($30.00 USDT minimum for VIP 1)' });
+    return res.status(400).json({ error: 'Minimum recharge amount for USDT is $10.00 USDT (VIP 1 minimum: $10.00 USDT)' });
   }
 
   const cleanNetwork = (network || 'TRC20').toUpperCase();
@@ -1541,7 +1541,7 @@ app.post('/api/auth/register', (req, res) => {
     totalTeamMembersCount: 0,
     totalTeamDeposit: 0.0,
     isIncomePaused: true,
-    incomePauseReason: 'Minimum $30.00 USDT Account Balance Required to Work and Earn VIP Yield',
+    incomePauseReason: 'Minimum $10.00 USDT Account Balance Required to Work and Earn VIP Yield',
     autoCompound: true,
     totalEarnedIncome: 0.0,
     todayTicketIncome: 0.0,
@@ -1626,7 +1626,7 @@ app.post('/api/auth/register', (req, res) => {
 
   res.json({
     success: true,
-    message: 'Account registered successfully! Welcome to HBO JAMBASE MUSIC. Please recharge at least $30.00 USDT to activate your VIP 1 level and start earning yields.',
+    message: 'Account registered successfully! Welcome to HBO JAMBASE MUSIC. Please recharge at least $10.00 USDT to activate your VIP 1 level and start earning yields.',
     user: users[cleanUserId],
     token: `jwt-${cleanUserId}-${Date.now()}`
   });
@@ -2128,12 +2128,12 @@ app.post('/api/admin/members/:id/balance', requireAdminAuth, (req, res) => {
     }
     user.totalAssets = Number((user.balance + (user.frozenBalance || 0)).toFixed(2));
 
-    const threshold = isUsd ? 30 : 2000;
+    const threshold = isUsd ? 10 : 2000;
     const currentWorkingBal = isUsd ? user.usdBalance : user.etbBalance;
     if (currentWorkingBal < threshold) {
       user.isIncomePaused = true;
       user.incomePauseReason = isUsd
-        ? 'Minimum $30.00 USDT Balance Required to Work and Earn VIP Yield'
+        ? 'Minimum $10.00 USDT Balance Required to Work and Earn VIP Yield'
         : 'Minimum 2,000 ETB Account Balance Required to Work and Earn VIP Yield';
     }
 
@@ -2289,8 +2289,8 @@ app.post('/api/admin/members/create', requireAdminAuth, (req, res) => {
     validDirectMembersCount: 0,
     totalTeamMembersCount: 0,
     totalTeamDeposit: 0.0,
-    isIncomePaused: initBal < 30,
-    incomePauseReason: initBal < 30 ? 'Minimum $30.00 Account Balance Required to Work and Earn VIP Yield' : undefined,
+    isIncomePaused: initBal < 10,
+    incomePauseReason: initBal < 10 ? 'Minimum $10.00 Account Balance Required to Work and Earn VIP Yield' : undefined,
     autoCompound: true,
     totalEarnedIncome: 0.0,
     totalVipProfit: 0.0,
@@ -2522,11 +2522,11 @@ app.post('/api/admin/withdrawals/:id/action', requireAdminAuth, (req, res) => {
 
     // Check minimum threshold for current currency
     const workingBalance = isUsd ? user.usdBalance : user.etbBalance;
-    const minRequired = isUsd ? 30 : 2000;
+    const minRequired = isUsd ? 10 : 2000;
     if (workingBalance < minRequired) {
       user.isIncomePaused = true;
       user.incomePauseReason = isUsd
-        ? 'Minimum $30.00 USDT Balance Required to Work and Earn VIP Yield'
+        ? 'Minimum $10.00 USDT Balance Required to Work and Earn VIP Yield'
         : 'Minimum 2,000 ETB Balance Required to Work and Earn VIP Yield';
     }
 

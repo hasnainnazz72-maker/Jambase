@@ -56,7 +56,7 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
   const [withdrawNetwork, setWithdrawNetwork] = useState<'BEP20' | 'TRC20'>('TRC20');
 
   // Deposit state
-  const [depositAmount, setDepositAmount] = useState<string>('30');
+  const [depositAmount, setDepositAmount] = useState<string>('10');
   const [referenceNumber, setReferenceNumber] = useState<string>('');
   const [paymentSlipUrl, setPaymentSlipUrl] = useState<string>('');
   const [slipFileName, setSlipFileName] = useState<string>('');
@@ -153,8 +153,8 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
   // Execute Deposit Request
   const handleExecuteDeposit = async () => {
     const amt = parseFloat(depositAmount);
-    if (isNaN(amt) || amt < 30) {
-      setDepositMsg({ text: 'Minimum recharge amount is $30.00 USDT (VIP 1 qualifying requirement)', isError: true });
+    if (isNaN(amt) || amt < 10) {
+      setDepositMsg({ text: 'Minimum recharge amount is $10.00 USDT (VIP 1 qualifying requirement)', isError: true });
       return;
     }
 
@@ -447,7 +447,7 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
             <div className="flex items-center justify-between pb-2 border-b border-neutral-800">
               <div>
                 <h4 className="text-xs font-black text-white">Official {CRYPTO_DEPOSIT_INFO[depositNetwork].network} Deposit</h4>
-                <p className="text-[10px] text-amber-300">Min. Deposit: $30.00 USDT (VIP 1)</p>
+                <p className="text-[10px] text-amber-300">Min. Deposit: $10.00 USDT (VIP 1)</p>
               </div>
               <span className="px-2 py-0.5 rounded-full bg-green-500/20 text-green-300 text-[10px] font-extrabold border border-green-500/30">
                 Verified Address
@@ -499,7 +499,7 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
           <div>
             <label className="text-xs font-bold text-neutral-300 mb-1.5 block">Select Amount (USDT)</label>
             <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5">
-              {['30', '50', '100', '500', '2000', '5000', '20000'].map((amt) => (
+              {['10', '30', '50', '100', '500', '2000', '5000'].map((amt) => (
                 <button
                   key={amt}
                   type="button"
@@ -525,7 +525,7 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
               </span>
               <input
                 type="number"
-                min="30"
+                min="10"
                 step="1"
                 value={depositAmount}
                 onChange={(e) => setDepositAmount(e.target.value)}
@@ -533,7 +533,7 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
               />
             </div>
             <span className="text-[10px] text-neutral-400 mt-1 block">
-              Minimum recharge is $30.00 USDT (qualifies for VIP 1 daily earnings)
+              Minimum recharge is $10.00 USDT (qualifies for VIP 1 daily earnings)
             </span>
           </div>
 
@@ -756,13 +756,13 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
           </div>
 
           {/* Warning if remaining balance drops below VIP 1 */}
-          {remainingIfWd < 30 && (
+          {remainingIfWd < 10 && (
             <div className="p-3 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs flex items-start gap-2.5">
               <AlertTriangle size={16} className="shrink-0 text-amber-400 mt-0.5" />
               <div>
                 <span className="font-extrabold block">Notice: VIP 1 Balance Threshold</span>
                 <p className="mt-0.5 text-neutral-400">
-                  After this withdrawal, your remaining balance will be ${Math.max(0, remainingIfWd).toFixed(2)} USDT. Daily Grab earnings require at least $30.00 USDT.
+                  After this withdrawal, your remaining balance will be ${Math.max(0, remainingIfWd).toFixed(2)} USDT. Daily Grab earnings require at least $10.00 USDT.
                 </p>
               </div>
             </div>

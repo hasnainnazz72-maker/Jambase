@@ -4,11 +4,11 @@ export const VIP_TIERS: VIPTier[] = [
   {
     level: 1,
     name: 'VIP 1',
-    minBalance: 30,
+    minBalance: 10,
     maxBalance: 499,
     minDirectMembers: 0,
     dailyRate: 0.019, // 1.9%
-    description: 'VIP 1: $30–$499 with 1.9% daily profit. 0 direct members required.',
+    description: 'VIP 1: $10–$499 with 1.9% daily profit. 0 direct members required.',
     color: '#E5A93C',
     badge: '★ VIP 1'
   },
@@ -416,14 +416,14 @@ export const INITIAL_NOTICES: PlatformNotice[] = [
   {
     id: 'n-2',
     title: 'USD VIP Structure & Daily Multi-Tier Commissions Active',
-    content: 'VIP 1 ($30–$499 @ 1.9%) up to VIP 6 ($50,000–$500,000 @ 6.0%). Earn 16% (Level 1), 8% (Level 2), and 4% (Level 3) subordinate dividends in USDT in real time.',
+    content: 'VIP 1 ($10–$499 @ 1.9%) up to VIP 6 ($50,000–$500,000 @ 6.0%). Earn 16% (Level 1), 8% (Level 2), and 4% (Level 3) subordinate dividends in USDT in real time.',
     date: '2026-08-27',
     type: 'upgrade'
   },
   {
     id: 'n-3',
     title: 'System Notice: 24-Hour Daily Income Engine Executes at 00:00 UTC',
-    content: 'Minimum balance required for daily yield is $30.00 USDT (VIP 1). Ensure your available balance remains above $30.00 USDT to maintain uninterrupted daily income.',
+    content: 'Minimum balance required for daily yield is $10.00 USDT (VIP 1). Ensure your available balance remains above $10.00 USDT to maintain uninterrupted daily income.',
     date: '2026-08-26',
     type: 'system'
   }

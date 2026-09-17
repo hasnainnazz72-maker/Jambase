@@ -82,7 +82,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
     } catch {}
 
     const textToSpeak = notices[0]?.content ||
-      'Official HBO JAMBASE announcement: USDT TRC20 and BEP20 crypto recharge channels are active. Minimum recharge is $30.00 USDT. Daily Grab income is active. All member earnings are exclusively generated through the Grab feature.';
+      'Official HBO JAMBASE announcement: USDT TRC20 and BEP20 crypto recharge channels are active. Minimum recharge is $10.00 USDT. Daily Grab income is active. All member earnings are exclusively generated through the Grab feature.';
 
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(textToSpeak);
@@ -453,7 +453,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 {notices[0]?.title || 'USDT TRC20 & BEP20 Official Crypto Recharge Active'}
               </h4>
               <p className="text-neutral-400">
-                {notices[0]?.content || 'Members can recharge their accounts directly in USDT via TRC20 or BEP20 crypto transfer. Minimum recharge is $30.00 USDT. Fast admin verification upon TxID submission.'}
+                {notices[0]?.content || 'Members can recharge their accounts directly in USDT via TRC20 or BEP20 crypto transfer. Minimum recharge is $10.00 USDT. Fast admin verification upon TxID submission.'}
               </p>
 
               <div className="p-3 rounded-xl bg-neutral-900 border border-neutral-800 space-y-1">
@@ -461,7 +461,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   <Gift size={13} /> Member Income Rules:
                 </span>
                 <p className="text-[11px] text-neutral-400">
-                  Ticket purchase is closed. The only way to earn member income is through the <strong>Grab</strong> feature. Maintain account balance at or above $30.00 USDT to generate daily VIP dividends.
+                  Ticket purchase is closed. The only way to earn member income is through the <strong>Grab</strong> feature. Maintain account balance at or above $10.00 USDT to generate daily VIP dividends.
                 </p>
               </div>
             </div>

@@ -225,8 +225,8 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
                   <span className="text-[#E5A93C] font-bold flex items-center gap-1">
                     <CheckCircle2 size={13} /> Claimed for UTC {todayUtc}
                   </span>
-                ) : availableBalance < 30 ? (
-                  <span className="text-amber-400 font-bold">Min $30 USDT Balance Required</span>
+                ) : availableBalance < 10 ? (
+                  <span className="text-amber-400 font-bold">Min $10 USDT Balance Required</span>
                 ) : (
                   <span className="text-[#E5A93C] font-bold">Ready to Claim Today</span>
                 )}
@@ -247,10 +247,10 @@ export const IncomeView: React.FC<IncomeViewProps> = ({
                 Next Grab cycle unlocks at <strong>00:00:00 UTC</strong> (in {utcCountdown}).
               </p>
             </div>
-          ) : availableBalance < 30 ? (
+          ) : availableBalance < 10 ? (
             <div className="space-y-2">
               <div className="p-3 rounded-2xl bg-amber-950/30 border border-amber-800/40 text-xs text-amber-300 text-center">
-                Available balance is below $30.00 USDT. Maintain at least $30.00 USDT to qualify for VIP 1 Grab income.
+                Available balance is below $10.00 USDT. Maintain at least $10.00 USDT to qualify for VIP 1 Grab income.
               </div>
               <button
                 onClick={() => onNavigateTab('finance')}

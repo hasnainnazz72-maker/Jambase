@@ -250,7 +250,7 @@ export const MemberManagementView: React.FC<MemberManagementViewProps> = ({ onRe
     setStatusTargetUser(user);
     setStatusValue(user.status || 'active');
     setIsIncomePausedValue(Boolean(user.isIncomePaused));
-    setIncomePauseReasonValue(user.incomePauseReason || 'Minimum $30.00 Account Balance Required to Work and Earn VIP Yield');
+    setIncomePauseReasonValue(user.incomePauseReason || 'Minimum $10.00 Account Balance Required to Work and Earn VIP Yield');
     setVipLevelValue(user.vipLevel || 1);
     setWalletAddressValue(user.walletAddress || '');
     setPhoneValue(user.phone || '');
@@ -578,7 +578,7 @@ export const MemberManagementView: React.FC<MemberManagementViewProps> = ({ onRe
             >
               <option value="all" className="bg-slate-900 text-white">All Statuses</option>
               <option value="active" className="bg-slate-900 text-white">Active Only</option>
-              <option value="paused" className="bg-slate-900 text-white">Income Paused (&lt;$30 USDT)</option>
+              <option value="paused" className="bg-slate-900 text-white">Income Paused (&lt;$10 USDT)</option>
               <option value="suspended" className="bg-slate-900 text-white">Suspended</option>
               <option value="frozen" className="bg-slate-900 text-white">Frozen</option>
             </select>
@@ -1692,7 +1692,7 @@ export const MemberManagementView: React.FC<MemberManagementViewProps> = ({ onRe
                   onChange={(e) => setVipLevelValue(parseInt(e.target.value, 10))}
                   className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-amber-300 font-semibold focus:outline-none focus:border-amber-500"
                 >
-                  <option value="1">VIP 1: $30–$499 — 1.9% Daily Yield</option>
+                  <option value="1">VIP 1: $10–$499 — 1.9% Daily Yield</option>
                   <option value="2">VIP 2: $500–$1,999 — 2.5% Daily Yield (3 Valid Direct)</option>
                   <option value="3">VIP 3: $2,000–$4,999 — 3.0% Daily Yield (5 Valid Direct)</option>
                   <option value="4">VIP 4: $5,000–$20,000 — 4.0% Daily Yield (10 Valid Direct)</option>
@@ -1728,7 +1728,7 @@ export const MemberManagementView: React.FC<MemberManagementViewProps> = ({ onRe
                       type="text"
                       value={incomePauseReasonValue}
                       onChange={(e) => setIncomePauseReasonValue(e.target.value)}
-                      placeholder="Minimum $30.00 Account Balance Required..."
+                      placeholder="Minimum $10.00 Account Balance Required..."
                       className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-slate-200 text-xs"
                     />
                   </div>
@@ -1886,7 +1886,7 @@ export const MemberManagementView: React.FC<MemberManagementViewProps> = ({ onRe
                     onChange={(e) => setNewVipLevel(parseInt(e.target.value, 10))}
                     className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-amber-300 font-semibold text-xs"
                   >
-                    <option value="1">VIP 1: $30–$499 — 1.9% Daily Yield</option>
+                    <option value="1">VIP 1: $10–$499 — 1.9% Daily Yield</option>
                     <option value="2">VIP 2: $500–$1,999 — 2.5% Daily Yield (3 Direct)</option>
                     <option value="3">VIP 3: $2,000–$4,999 — 3.0% Daily Yield (5 Direct)</option>
                     <option value="4">VIP 4: $5,000–$20,000 — 4.0% Daily Yield (10 Direct)</option>
