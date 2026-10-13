@@ -42,9 +42,10 @@ import { User, Transaction, IncomeRecord, TicketPurchase, ReferralMember, AdminM
 
 interface MemberManagementViewProps {
   onRefreshOverview?: () => void;
+  refreshTrigger?: number;
 }
 
-export const MemberManagementView: React.FC<MemberManagementViewProps> = ({ onRefreshOverview }) => {
+export const MemberManagementView: React.FC<MemberManagementViewProps> = ({ onRefreshOverview, refreshTrigger }) => {
   const [members, setMembers] = useState<User[]>([]);
   const [summary, setSummary] = useState<AdminMemberSummary | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -120,23 +121,34 @@ export const MemberManagementView: React.FC<MemberManagementViewProps> = ({ onRe
     setTimeout(() => setNotification(null), 5000);
   };
 
-  const loadMembers = async () => {
-    setLoading(true);
+  const loadMembers = async (silent = false) => {
+    if (!silent) setLoading(true);
     setError(null);
     try {
       const res = await api.getAdminMembers();
       setMembers(res.members || []);
       setSummary(res.summary || null);
     } catch (err: any) {
-      setError(err.message || 'Failed to load member database');
+      if (!silent) setError(err.message || 'Failed to load member database');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
     loadMembers();
+    // Silent auto-sync every 4 seconds to guarantee live updates
+    const interval = setInterval(() => {
+      loadMembers(true);
+    }, 4000);
+    return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (refreshTrigger !== undefined && refreshTrigger > 0) {
+      loadMembers(true);
+    }
+  }, [refreshTrigger]);
 
   const openMemberDetail = async (user: User) => {
     setSelectedMemberId(user.id);

@@ -207,6 +207,17 @@ export interface Transaction {
   createdAt: string;
 }
 
+export interface AuditLogEntry {
+  id: string;
+  timestamp: string;
+  action: string;
+  performedBy: string;
+  targetType: 'user' | 'deposit' | 'withdrawal' | 'transaction' | 'system';
+  targetId: string;
+  details: string;
+  metadata?: Record<string, any>;
+}
+
 export interface AdminMemberSummary {
   totalRegistered: number;
   totalActive: number;

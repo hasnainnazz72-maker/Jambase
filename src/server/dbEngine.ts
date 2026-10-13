@@ -12,7 +12,8 @@ import {
   DepositRequest,
   TaskItem,
   ReferralMember,
-  PlatformNotice
+  PlatformNotice,
+  AuditLogEntry
 } from '../types';
 import {
   INITIAL_CATEGORIES,
@@ -37,6 +38,7 @@ export interface PlatformDatabaseSchema {
   artists: any[];
   notices: PlatformNotice[];
   userTasks: Record<string, TaskItem[]>;
+  auditLogs?: AuditLogEntry[];
   telegramSupportConfig: {
     username: string;
     link: string;
@@ -129,14 +131,14 @@ const getInitialSeedDatabase = (): PlatformDatabaseSchema => {
     totalAssets: 50.0,
     vipLevel: 1,
     referralCode: 'JAM888',
-    validDirectMembersCount: 3,
-    totalTeamMembersCount: 7,
-    totalTeamDeposit: 4200.0,
+    validDirectMembersCount: 0,
+    totalTeamMembersCount: 0,
+    totalTeamDeposit: 0.0,
     isIncomePaused: false,
     autoCompound: true,
-    totalEarnedIncome: 84.50,
-    totalVipProfit: 54.50,
-    totalTeamCommission: 30.00,
+    totalEarnedIncome: 0.0,
+    totalVipProfit: 0.0,
+    totalTeamCommission: 0.0,
     todayVipProfit: 0.0,
     todayTeamCommission: 0.0,
     todayTicketIncome: 0.0,
@@ -146,9 +148,9 @@ const getInitialSeedDatabase = (): PlatformDatabaseSchema => {
     concertExpenditure: 0.0,
     financialExpenditure: 0.0,
     dailyTicketDate: todayInitialUtc,
-    dailyTicketStartingBalance: 2500.0,
+    dailyTicketStartingBalance: 50.0,
     dailyTicketSpent: 0.0,
-    createdAt: new Date(Date.now() - 30 * 86400000).toISOString(),
+    createdAt: new Date().toISOString(),
     isAdmin: true
   };
 
@@ -746,14 +748,6 @@ class DatabaseManager {
           console.log(`[VIP Data Protection] Database loaded successfully from ${DB_FILE}. Found ${Object.keys(parsed.users).length} registered member accounts.`);
 
           let needsSave = false;
-          // Ensure all seed users exist in parsed.users if missing
-          const initialSeed = getInitialSeedDatabase();
-          for (const [seedId, seedUserObj] of Object.entries(initialSeed.users)) {
-            if (!parsed.users[seedId]) {
-              parsed.users[seedId] = seedUserObj;
-              needsSave = true;
-            }
-          }
 
           // Ensure default metadata
           if (!parsed.metadata) {
@@ -763,6 +757,48 @@ class DatabaseManager {
               dbCreatedAt: new Date().toISOString()
             };
             needsSave = true;
+          }
+
+          // Ensure auditLogs array
+          if (!parsed.auditLogs) {
+            parsed.auditLogs = [];
+            needsSave = true;
+          }
+
+          // Purge any legacy demo accounts
+          for (const uid of Object.keys(parsed.users)) {
+            if (uid.startsWith('usr-ref-') || uid.toLowerCase().includes('demo')) {
+              console.log(`[VIP Data Protection] Purged legacy demo user account: ${uid}`);
+              delete parsed.users[uid];
+              needsSave = true;
+            }
+          }
+
+          // Purge any legacy orphaned/fake demo referrals
+          if (parsed.referrals) {
+            const initialRefLen = parsed.referrals.length;
+            parsed.referrals = parsed.referrals.filter(r => {
+              if (r.id.startsWith('ref-') && !(r as any).uplineId && !(r as any).userId) return false;
+              if (r.userId && r.userId.startsWith('usr-ref-')) return false;
+              if ((r as any).uplineId && (r as any).uplineId.startsWith('usr-ref-')) return false;
+              return true;
+            });
+            if (parsed.referrals.length !== initialRefLen) {
+              needsSave = true;
+            }
+          }
+
+          // Ensure all members with 0 verified referrals have strictly ZERO team metrics
+          for (const u of Object.values(parsed.users)) {
+            const hasRefs = (parsed.referrals || []).some(r => (r as any).uplineId === u.id || (r as any).userId === u.id);
+            if (!hasRefs) {
+              if (u.validDirectMembersCount !== 0 || u.totalTeamMembersCount !== 0 || (u.totalTeamDeposit || 0) !== 0) {
+                u.validDirectMembersCount = 0;
+                u.totalTeamMembersCount = 0;
+                u.totalTeamDeposit = 0;
+                needsSave = true;
+              }
+            }
           }
 
           // Ensure default tickets in USD (migrating if older ETB tickets exist)

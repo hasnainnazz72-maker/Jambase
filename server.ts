@@ -20,7 +20,8 @@ import {
   WithdrawalRequest,
   DepositRequest,
   TaskItem,
-  ReferralMember
+  ReferralMember,
+  AuditLogEntry
 } from './src/types';
 import {
   createPreDeploymentSnapshot,
@@ -70,6 +71,7 @@ let transactions = db.transactions;
 let withdrawals = db.withdrawals;
 let deposits = db.deposits;
 let userTasks = db.userTasks;
+let auditLogs: AuditLogEntry[] = db.auditLogs || [];
 let telegramSupportConfig = db.telegramSupportConfig;
 
 /**
@@ -89,6 +91,7 @@ function syncMemoryPointers() {
   withdrawals = db.withdrawals;
   deposits = db.deposits;
   userTasks = db.userTasks;
+  auditLogs = db.auditLogs || [];
   telegramSupportConfig = db.telegramSupportConfig;
 }
 
@@ -108,8 +111,64 @@ function persistDb(reason?: string, triggerBackup: boolean = false) {
   db.withdrawals = withdrawals;
   db.deposits = deposits;
   db.userTasks = userTasks;
+  db.auditLogs = auditLogs;
   db.telegramSupportConfig = telegramSupportConfig;
   dbManager.save(reason, triggerBackup);
+}
+
+/**
+ * Generate cryptographically collision-free unique IDs for entities and transactions
+ */
+function generateUniqueId(prefix: string): string {
+  const ts = Date.now().toString(36).toUpperCase();
+  const rand = crypto.randomBytes(4).toString('hex').toUpperCase();
+  return `${prefix}-${ts}-${rand}`;
+}
+
+/**
+ * Real-Time Admin Event Broadcasting & Audit Logging Engine
+ */
+const adminSseClients = new Set<express.Response>();
+
+function broadcastAdminActivity(event: {
+  type: string;
+  title: string;
+  description: string;
+  performedBy?: string;
+  targetType?: 'user' | 'deposit' | 'withdrawal' | 'transaction' | 'system';
+  targetId?: string;
+  data?: any;
+}) {
+  const logEntry: AuditLogEntry = {
+    id: generateUniqueId('AUD'),
+    timestamp: new Date().toISOString(),
+    action: event.type,
+    performedBy: event.performedBy || 'System',
+    targetType: event.targetType || 'system',
+    targetId: event.targetId || '',
+    details: `${event.title} - ${event.description}`,
+    metadata: event.data
+  };
+
+  auditLogs.unshift(logEntry);
+  if (auditLogs.length > 500) {
+    auditLogs.pop();
+  }
+
+  // Push SSE event to all connected admin portals immediately
+  const payload = JSON.stringify({
+    ...event,
+    logEntry,
+    timestamp: logEntry.timestamp
+  });
+
+  for (const client of adminSseClients) {
+    try {
+      client.write(`data: ${payload}\n\n`);
+    } catch {
+      adminSseClients.delete(client);
+    }
+  }
 }
 
 export const PLATFORM_WALLETS = {
@@ -386,11 +445,12 @@ function getReferralsForUser(user: User): ReferralMember[] {
   const result: ReferralMember[] = [];
   const seenUsernames = new Set<string>();
 
-  // 1. Check existing referrals array where uplineId or userId matches, or seed referrals for PRIMARY_USER_ID
+  // 1. Strict ownership check: Only referrals specifically belonging to this user
   for (const r of referrals) {
-    const isOwner = (r as any).uplineId === user.id ||
-      (r as any).userId === user.id ||
-      (!(r as any).uplineId && !(r as any).userId && user.id === PRIMARY_USER_ID);
+    const isOwner = Boolean(
+      ((r as any).uplineId && (r as any).uplineId === user.id) ||
+      ((r as any).userId && (r as any).userId === user.id)
+    );
 
     if (isOwner) {
       // Synchronize live balance & deposit with real registered account if it exists
@@ -519,10 +579,15 @@ function recalculateUserState(userId: string = PRIMARY_USER_ID) {
 
   // Calculate valid direct members and total team metrics from real referral relationships
   const userReferrals = getReferralsForUser(user);
-  const validDirectMembers = userReferrals.filter(r => (r.userId === user.id || (!r.userId && user.id === PRIMARY_USER_ID)) && r.level === 1 && r.isValid && ((r.totalDeposit || 0) >= 30 || (r.balance || 0) >= 30)).length;
+  const validDirectMembers = userReferrals.filter(r => 
+    ((r as any).userId === user.id || (r as any).uplineId === user.id) && 
+    r.level === 1 && 
+    r.isValid && 
+    ((r.totalDeposit || 0) >= 30 || (r.balance || 0) >= 30)
+  ).length;
   user.validDirectMembersCount = validDirectMembers;
   user.totalTeamMembersCount = userReferrals.length;
-  user.totalTeamDeposit = userReferrals.reduce((sum, r) => sum + (r.totalDeposit || 0), 0);
+  user.totalTeamDeposit = Number(userReferrals.reduce((sum, r) => sum + (r.totalDeposit || 0), 0).toFixed(2));
 
   // Determine VIP level based on qualifying USD funds and valid direct members
   const qualifyingFunds = (user.usdBalance || user.balance || 0) + (user.usdFrozenBalance || user.frozenBalance || 0);
@@ -865,8 +930,9 @@ app.post('/api/team/claim-commission', (req, res) => {
   const user = recalculateUserState(targetId);
   if (!user) return res.status(404).json({ error: 'User not found' });
 
-  // Example automated rebate generation from active direct referrals
-  const validDirects = referrals.filter(r => r.level === 1 && r.isValid);
+  // Commission rebate from member's own verified direct referrals
+  const userReferrals = getReferralsForUser(user);
+  const validDirects = userReferrals.filter(r => ((r as any).uplineId === user.id || (r as any).userId === user.id) && r.level === 1 && r.isValid);
   if (validDirects.length === 0) {
     return res.status(400).json({ error: 'No active direct team members available for rebate claim.' });
   }
@@ -1087,15 +1153,27 @@ app.post('/api/finance/deposit', (req, res) => {
     });
   }
 
+  // Prevent duplicate submission of identical TxID / Reference
+  const duplicateTx = deposits.find(d => 
+    (d.referenceNumber && d.referenceNumber.toLowerCase() === cleanRef.toLowerCase()) || 
+    (d.txHash && d.txHash.toLowerCase() === cleanRef.toLowerCase())
+  );
+  if (duplicateTx) {
+    return res.status(400).json({
+      error: `This Transaction Hash / Reference "${cleanRef}" has already been submitted (Status: ${duplicateTx.status}). Duplicate submissions are not permitted.`
+    });
+  }
+
   const cleanSlip = (paymentSlipUrl || '').trim();
   if (!cleanSlip) {
     return res.status(400).json({ error: 'Payment slip receipt upload is required' });
   }
 
   const platformAddress = cleanNetwork === 'BEP20' ? PLATFORM_WALLETS.BEP20 : PLATFORM_WALLETS.TRC20;
+  const depositId = generateUniqueId('DEP');
 
   const newDeposit: DepositRequest = {
-    id: `DEP-${Date.now().toString().slice(-6)}`,
+    id: depositId,
     userId: user.id,
     username: user.username,
     userEmail: user.email,
@@ -1120,8 +1198,9 @@ app.post('/api/finance/deposit', (req, res) => {
   deposits.unshift(newDeposit);
 
   // Record pending transaction in member ledger (Balance is NOT credited until Admin manual approval)
+  const txnId = generateUniqueId('TXN-DEP');
   transactions.unshift({
-    id: `TXN-DEP-${Date.now()}`,
+    id: txnId,
     userId: user.id,
     type: 'deposit',
     category: 'deposit',
@@ -1139,6 +1218,17 @@ app.post('/api/finance/deposit', (req, res) => {
 
   recalculateUserState(user.id);
   persistDb(`Recharge Request Submitted (Pending Admin Approval): $${depAmount} USDT by ${user.username}`);
+
+  // Instantly broadcast to all connected Admin Panels
+  broadcastAdminActivity({
+    type: 'RECHARGE_SUBMITTED',
+    title: 'New Recharge Request',
+    description: `Member ${user.username} submitted recharge #${depositId} for $${depAmount.toFixed(2)} USDT (${cleanNetwork})`,
+    performedBy: `member:${user.username}`,
+    targetType: 'deposit',
+    targetId: depositId,
+    data: newDeposit
+  });
 
   res.json({
     success: true,
@@ -1186,6 +1276,14 @@ app.post('/api/finance/withdraw', (req, res) => {
     return res.status(400).json({ error: 'Please select a valid network: BEP20 (USDT) or TRC20 (USDT)' });
   }
 
+  // Check if member already has an unresolved pending withdrawal request
+  const pendingWd = withdrawals.find(w => w.userId === user.id && w.status === 'Pending');
+  if (pendingWd) {
+    return res.status(400).json({
+      error: `You already have a pending withdrawal request (#${pendingWd.id} for $${pendingWd.amount.toFixed(2)} USDT). Please await Admin audit approval before submitting another request.`
+    });
+  }
+
   // 5% platform service fee calculation
   const fee = Number((wdAmount * 0.05).toFixed(2));
   const netAmount = Number((wdAmount - fee).toFixed(2));
@@ -1198,7 +1296,7 @@ app.post('/api/finance/withdraw', (req, res) => {
   user.frozenBalance = user.usdFrozenBalance;
   user.totalAssets = Number((user.balance + user.frozenBalance).toFixed(2));
 
-  const txId = `WD-${Math.floor(1000 + Math.random() * 9000)}`;
+  const txId = generateUniqueId('WD');
 
   const newWd: WithdrawalRequest = {
     id: txId,
@@ -1224,8 +1322,9 @@ app.post('/api/finance/withdraw', (req, res) => {
 
   withdrawals.unshift(newWd);
 
+  const txnId = generateUniqueId('TXN-WD');
   transactions.unshift({
-    id: `TXN-WD-${Date.now()}`,
+    id: txnId,
     userId: user.id,
     type: 'withdrawal',
     category: 'withdrawal',
@@ -1243,6 +1342,17 @@ app.post('/api/finance/withdraw', (req, res) => {
 
   recalculateUserState(user.id);
   persistDb(`Withdrawal Requested (Pending Admin Approval): $${wdAmount} USDT by ${user.username}`);
+
+  // Instantly broadcast to all connected Admin Panels
+  broadcastAdminActivity({
+    type: 'WITHDRAWAL_REQUESTED',
+    title: 'New Withdrawal Request',
+    description: `Member ${user.username} requested withdrawal #${txId} for $${wdAmount.toFixed(2)} USDT (${cleanNetwork})`,
+    performedBy: `member:${user.username}`,
+    targetType: 'withdrawal',
+    targetId: txId,
+    data: newWd
+  });
 
   res.json({
     success: true,
@@ -1653,6 +1763,23 @@ app.post('/api/auth/register', (req, res) => {
   recalculateUserState(cleanUserId);
   persistDb(`New Member Registered: ${cleanUsername} (ID: ${cleanUserId}, Inviter: ${newUser.referredBy || 'Direct'})`, true);
 
+  // Instantly broadcast new registration to connected Admin Panels
+  broadcastAdminActivity({
+    type: 'MEMBER_REGISTER',
+    title: 'New Member Registered',
+    description: `Member ${cleanUsername} registered successfully (${cleanPhone}). Sponsor: ${newUser.referredBy || 'Direct'}. Initial Team: 0 members.`,
+    performedBy: `member:${cleanUsername}`,
+    targetType: 'user',
+    targetId: cleanUserId,
+    data: {
+      id: cleanUserId,
+      username: cleanUsername,
+      phone: cleanPhone,
+      referredBy: newUser.referredBy,
+      createdAt: newUser.createdAt
+    }
+  });
+
   res.json({
     success: true,
     message: 'Account registered successfully! Welcome to HBO JAMBASE MUSIC.',
@@ -1907,7 +2034,58 @@ app.get('/api/admin/overview', requireAdminAuth, (req, res) => {
     referralsList: referrals,
     ticketsList: tickets,
     membersList: allUsersList,
+    recentAuditLogs: auditLogs.slice(0, 50),
+    serverTime: new Date().toISOString(),
     deployVerification: getVerificationStatus()
+  });
+});
+
+// GET Real-Time SSE Stream for Admin Activity
+app.get('/api/admin/events', (req, res) => {
+  const authHeader = req.headers['authorization'] || '';
+  const customHeader = (req.headers['x-admin-token'] as string) || '';
+  const queryToken = (req.query.token as string) || '';
+  let token = customHeader || queryToken;
+  if (!token && authHeader.startsWith('Bearer ')) {
+    token = authHeader.slice(7).trim();
+  }
+
+  if (!token || !activeAdminSessions.has(token)) {
+    return res.status(401).json({ error: 'Unauthorized: Admin authentication token required' });
+  }
+
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'X-Accel-Buffering': 'no'
+  });
+
+  res.write(`data: ${JSON.stringify({ type: 'CONNECTED', message: 'Admin real-time sync active', timestamp: new Date().toISOString() })}\n\n`);
+  adminSseClients.add(res);
+
+  const pingInterval = setInterval(() => {
+    try {
+      res.write(': ping\n\n');
+    } catch {
+      clearInterval(pingInterval);
+      adminSseClients.delete(res);
+    }
+  }, 20000);
+
+  req.on('close', () => {
+    clearInterval(pingInterval);
+    adminSseClients.delete(res);
+  });
+});
+
+// GET Complete Platform Audit Trail & History
+app.get('/api/admin/audit-logs', requireAdminAuth, (req, res) => {
+  const limit = Math.min(250, parseInt(req.query.limit as string) || 50);
+  res.json({
+    success: true,
+    logs: auditLogs.slice(0, limit),
+    totalLogs: auditLogs.length
   });
 });
 
@@ -2134,6 +2312,16 @@ app.post('/api/admin/members/:id/balance', requireAdminAuth, (req, res) => {
     transactions.unshift(transaction);
     persistDb(`Admin Balance Credit: +${numAmount} ${unitLabel} to ${user.username} (#${txId})`);
 
+    broadcastAdminActivity({
+      type: 'BALANCE_ADJUSTED',
+      title: 'Balance Credited',
+      description: `+${numAmount.toLocaleString()} ${unitLabel} credited to ${user.username} by ${operatorName}. Reason: ${actionReason}`,
+      performedBy: `admin:${operatorName}`,
+      targetType: 'user',
+      targetId: user.id,
+      data: { userId: user.id, username: user.username, amount: numAmount, action: 'add' }
+    });
+
     return res.json({
       success: true,
       message: `Successfully credited +${numAmount.toLocaleString()} ${unitLabel} to ${user.username}'s available balance.`,
@@ -2188,6 +2376,16 @@ app.post('/api/admin/members/:id/balance', requireAdminAuth, (req, res) => {
 
     transactions.unshift(transaction);
     persistDb(`Admin Balance Deduction: -${numAmount.toLocaleString()} ${unitLabel} from ${user.username} (#${txId})`);
+
+    broadcastAdminActivity({
+      type: 'BALANCE_ADJUSTED',
+      title: 'Balance Deducted',
+      description: `-${numAmount.toLocaleString()} ${unitLabel} debited from ${user.username} by ${operatorName}. Reason: ${actionReason}`,
+      performedBy: `admin:${operatorName}`,
+      targetType: 'user',
+      targetId: user.id,
+      data: { userId: user.id, username: user.username, amount: numAmount, action: 'deduct' }
+    });
 
     return res.json({
       success: true,
@@ -2455,7 +2653,21 @@ app.post('/api/admin/deposits/:id/action', requireAdminAuth, (req, res) => {
     }
 
     recalculateUserState(user.id);
+    if (user.inviterId) {
+      recalculateUserState(user.inviterId);
+    }
     persistDb(`Admin Approved Recharge: #${dep.id} (+${dep.amount} ${isUsd ? 'USD' : 'ETB'}) for ${user.username}`);
+
+    // Instantly broadcast deposit approval
+    broadcastAdminActivity({
+      type: 'DEPOSIT_APPROVED',
+      title: 'Recharge Approved',
+      description: `Recharge #${dep.id} of $${dep.amount.toFixed(2)} USDT APPROVED for ${user.username} by ${operatorName}`,
+      performedBy: `admin:${operatorName}`,
+      targetType: 'deposit',
+      targetId: dep.id,
+      data: dep
+    });
 
     return res.json({
       success: true,
@@ -2484,6 +2696,17 @@ app.post('/api/admin/deposits/:id/action', requireAdminAuth, (req, res) => {
 
     recalculateUserState(user.id);
     persistDb(`Admin Rejected Recharge: #${dep.id} (${dep.amount} ${isUsd ? 'USD' : 'ETB'}) for ${user.username}`);
+
+    // Instantly broadcast deposit rejection
+    broadcastAdminActivity({
+      type: 'DEPOSIT_REJECTED',
+      title: 'Recharge Rejected',
+      description: `Recharge #${dep.id} of $${dep.amount.toFixed(2)} USDT REJECTED for ${user.username}. Reason: ${dep.rejectReason}`,
+      performedBy: `admin:${operatorName}`,
+      targetType: 'deposit',
+      targetId: dep.id,
+      data: dep
+    });
 
     return res.json({
       success: true,
@@ -2560,7 +2783,19 @@ app.post('/api/admin/withdrawals/:id/action', requireAdminAuth, (req, res) => {
     }
 
     recalculateUserState(user.id);
+    recalculateUserState(user.id);
     persistDb(`Admin Approved Withdrawal: #${wd.id} (${wd.amount} ${isUsd ? 'USD' : 'ETB'}) for ${user.username}`);
+
+    // Instantly broadcast withdrawal approval
+    broadcastAdminActivity({
+      type: 'WITHDRAWAL_APPROVED',
+      title: 'Withdrawal Approved',
+      description: `Withdrawal #${wd.id} of $${wd.amount.toFixed(2)} USDT APPROVED for ${user.username} by ${operatorName}`,
+      performedBy: `admin:${operatorName}`,
+      targetType: 'withdrawal',
+      targetId: wd.id,
+      data: wd
+    });
 
     return res.json({
       success: true,
@@ -2603,8 +2838,9 @@ app.post('/api/admin/withdrawals/:id/action', requireAdminAuth, (req, res) => {
     }
 
     // Create explicit Refund Transaction Record in member ledger
+    const refundTxId = generateUniqueId('TXN-WD-REFUND');
     transactions.unshift({
-      id: `TXN-WD-REFUND-${Date.now()}`,
+      id: refundTxId,
       userId: user.id,
       type: 'deposit',
       category: 'admin_credit',
@@ -2624,6 +2860,17 @@ app.post('/api/admin/withdrawals/:id/action', requireAdminAuth, (req, res) => {
 
     recalculateUserState(user.id);
     persistDb(`Admin Rejected Withdrawal & Refunded Funds: #${wd.id} (${wd.amount} ${isUsd ? 'USD' : 'ETB'}) for ${user.username}`);
+
+    // Instantly broadcast withdrawal rejection
+    broadcastAdminActivity({
+      type: 'WITHDRAWAL_REJECTED',
+      title: 'Withdrawal Rejected & Refunded',
+      description: `Withdrawal #${wd.id} of $${wd.amount.toFixed(2)} USDT REJECTED for ${user.username}. Balance safely refunded. Reason: ${wd.rejectReason}`,
+      performedBy: `admin:${operatorName}`,
+      targetType: 'withdrawal',
+      targetId: wd.id,
+      data: wd
+    });
 
     return res.json({
       success: true,

@@ -36,7 +36,7 @@ import {
   ArrowDownLeft
 } from 'lucide-react';
 import { api, AdminOverviewResponse } from '../../services/api';
-import { Ticket, ReferralMember, WithdrawalRequest, DepositRequest, BackupSnapshot, DatabaseIntegrityReport } from '../../types';
+import { Ticket, ReferralMember, WithdrawalRequest, DepositRequest, BackupSnapshot, DatabaseIntegrityReport, AuditLogEntry } from '../../types';
 import { MemberManagementView } from './MemberManagementView';
 import { WithdrawalApprovalQueue } from './WithdrawalApprovalQueue';
 import { RechargeApprovalQueue } from './RechargeApprovalQueue';
@@ -57,10 +57,18 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
   const [loginError, setLoginError] = useState<string | null>(null);
 
   // Admin Dashboard state
-  const [activeTab, setActiveTab] = useState<'members' | 'recharges' | 'withdrawals' | 'referrals' | 'tickets' | 'notices' | 'telegram' | 'metrics' | 'backups'>('members');
+  const [activeTab, setActiveTab] = useState<'members' | 'recharges' | 'withdrawals' | 'activity' | 'referrals' | 'tickets' | 'notices' | 'telegram' | 'metrics' | 'backups'>('members');
   const [overview, setOverview] = useState<AdminOverviewResponse | null>(null);
   const [dataLoading, setDataLoading] = useState(false);
   const [actionMsg, setActionMsg] = useState<{ text: string; isError?: boolean } | null>(null);
+
+  // Real-Time Sync & Live Audit Stream state
+  const [lastSyncTime, setLastSyncTime] = useState<string>('');
+  const [sseConnected, setSseConnected] = useState<boolean>(false);
+  const [refreshCounter, setRefreshCounter] = useState<number>(0);
+  const [auditLogsList, setAuditLogsList] = useState<AuditLogEntry[]>([]);
+  const [activityFilter, setActivityFilter] = useState<'all' | 'register' | 'recharge' | 'withdraw' | 'balance'>('all');
+  const [activitySearch, setActivitySearch] = useState<string>('');
 
   // VIP Data Protection & Backups state
   const [backups, setBackups] = useState<BackupSnapshot[]>([]);
@@ -115,28 +123,81 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
     verifySession();
   }, []);
 
-  const loadDashboardData = async () => {
-    setDataLoading(true);
+  const loadDashboardData = async (silent = false) => {
+    if (!silent) setDataLoading(true);
     try {
       const res = await api.getAdminOverview();
       setOverview(res);
-
-      const notices = await api.getNotices();
-      if (notices && notices.length > 0) {
-        setNoticeTitle(notices[0].title);
-        setNoticeContent(notices[0].content || '');
+      setLastSyncTime(new Date().toLocaleTimeString());
+      if (res.recentAuditLogs) {
+        setAuditLogsList(res.recentAuditLogs);
       }
+      setRefreshCounter(c => c + 1);
 
-      const tg = await api.getTelegramSupport();
-      if (tg?.telegram?.username) {
-        setTelegramUsername(tg.telegram.username);
+      if (!silent) {
+        const notices = await api.getNotices();
+        if (notices && notices.length > 0) {
+          setNoticeTitle(notices[0].title);
+          setNoticeContent(notices[0].content || '');
+        }
+
+        const tg = await api.getTelegramSupport();
+        if (tg?.telegram?.username) {
+          setTelegramUsername(tg.telegram.username);
+        }
       }
     } catch (err: any) {
-      console.error('Failed to load admin overview', err);
+      if (!silent) console.error('Failed to load admin overview', err);
     } finally {
-      setDataLoading(false);
+      if (!silent) setDataLoading(false);
     }
   };
+
+  // Real-Time Event Stream (SSE) & Auto-Sync Polling
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    let eventSource: EventSource | null = null;
+    const token = api.getAdminToken();
+
+    try {
+      eventSource = new EventSource(`/api/admin/events?token=${encodeURIComponent(token)}`);
+      eventSource.onopen = () => {
+        setSseConnected(true);
+      };
+      eventSource.onmessage = (e) => {
+        try {
+          const data = JSON.parse(e.data);
+          if (data.type === 'CONNECTED') {
+            setSseConnected(true);
+            return;
+          }
+          // Real-time server activity received
+          loadDashboardData(true);
+          // Show real-time activity alert toast
+          if (data.title && data.description) {
+            setActionMsg({ text: `⚡ [Real-Time] ${data.title}: ${data.description}` });
+            setTimeout(() => setActionMsg(null), 4500);
+          }
+        } catch {}
+      };
+      eventSource.onerror = () => {
+        setSseConnected(false);
+      };
+    } catch {
+      setSseConnected(false);
+    }
+
+    // High-frequency auto-sync every 3.5 seconds as robust live guarantee
+    const interval = setInterval(() => {
+      loadDashboardData(true);
+    }, 3500);
+
+    return () => {
+      if (eventSource) eventSource.close();
+      clearInterval(interval);
+    };
+  }, [isAuthenticated]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

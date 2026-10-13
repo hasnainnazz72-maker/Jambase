@@ -15,7 +15,8 @@ import {
   BackupSnapshot,
   DatabaseIntegrityReport,
   AdminMemberSummary,
-  AdminMemberDetail
+  AdminMemberDetail,
+  AuditLogEntry
 } from '../types';
 
 export interface IncomeResponse {
@@ -85,6 +86,7 @@ export interface AdminOverviewResponse {
   depositsList: DepositRequest[];
   referralsList: ReferralMember[];
   ticketsList: Ticket[];
+  recentAuditLogs?: AuditLogEntry[];
 }
 
 let adminAuthToken: string = (typeof window !== 'undefined' && sessionStorage.getItem('jambase_admin_token')) || '';
@@ -560,6 +562,14 @@ export const api = {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to fetch withdrawal requests');
+    return data;
+  },
+  async getAdminAuditLogs(limit: number = 100): Promise<{ success: boolean; logs: AuditLogEntry[] }> {
+    const res = await fetch(`/api/admin/audit-logs?limit=${limit}`, {
+      headers: getAdminHeaders()
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to fetch audit logs');
     return data;
   },
 
