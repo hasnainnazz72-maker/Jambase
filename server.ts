@@ -234,7 +234,7 @@ function distributeTicketProfitTeamCommissions(sourceUserId: string, ticketProfi
   if (!sourceUser) return;
 
   // Level A (Direct inviter - 16%)
-  const uplineAId = sourceUser.inviterId || (sourceUserId !== PRIMARY_USER_ID ? PRIMARY_USER_ID : undefined);
+  const uplineAId = sourceUser.inviterId;
   if (uplineAId && users[uplineAId] && uplineAId !== sourceUserId) {
     creditTeamCommission(
       uplineAId,
@@ -354,15 +354,27 @@ setInterval(() => {
 }, 2000);
 
 /**
- * Safely resolves the active user ID from HTTP headers (X-User-Id) or query params,
- * falling back to PRIMARY_USER_ID. Validates that the user exists in memory.
+ * Safely resolves the active user ID from HTTP headers (X-User-Id, Bearer token) or query params.
+ * Returns null if no authenticated member is found.
  */
-function resolveUserId(req: express.Request): string {
+function resolveUserId(req: express.Request): string | null {
   const headerUserId = req.headers['x-user-id'] as string;
   if (headerUserId && users[headerUserId]) return headerUserId;
+
+  const authHeader = req.headers['authorization'] || '';
+  if (authHeader.startsWith('Bearer jwt-')) {
+    const raw = authHeader.slice(7);
+    const lastDash = raw.lastIndexOf('-');
+    if (lastDash > 4) {
+      const tokenUserId = raw.substring(4, lastDash);
+      if (tokenUserId && users[tokenUserId]) return tokenUserId;
+    }
+  }
+
   const queryUserId = req.query.userId as string;
   if (queryUserId && users[queryUserId]) return queryUserId;
-  return PRIMARY_USER_ID;
+
+  return null;
 }
 
 /**
@@ -561,6 +573,9 @@ app.get('/api/health', (req, res) => {
 // GET Current User Profile & Synchronized State
 app.get('/api/user', (req, res) => {
   const targetId = resolveUserId(req);
+  if (!targetId || !users[targetId]) {
+    return res.status(401).json({ error: 'Unauthorized: Valid member session required' });
+  }
   const user = recalculateUserState(targetId);
   if (!user) return res.status(404).json({ error: 'User not found' });
   res.json(user);
@@ -624,7 +639,8 @@ app.post('/api/user/currency', (req, res) => {
     return res.status(400).json({ error: 'Currency must be either ETB or USD' });
   }
   const targetId = resolveUserId(req);
-  const user = users[targetId] || users[PRIMARY_USER_ID];
+  if (!targetId || !users[targetId]) return res.status(401).json({ error: 'Unauthorized: Valid member session required' });
+  const user = users[targetId];
   if (!user) return res.status(404).json({ error: 'User not found' });
 
   user.activeCurrency = currency;
@@ -645,6 +661,7 @@ app.post('/api/user/currency', (req, res) => {
 // 8. Never convert or merge ETB balance into USD balance, or USD balance into ETB balance.
 const handleDailyProfitClaim = (req: express.Request, res: express.Response) => {
   const targetId = resolveUserId(req);
+  if (!targetId || !users[targetId]) return res.status(401).json({ error: 'Unauthorized: Valid member session required' });
   const user = recalculateUserState(targetId);
   if (!user) return res.status(404).json({ error: 'User not found' });
 
@@ -776,6 +793,7 @@ app.post('/api/income/claim-daily-vip', handleDailyProfitClaim);
 // Completely separates VIP Profit ledger from Team Commission ledger!
 app.get('/api/ledger/breakdown', (req, res) => {
   const targetId = resolveUserId(req);
+  if (!targetId || !users[targetId]) return res.status(401).json({ error: 'Unauthorized: Valid member session required' });
   const user = recalculateUserState(targetId);
   if (!user) return res.status(404).json({ error: 'User not found' });
 
@@ -843,6 +861,7 @@ app.get('/api/ledger/breakdown', (req, res) => {
 // POST Claim or Distribute Team Rebate / Commission (16% / 8% / 4%)
 app.post('/api/team/claim-commission', (req, res) => {
   const targetId = resolveUserId(req);
+  if (!targetId || !users[targetId]) return res.status(401).json({ error: 'Unauthorized: Valid member session required' });
   const user = recalculateUserState(targetId);
   if (!user) return res.status(404).json({ error: 'User not found' });
 
@@ -912,6 +931,7 @@ app.post('/api/admin/distribute-team-commission', (req, res) => {
 // POST Settle Ticket Purchases (Check and unfreeze/credit 2-min tickets)
 app.post('/api/tickets/settle', (req, res) => {
   const targetId = resolveUserId(req);
+  if (!targetId || !users[targetId]) return res.status(401).json({ error: 'Unauthorized: Valid member session required' });
   const settled = checkAndSettleFrozenTickets(targetId);
   const user = recalculateUserState(targetId);
   const userPurchases = purchases.filter(p => p.userId === targetId);
@@ -927,6 +947,7 @@ app.post('/api/tickets/settle', (req, res) => {
 // GET User Purchases
 app.get('/api/purchases', (req, res) => {
   const targetId = resolveUserId(req);
+  if (!targetId || !users[targetId]) return res.status(401).json({ error: 'Unauthorized: Valid member session required' });
   const userPurchases = purchases.filter(p => p.userId === targetId);
   res.json(userPurchases);
 });
@@ -934,6 +955,7 @@ app.get('/api/purchases', (req, res) => {
 // GET Income Summary & Records
 app.get('/api/income', (req, res) => {
   const targetId = resolveUserId(req);
+  if (!targetId || !users[targetId]) return res.status(401).json({ error: 'Unauthorized: Valid member session required' });
   const user = recalculateUserState(targetId);
   const records = incomeRecords.filter(r => r.userId === targetId);
   const userPurchases = purchases.filter(p => p.userId === targetId);
@@ -983,6 +1005,7 @@ app.post('/api/income/calculate-daily', (req, res) => {
 // GET Finance Dashboard (Balances, History, Withdrawals, Deposits)
 app.get('/api/finance', (req, res) => {
   const targetId = resolveUserId(req);
+  if (!targetId || !users[targetId]) return res.status(401).json({ error: 'Unauthorized: Valid member session required' });
   const user = recalculateUserState(targetId);
   const userTx = transactions.filter(t => t.userId === targetId);
   const userWd = withdrawals.filter(w => w.userId === targetId);
@@ -1041,7 +1064,8 @@ app.post('/api/finance/deposit', (req, res) => {
   } = req.body;
 
   const targetId = resolveUserId(req);
-  const user = users[targetId] || users[PRIMARY_USER_ID];
+  if (!targetId || !users[targetId]) return res.status(401).json({ error: 'Unauthorized: Valid member session required' });
+  const user = users[targetId];
   if (!user) return res.status(404).json({ error: 'User not found' });
 
   const depAmount = parseFloat(amount);
@@ -1136,7 +1160,8 @@ app.post('/api/finance/withdraw', (req, res) => {
   } = req.body;
 
   const targetId = resolveUserId(req);
-  const user = users[targetId] || users[PRIMARY_USER_ID];
+  if (!targetId || !users[targetId]) return res.status(401).json({ error: 'Unauthorized: Valid member session required' });
+  const user = users[targetId];
   if (!user) return res.status(404).json({ error: 'User not found' });
 
   const wdAmount = parseFloat(amount);
@@ -1230,6 +1255,7 @@ app.post('/api/finance/withdraw', (req, res) => {
 // GET Team & Referrals (Commission tiers 16% / 8% / 4%)
 app.get('/api/team', (req, res) => {
   const targetId = resolveUserId(req);
+  if (!targetId || !users[targetId]) return res.status(401).json({ error: 'Unauthorized: Valid member session required' });
   const user = recalculateUserState(targetId);
   if (!user) return res.status(404).json({ error: 'User not found' });
   
@@ -1255,6 +1281,7 @@ app.get('/api/team', (req, res) => {
 // GET Tasks (Strictly the 4 Referral & Activation Milestone Tasks)
 app.get('/api/tasks', (req, res) => {
   const targetId = resolveUserId(req);
+  if (!targetId || !users[targetId]) return res.status(401).json({ error: 'Unauthorized: Valid member session required' });
   const user = recalculateUserState(targetId);
   if (!user) return res.status(404).json({ error: 'User not found' });
   const userReferrals = getReferralsForUser(user);
@@ -1336,7 +1363,8 @@ app.get('/api/tasks', (req, res) => {
 app.post('/api/tasks/claim', (req, res) => {
   const { taskId } = req.body;
   const targetId = resolveUserId(req);
-  const user = users[targetId] || users[PRIMARY_USER_ID];
+  if (!targetId || !users[targetId]) return res.status(401).json({ error: 'Unauthorized: Valid member session required' });
+  const user = users[targetId];
   if (!user) return res.status(404).json({ error: 'User not found' });
 
   if (!user.claimedTaskIds) {
@@ -1436,7 +1464,8 @@ app.post('/api/tasks/claim', (req, res) => {
 // POST Daily Attendance Check-in (Welfare Center: Claim 1.00 USDT once daily)
 app.post('/api/welfare/attendance', (req, res) => {
   const targetId = resolveUserId(req);
-  const user = users[targetId] || users[PRIMARY_USER_ID];
+  if (!targetId || !users[targetId]) return res.status(401).json({ error: 'Unauthorized: Valid member session required' });
+  const user = users[targetId];
   if (!user) return res.status(404).json({ error: 'User not found' });
 
   const todayStr = new Date().toISOString().slice(0, 10);
@@ -1626,7 +1655,7 @@ app.post('/api/auth/register', (req, res) => {
 
   res.json({
     success: true,
-    message: 'Account registered successfully! Welcome to HBO JAMBASE MUSIC. Please recharge at least $10.00 USDT to activate your VIP 1 level and start earning yields.',
+    message: 'Account registered successfully! Welcome to HBO JAMBASE MUSIC.',
     user: users[cleanUserId],
     token: `jwt-${cleanUserId}-${Date.now()}`
   });
@@ -2847,7 +2876,8 @@ app.post('/api/admin/system/deploy-verification/run', requireAdminAuth, (req, re
 // User: Update Profile
 app.put('/api/user/profile', (req, res) => {
   const targetId = resolveUserId(req);
-  const user = users[targetId] || users[PRIMARY_USER_ID];
+  if (!targetId || !users[targetId]) return res.status(401).json({ error: 'Unauthorized: Valid member session required' });
+  const user = users[targetId];
   if (!user) return res.status(404).json({ error: 'User not found' });
 
   // CRITICAL FINANCIAL SECURITY: Explicitly reject any attempt to pass protected financial fields
@@ -2878,7 +2908,8 @@ app.put('/api/user/profile', (req, res) => {
 // User: Update Security & Preferences
 app.put('/api/user/security', (req, res) => {
   const targetId = resolveUserId(req);
-  const user = users[targetId] || users[PRIMARY_USER_ID];
+  if (!targetId || !users[targetId]) return res.status(401).json({ error: 'Unauthorized: Valid member session required' });
+  const user = users[targetId];
   if (!user) return res.status(404).json({ error: 'User not found' });
 
   // CRITICAL FINANCIAL SECURITY: Explicitly reject any attempt to pass protected financial fields

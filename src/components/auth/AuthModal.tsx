@@ -13,6 +13,7 @@ interface AuthModalProps {
   initialMode?: 'login' | 'register';
   initialReferralCode?: string;
   isReferralLocked?: boolean;
+  isMandatory?: boolean;
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({
@@ -21,7 +22,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onSuccess,
   initialMode = 'register',
   initialReferralCode = '',
-  isReferralLocked = false
+  isReferralLocked = false,
+  isMandatory = false
 }) => {
   const { t } = useLanguage();
   const [mode, setMode] = useState<'login' | 'register'>(initialMode);
@@ -211,16 +213,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="w-full max-w-sm max-h-[90vh] rounded-3xl bg-[#160c0e] border border-[#DC2626]/40 overflow-hidden shadow-2xl text-white flex flex-col relative">
+    <div className={`fixed inset-0 z-50 flex items-center justify-center ${isMandatory ? 'bg-[#0a0708]' : 'bg-black/85 backdrop-blur-sm'} p-4 animate-in fade-in duration-200`}>
+      <div className="w-full max-w-sm max-h-[92vh] rounded-3xl bg-[#160c0e] border border-[#DC2626]/40 overflow-hidden shadow-2xl text-white flex flex-col relative">
         {/* Header */}
         <div className="relative p-5 bg-gradient-to-br from-[#2a0e11] via-[#1a0c0f] to-[#0a0708] border-b border-[#3d181c] shrink-0">
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 p-1.5 rounded-full bg-black/50 text-neutral-400 hover:text-white"
-          >
-            <X size={18} />
-          </button>
+          {!isMandatory && (
+            <button
+              onClick={onClose}
+              className="absolute top-4 right-4 p-1.5 rounded-full bg-black/50 text-neutral-400 hover:text-white"
+            >
+              <X size={18} />
+            </button>
+          )}
 
           <div className="flex items-center gap-3">
             <span className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#DC2626] to-[#EF4444] text-[#FDE047] flex items-center justify-center font-black shadow-lg shadow-[#DC2626]/30 border border-[#E5A93C]/40">
@@ -231,7 +235,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 {mode === 'register' ? t('auth.register', 'Create HBO JAMBASE MUSIC Account') : t('auth.login', 'Account Login')}
               </h3>
               <p className="text-[11px] text-[#E5A93C] font-semibold">
-                {mode === 'register' ? 'Global Concert Ticketing & Assets' : 'Access your VIP investment portfolio'}
+                {mode === 'register' ? 'Official Member Registration' : 'Welcome back to Jambase Music'}
               </p>
             </div>
           </div>

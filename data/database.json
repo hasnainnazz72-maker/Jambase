@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "lastUpdated": "2026-10-13T14:34:08.001Z",
+  "lastUpdated": "2026-10-13T15:44:21.065Z",
   "users": {
     "usr-main-777": {
       "id": "usr-main-777",
@@ -508,6 +508,45 @@
       "usdBalance": 0,
       "usdFrozenBalance": 0,
       "activeCurrency": "USD"
+    },
+    "usr-mv6upzyg-8a3094": {
+      "id": "usr-mv6upzyg-8a3094",
+      "username": "MusicFan88",
+      "password": "secretpass123",
+      "email": "musicfan88@jambase.vip",
+      "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&auto=format&fit=crop&q=80",
+      "phone": "+1 5550198888",
+      "walletAddress": "",
+      "balance": 0,
+      "frozenBalance": 0,
+      "usdBalance": 0,
+      "usdFrozenBalance": 0,
+      "activeCurrency": "USD",
+      "totalAssets": 0,
+      "vipLevel": 1,
+      "referralCode": "JB641399",
+      "validDirectMembersCount": 0,
+      "totalTeamMembersCount": 0,
+      "totalTeamDeposit": 0,
+      "isIncomePaused": true,
+      "incomePauseReason": "Minimum $10.00 USDT Balance Required to Work and Earn VIP Yield",
+      "autoCompound": true,
+      "totalEarnedIncome": 0,
+      "todayTicketIncome": 0,
+      "todayConcertIncome": 0,
+      "todayFinancialIncome": 0,
+      "recordExpenditure": 0,
+      "concertExpenditure": 0,
+      "financialExpenditure": 0,
+      "createdAt": "2026-10-13T15:44:21.064Z",
+      "isAdmin": false,
+      "totalVipProfit": 0,
+      "totalTeamCommission": 0,
+      "todayVipProfit": 0,
+      "todayTeamCommission": 0,
+      "dailyTicketDate": "2026-10-13",
+      "dailyTicketStartingBalance": 0,
+      "dailyTicketSpent": 0
     }
   },
   "referrals": [

@@ -44,7 +44,17 @@ export default function App() {
   });
 
   const [currentTab, setCurrentTab] = useState<TabType>('home');
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const isAuth = localStorage.getItem('jambase_member_authenticated');
+      const savedUser = localStorage.getItem('jambase_member_user');
+      if (isAuth === 'true' && savedUser) {
+        return JSON.parse(savedUser);
+      }
+    } catch {}
+    return null;
+  });
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [artists, setArtists] = useState<Artist[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -66,7 +76,13 @@ export default function App() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Authentication & Referral Flow state
-  const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
+  const [showAuthModal, setShowAuthModal] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    const path = window.location.pathname.toLowerCase();
+    const hash = window.location.hash.toLowerCase();
+    if (path.startsWith('/admin') || hash.startsWith('#/admin') || hash === '#admin') return false;
+    return !hasActiveMemberSession();
+  });
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('register');
   const [lockedReferralCode, setLockedReferralCode] = useState<string>('');
   const [isReferralLocked, setIsReferralLocked] = useState<boolean>(false);
@@ -91,38 +107,8 @@ export default function App() {
     const pathname = window.location.pathname.toLowerCase();
     const hash = window.location.hash.toLowerCase();
     const isExplicitRegister = pathname === '/register' || hash.startsWith('#/register') || hash === '#register';
+    const isExplicitLogin = pathname === '/login' || hash.startsWith('#/login') || hash === '#login';
 
-    // REQUIREMENT 3 & 5: Check existing valid authentication session FIRST!
-    const isAuthenticated = hasActiveMemberSession();
-
-    if (isAuthenticated) {
-      // User is already logged in!
-      // - Detect the existing valid authentication session first
-      // - Keep the user logged in
-      // - Open their existing account/home/dashboard directly
-      // - Do NOT show the Registration page
-      // - Do NOT require them to log in again
-      // - Do NOT overwrite existing sponsor/referral relationship
-      setShowAuthModal(false);
-
-      // Clean referral query param from address bar so it doesn't linger or re-trigger
-      if (refParam || isExplicitRegister) {
-        try {
-          const cleanPath = isExplicitRegister ? '/' : window.location.pathname;
-          let cleanHash = window.location.hash;
-          if (cleanHash.includes('?')) {
-            cleanHash = cleanHash.split('?')[0];
-          }
-          if (isExplicitRegister) {
-            cleanHash = '';
-          }
-          window.history.replaceState(null, '', (cleanPath === '/register' ? '/' : cleanPath) + cleanHash);
-        } catch (e) {}
-      }
-      return;
-    }
-
-    // REQUIREMENT 1: User does NOT have an active account/session (first time visitor or logged out)
     if (refParam && refParam.trim()) {
       const cleanRef = refParam.trim().toUpperCase();
       try {
@@ -130,8 +116,6 @@ export default function App() {
       } catch (e) {}
       setLockedReferralCode(cleanRef);
       setIsReferralLocked(true);
-      setAuthModalMode('register');
-      setShowAuthModal(true);
     } else {
       let savedRef = '';
       try {
@@ -141,11 +125,38 @@ export default function App() {
         setLockedReferralCode(savedRef.trim().toUpperCase());
         setIsReferralLocked(true);
       }
-      if (isExplicitRegister) {
-        setAuthModalMode('register');
-        setShowAuthModal(true);
-      }
     }
+
+    // Check existing valid authentication session FIRST
+    const isAuthenticated = hasActiveMemberSession();
+
+    if (isAuthenticated) {
+      setShowAuthModal(false);
+
+      // Clean referral query param from address bar so it doesn't linger or re-trigger
+      if (refParam || isExplicitRegister || isExplicitLogin) {
+        try {
+          const cleanPath = (isExplicitRegister || isExplicitLogin) ? '/' : window.location.pathname;
+          let cleanHash = window.location.hash;
+          if (cleanHash.includes('?')) {
+            cleanHash = cleanHash.split('?')[0];
+          }
+          if (isExplicitRegister || isExplicitLogin) {
+            cleanHash = '';
+          }
+          window.history.replaceState(null, '', cleanPath + cleanHash);
+        } catch (e) {}
+      }
+      return;
+    }
+
+    // MANDATORY REGISTRATION: Every new visitor MUST register first (or sign in if already registered)
+    if (isExplicitLogin) {
+      setAuthModalMode('login');
+    } else {
+      setAuthModalMode('register');
+    }
+    setShowAuthModal(true);
   }, []);
 
   // Sync URL route changes and referral detection
@@ -182,6 +193,12 @@ export default function App() {
 
   // Primary data fetcher for public member site
   const loadAllData = useCallback(async () => {
+    if (!hasActiveMemberSession()) {
+      setUser(null);
+      setShowAuthModal(true);
+      return;
+    }
+
     try {
       const [
         userData,
@@ -197,22 +214,28 @@ export default function App() {
         teamRes
       ] = await Promise.all([
         api.getUser(),
-        api.getTickets(),
-        api.getArtists(),
-        api.getCategories(),
-        api.getNotices(),
-        api.getVIPTiers(),
-        api.getPurchases(),
-        api.getTasks(),
-        api.getIncome(),
-        api.getFinance(),
-        api.getTeam()
+        api.getTickets().catch(() => []),
+        api.getArtists().catch(() => []),
+        api.getCategories().catch(() => []),
+        api.getNotices().catch(() => []),
+        api.getVIPTiers().catch(() => VIP_TIERS),
+        api.getPurchases().catch(() => []),
+        api.getTasks().catch(() => []),
+        api.getIncome().catch(() => null),
+        api.getFinance().catch(() => null),
+        api.getTeam().catch(() => null)
       ]);
 
-      setUser(userData || null);
-      if (userData && hasActiveMemberSession()) {
-        setMemberSession(userData);
+      if (!userData || !userData.id) {
+        clearMemberSession();
+        setUser(null);
+        setAuthModalMode('login');
+        setShowAuthModal(true);
+        return;
       }
+
+      setUser(userData);
+      setMemberSession(userData);
       setTickets(ticketsData || []);
       setArtists(artistsData || []);
       setCategories(categoriesData || []);
@@ -225,8 +248,11 @@ export default function App() {
       setTeamData(teamRes || null);
     } catch (err: any) {
       console.error('Failed to load initial data from server', err);
-      if (err?.message?.includes('User not found') || err?.message?.includes('unauthorized')) {
+      if (err?.message?.includes('User not found') || err?.message?.includes('Unauthorized') || err?.message?.includes('unauthorized')) {
         clearMemberSession();
+        setUser(null);
+        setAuthModalMode('login');
+        setShowAuthModal(true);
       }
     }
   }, []);
@@ -251,6 +277,36 @@ export default function App() {
           loadAllData();
         }}
       />
+    );
+  }
+
+  // Compulsory registration / login gate:
+  // If not visiting admin panel and not authenticated, display compulsory clean Auth screen only.
+  if (!user || !hasActiveMemberSession()) {
+    return (
+      <div className="min-h-screen bg-[#0e0709] text-white flex flex-col justify-center items-center p-4">
+        <AuthModal
+          isOpen={true}
+          isMandatory={true}
+          onClose={() => {}}
+          onSuccess={(authenticatedUser) => {
+            setUser(authenticatedUser);
+            setMemberSession(authenticatedUser);
+            setShowAuthModal(false);
+            setLockedReferralCode('');
+            setIsReferralLocked(false);
+            showToast(`Welcome ${authenticatedUser.username}!`);
+            setCurrentTab('home');
+            try {
+              window.history.replaceState(null, '', '/');
+            } catch (e) {}
+            loadAllData();
+          }}
+          initialMode={authModalMode}
+          initialReferralCode={lockedReferralCode}
+          isReferralLocked={isReferralLocked}
+        />
+      </div>
     );
   }
 

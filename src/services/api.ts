@@ -158,11 +158,11 @@ export const setMemberSession = (user: User, token?: string) => {
 export const hasActiveMemberSession = (): boolean => {
   if (typeof window === 'undefined') return false;
   try {
-    const uid = localStorage.getItem('jambase_member_user_id') || memberUserId;
     const isAuth = localStorage.getItem('jambase_member_authenticated');
+    if (isAuth !== 'true') return false;
+    const uid = localStorage.getItem('jambase_member_user_id') || memberUserId;
     const token = localStorage.getItem('jambase_member_token') || memberAuthToken;
 
-    if (isAuth === 'false') return false;
     if (uid && uid.trim().length > 0) return true;
     if (token && token.trim().length > 0) return true;
     return false;
