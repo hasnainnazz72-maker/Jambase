@@ -989,7 +989,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
               </div>
               <div className="p-4 rounded-xl bg-black/50 border border-neutral-850 space-y-1">
                 <div className="text-neutral-400 font-medium">Minimum Withdrawal Limit</div>
-                <div className="text-white font-bold">$10 USDT (TRC20 / BEP20)</div>
+                <div className="text-white font-bold">$6 USDT (TRC20 / BEP20)</div>
               </div>
               <div className="p-4 rounded-xl bg-black/50 border border-neutral-850 space-y-1">
                 <div className="text-neutral-400 font-medium">Minimum Recharge Limit</div>

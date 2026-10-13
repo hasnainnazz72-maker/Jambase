@@ -117,7 +117,7 @@ export const PLATFORM_WALLETS = {
   TRC20: 'TETttTRj6ZX5gAm79RgDgDm6WHeMrnDjdy',
   USDT: {
     minDeposit: 10,
-    minWithdrawal: 10,
+    minWithdrawal: 6,
     feePercent: 7
   }
 };
@@ -1140,8 +1140,8 @@ app.post('/api/finance/withdraw', (req, res) => {
   if (!user) return res.status(404).json({ error: 'User not found' });
 
   const wdAmount = parseFloat(amount);
-  if (isNaN(wdAmount) || wdAmount < 10) {
-    return res.status(400).json({ error: 'Minimum withdrawal amount is $10.00 USDT' });
+  if (isNaN(wdAmount) || wdAmount < 6) {
+    return res.status(400).json({ error: 'Minimum withdrawal amount is $6.00 USDT' });
   }
 
   const availableBal = typeof user.usdBalance === 'number' ? user.usdBalance : (user.balance || 0);

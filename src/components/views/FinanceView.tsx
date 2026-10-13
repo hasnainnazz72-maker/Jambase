@@ -203,8 +203,8 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
   const handleExecuteWithdrawal = async () => {
     const amt = parseFloat(withdrawAmount);
 
-    if (isNaN(amt) || amt < 10) {
-      setWithdrawMsg({ text: 'Minimum withdrawal is $10.00 USDT', isError: true });
+    if (isNaN(amt) || amt < 6) {
+      setWithdrawMsg({ text: 'Minimum withdrawal is $6.00 USDT', isError: true });
       return;
     }
 
@@ -688,10 +688,10 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
           {/* Amount Presets */}
           <div>
             <label className="text-xs font-semibold text-neutral-300 mb-1.5 block">
-              Quick Select Amount (Min $10 USDT)
+              Quick Select Amount (Min $6 USDT)
             </label>
             <div className="grid grid-cols-5 gap-1.5">
-              {['10', '30', '50', '100', '500'].map((amt) => (
+              {['6', '10', '30', '50', '100'].map((amt) => (
                 <button
                   key={amt}
                   type="button"
@@ -717,7 +717,7 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ financeData, onRefresh
               <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 font-bold text-xs">USDT</span>
               <input
                 type="number"
-                min="10"
+                min="6"
                 step="1"
                 value={withdrawAmount}
                 onChange={(e) => setWithdrawAmount(e.target.value)}

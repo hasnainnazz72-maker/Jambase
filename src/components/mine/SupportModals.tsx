@@ -103,7 +103,7 @@ export const SupportModal: React.FC<SupportModalProps> = ({
     },
     {
       q: 'What are the withdrawal limits and fees?',
-      a: 'The minimum withdrawal is $10.00 USDT via crypto transfer (TRC20 / BEP20). Standard platform service fee is 5%. Funds are processed rapidly following administrative audit.'
+      a: 'The minimum withdrawal is $6.00 USDT via crypto transfer (TRC20 / BEP20). Standard platform service fee is 5%. Funds are processed rapidly following administrative audit.'
     }
   ];
 
