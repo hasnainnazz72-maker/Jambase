@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Component, ReactNode } from 'react';
 import {
   ShieldCheck,
   Lock,
@@ -44,6 +44,8 @@ import { RechargeApprovalQueue } from './RechargeApprovalQueue';
 interface AdminPortalProps {
   onBackToWebsite: () => void;
 }
+
+
 
 export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -558,12 +560,20 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
           </div>
 
           <div className="flex items-center gap-2 self-end sm:self-auto">
+            {/* Live Real-Time Sync Indicator */}
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-neutral-900 border border-neutral-800 text-[11px] font-mono shadow-inner">
+              <span className={`w-2.5 h-2.5 rounded-full ${sseConnected ? 'bg-emerald-400 animate-pulse shadow-md shadow-emerald-500/50' : 'bg-amber-400'}`} />
+              <span className="text-neutral-200 font-bold">{sseConnected ? 'Live Real-Time Sync' : 'Live Syncing'}</span>
+              {lastSyncTime && <span className="text-neutral-500 text-[10px]">({lastSyncTime})</span>}
+            </div>
+
             <button
-              onClick={loadDashboardData}
-              title="Refresh Data"
-              className="p-2 rounded-xl bg-neutral-900 border border-neutral-800 hover:border-neutral-700 text-neutral-300 hover:text-white transition-colors"
+              onClick={() => loadDashboardData()}
+              title="Refresh / Sync Now"
+              className="px-3 py-1.5 rounded-xl bg-neutral-900 border border-neutral-800 hover:border-neutral-700 text-neutral-300 hover:text-white transition-colors flex items-center gap-1.5 text-xs font-semibold"
             >
-              <RefreshCw size={15} className={dataLoading ? 'animate-spin' : ''} />
+              <RefreshCw size={14} className={dataLoading ? 'animate-spin text-amber-400' : ''} />
+              <span className="hidden md:inline">Sync Now</span>
             </button>
 
             <button
@@ -679,6 +689,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
             { id: 'members', label: 'Member Management', count: overview?.totalRegisteredMembers || overview?.totalUsers, highlight: true },
             { id: 'recharges', label: 'Pending Recharge', count: overview?.pendingDeposits, isPendingHighlight: (overview?.pendingDeposits || 0) > 0 },
             { id: 'withdrawals', label: 'Withdrawal Approvals', count: overview?.pendingWithdrawals, isPendingHighlight: (overview?.pendingWithdrawals || 0) > 0 },
+            { id: 'activity', label: 'Live Activity & Sync', count: (auditLogsList.length || overview?.recentAuditLogs?.length) || undefined, isLive: true },
             { id: 'referrals', label: 'Referral Compliance', count: overview?.totalReferrals },
             { id: 'tickets', label: 'Concert & Ticket Hub', count: overview?.totalTickets },
             { id: 'notices', label: '24h Announcements' },
@@ -700,17 +711,22 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
                     ? 'bg-amber-400 text-slate-950 shadow-md shadow-amber-500/20'
                     : tab.isPendingHighlight
                     ? 'bg-amber-400 text-black shadow-md shadow-amber-500/20 font-black'
+                    : tab.id === 'activity'
+                    ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20 font-black'
                     : 'bg-gradient-to-r from-[#DC2626] to-[#B91C1C] text-[#FDE047] shadow-md shadow-[#DC2626]/20 border border-[#E5A93C]/40'
                   : tab.isPendingHighlight
                     ? 'bg-amber-950/40 text-amber-300 border border-amber-500/40 hover:bg-amber-900/60'
                     : tab.highlight
                     ? 'bg-neutral-900 text-amber-300 border border-amber-500/30 hover:bg-neutral-850'
+                    : tab.id === 'activity'
+                    ? 'bg-emerald-950/30 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-900/50'
                     : 'bg-neutral-900 text-neutral-400 hover:text-white border border-neutral-800'
               }`}
             >
               {tab.id === 'members' && <Users size={13} />}
               {tab.id === 'recharges' && <ArrowDownLeft size={13} />}
               {tab.id === 'withdrawals' && <Clock size={13} />}
+              {tab.id === 'activity' && <Activity size={13} className={sseConnected ? 'text-emerald-400 animate-pulse' : ''} />}
               {tab.id === 'backups' && <Database size={13} />}
               <span>{tab.label}</span>
               {tab.count !== undefined && (
@@ -720,6 +736,8 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
                       ? 'bg-black/30 text-black'
                       : tab.isPendingHighlight
                       ? 'bg-amber-500/30 text-amber-200 border border-amber-500/40'
+                      : tab.id === 'activity'
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                       : 'bg-neutral-800 text-neutral-300'
                   }`}
                 >
@@ -732,7 +750,10 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
 
         {/* TAB 0: MEMBER MANAGEMENT */}
         {activeTab === 'members' && (
-          <MemberManagementView onRefreshOverview={loadDashboardData} />
+          <MemberManagementView
+            onRefreshOverview={loadDashboardData}
+            refreshTrigger={refreshCounter}
+          />
         )}
 
         {/* TAB 1: PENDING RECHARGES / DEPOSITS */}
@@ -753,6 +774,177 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
           />
         )}
 
+        {/* TAB: LIVE ACTIVITY STREAM & AUDIT TRAIL */}
+        {activeTab === 'activity' && (
+          <div className="space-y-4 animate-in fade-in duration-150">
+            {/* Header & Controls */}
+            <div className="p-5 rounded-3xl bg-[#11131a] border border-neutral-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                    <Activity size={20} className={sseConnected ? 'animate-pulse' : ''} />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-extrabold text-white">Live Activity Stream & Platform Audit Trail</h2>
+                    <p className="text-xs text-neutral-400">
+                      Real-time synchronized event log for member registrations, recharges, withdrawals, and balance updates
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs font-mono">
+                  <span className={`w-2 h-2 rounded-full ${sseConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+                  <span className="text-neutral-300 font-semibold">{sseConnected ? 'SSE Active' : 'Polling Active'}</span>
+                </div>
+                <button
+                  onClick={() => loadDashboardData()}
+                  disabled={dataLoading}
+                  className="px-3 py-1.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 border border-neutral-700 text-xs font-semibold text-neutral-200 transition-colors flex items-center gap-1.5"
+                >
+                  <RefreshCw size={13} className={dataLoading ? 'animate-spin text-amber-400' : ''} />
+                  <span>Refresh Feed</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Filter Buttons & Search */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-[#11131a] border border-neutral-800/80 p-3 rounded-2xl">
+              <div className="flex flex-wrap items-center gap-1.5">
+                {[
+                  { id: 'all', label: 'All Events' },
+                  { id: 'register', label: 'Registrations' },
+                  { id: 'recharge', label: 'Recharges' },
+                  { id: 'withdraw', label: 'Withdrawals' },
+                  { id: 'balance', label: 'Balance Adjustments' }
+                ].map((f) => (
+                  <button
+                    key={f.id}
+                    onClick={() => setActivityFilter(f.id as any)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                      activityFilter === f.id
+                        ? 'bg-amber-400 text-slate-950 font-bold shadow-md shadow-amber-500/20'
+                        : 'bg-neutral-900 text-neutral-400 hover:text-white border border-neutral-800'
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="relative">
+                <input
+                  type="text"
+                  value={activitySearch}
+                  onChange={(e) => setActivitySearch(e.target.value)}
+                  placeholder="Filter by user, ID, or keywords..."
+                  className="w-full sm:w-64 px-3 py-1.5 pl-8 rounded-xl bg-neutral-950 border border-neutral-800 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-amber-400"
+                />
+                <Activity size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-500" />
+              </div>
+            </div>
+
+            {/* Activity Stream List */}
+            {(() => {
+              const logs = (auditLogsList.length > 0 ? auditLogsList : (overview?.recentAuditLogs || []));
+              const filtered = logs.filter((l) => {
+                if (activityFilter === 'register' && !l.action.includes('REGISTER')) return false;
+                if (activityFilter === 'recharge' && !l.action.includes('RECHARGE') && !l.action.includes('DEPOSIT')) return false;
+                if (activityFilter === 'withdraw' && !l.action.includes('WITHDRAW')) return false;
+                if (activityFilter === 'balance' && !l.action.includes('BALANCE')) return false;
+                if (activitySearch.trim()) {
+                  const q = activitySearch.toLowerCase();
+                  return (
+                    l.details.toLowerCase().includes(q) ||
+                    l.performedBy.toLowerCase().includes(q) ||
+                    l.targetId.toLowerCase().includes(q) ||
+                    l.action.toLowerCase().includes(q)
+                  );
+                }
+                return true;
+              });
+
+              if (filtered.length === 0) {
+                return (
+                  <div className="p-12 text-center rounded-3xl bg-[#11131a] border border-neutral-800 text-neutral-400 text-xs">
+                    <Activity size={28} className="mx-auto text-neutral-600 mb-2" />
+                    <p className="font-semibold text-neutral-300">No activity recorded for this filter</p>
+                    <p className="text-[11px] text-neutral-500 mt-0.5">Events appear here automatically when members register, recharge, or request withdrawals.</p>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="space-y-2">
+                  {filtered.map((log) => {
+                    const isRegister = log.action.includes('REGISTER');
+                    const isRecharge = log.action.includes('RECHARGE') || log.action.includes('DEPOSIT');
+                    const isWithdraw = log.action.includes('WITHDRAW');
+                    const isBalance = log.action.includes('BALANCE');
+                    const isApproved = log.action.includes('APPROVED');
+                    const isRejected = log.action.includes('REJECTED');
+
+                    return (
+                      <div
+                        key={log.id}
+                        className={`p-3.5 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs ${
+                          isApproved
+                            ? 'bg-emerald-950/20 border-emerald-500/30'
+                            : isRejected
+                            ? 'bg-red-950/20 border-red-500/30'
+                            : isRegister
+                            ? 'bg-blue-950/20 border-blue-500/30'
+                            : isBalance
+                            ? 'bg-purple-950/20 border-purple-500/30'
+                            : 'bg-[#11131a] border-neutral-800/80 hover:border-neutral-700'
+                        }`}
+                      >
+                        <div className="flex items-start sm:items-center gap-3 flex-1 min-w-0">
+                          <div className={`p-2 rounded-xl shrink-0 ${
+                            isApproved ? 'bg-emerald-500/20 text-emerald-400' :
+                            isRejected ? 'bg-red-500/20 text-red-400' :
+                            isRegister ? 'bg-blue-500/20 text-blue-400' :
+                            isBalance ? 'bg-purple-500/20 text-purple-400' :
+                            'bg-amber-500/20 text-amber-400'
+                          }`}>
+                            {isApproved ? <CheckCircle2 size={16} /> :
+                             isRejected ? <XCircle size={16} /> :
+                             isRegister ? <Users size={16} /> :
+                             isWithdraw ? <Clock size={16} /> :
+                             isRecharge ? <ArrowDownLeft size={16} /> :
+                             <Activity size={16} />}
+                          </div>
+
+                          <div className="space-y-0.5 flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-bold text-white text-xs">{log.action}</span>
+                              {log.targetId && (
+                                <span className="font-mono text-[10px] px-2 py-0.5 rounded-md bg-neutral-900 border border-neutral-800 text-neutral-300">
+                                  #{log.targetId}
+                                </span>
+                              )}
+                              <span className="text-[10px] text-neutral-500 font-mono">
+                                Actor: <strong className="text-neutral-300">{log.performedBy}</strong>
+                              </span>
+                            </div>
+                            <p className="text-neutral-300 text-[11px] leading-relaxed break-words">{log.details}</p>
+                          </div>
+                        </div>
+
+                        <div className="text-[10px] text-neutral-500 font-mono shrink-0 sm:text-right">
+                          <div>{new Date(log.timestamp).toLocaleTimeString()}</div>
+                          <div>{new Date(log.timestamp).toLocaleDateString()}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+          </div>
+        )}
+
         {/* TAB 2: REFERRALS */}
         {activeTab === 'referrals' && (
           <div className="space-y-4">
@@ -771,8 +963,8 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
                   <div key={ref.id} className="p-4 rounded-2xl bg-[#11131a] border border-neutral-800 space-y-2.5">
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="text-sm font-bold text-white">{ref.name}</div>
-                        <div className="text-[11px] text-neutral-400 font-mono">{ref.phone}</div>
+                        <div className="text-sm font-bold text-white">{ref.username || (ref as any).name || 'Member'}</div>
+                        <div className="text-[11px] text-neutral-400 font-mono">{ref.email || (ref as any).phone || ref.id}</div>
                       </div>
                       <span
                         className={`px-2.5 py-1 rounded-full text-[11px] font-extrabold ${
@@ -786,9 +978,9 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToWebsite }) => 
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 text-xs bg-black/40 p-2.5 rounded-xl border border-neutral-850 font-mono text-neutral-300">
-                      <div>Deposit: <strong className="text-white">${ref.depositAmount}</strong></div>
-                      <div>VIP Level: <strong className="text-white">VIP {ref.vipLevel}</strong></div>
-                      <div className="col-span-2">Joined: {new Date(ref.joinDate).toLocaleDateString()}</div>
+                      <div>Deposit: <strong className="text-white">${ref.totalDeposit || (ref as any).depositAmount || 0}</strong></div>
+                      <div>Level: <strong className="text-white">Tier {ref.level || 1}</strong></div>
+                      <div className="col-span-2">Joined: {ref.registeredAt ? new Date(ref.registeredAt).toLocaleDateString() : ((ref as any).joinDate ? new Date((ref as any).joinDate).toLocaleDateString() : 'N/A')}</div>
                       {ref.disqualifiedReason && (
                         <div className="col-span-2 text-red-400">Reason: {ref.disqualifiedReason}</div>
                       )}

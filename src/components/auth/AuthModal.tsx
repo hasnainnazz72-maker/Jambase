@@ -481,6 +481,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               ? t('auth.submitRegister', 'Register New Account')
               : t('auth.submitLogin', 'Sign In')}
           </button>
+
+          {/* Admin Console Shortcut */}
+          <div className="pt-2 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                window.location.hash = '#/admin';
+                window.location.reload();
+              }}
+              className="text-[11px] text-neutral-500 hover:text-amber-400 font-mono transition-colors inline-flex items-center gap-1"
+            >
+              <ShieldCheck size={12} />
+              <span>Admin Console Portal</span>
+            </button>
+          </div>
         </form>
 
         {/* Country Picker Sub-Modal */}

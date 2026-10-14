@@ -7,7 +7,8 @@ import {
   Clock,
   UserPlus,
   CircleDot,
-  Globe
+  Globe,
+  ShieldCheck
 } from 'lucide-react';
 import { User, VIPTier, PlatformNotice } from '../../types';
 import { api, TeamResponse, FinanceResponse, IncomeResponse } from '../../services/api';
@@ -279,7 +280,7 @@ export const MineView: React.FC<MineViewProps> = ({
       </div>
 
       {/* 8. SIGN OUT BUTTON (Matching Screenshot centered clean white button) */}
-      <div className="pt-6 pb-2 text-center">
+      <div className="pt-6 pb-2 text-center flex flex-col items-center gap-2">
         <button
           onClick={() => {
             if (onLogout) {
@@ -289,12 +290,22 @@ export const MineView: React.FC<MineViewProps> = ({
               onOpenAuthModal('login');
             } else {
               api.logoutUser();
-              setShowAuthModal(true);
             }
           }}
           className="text-sm font-bold text-neutral-300 hover:text-white transition-colors py-2 px-6 rounded-xl hover:bg-neutral-900"
         >
           {t('mine.logout', 'Sign out')}
+        </button>
+
+        <button
+          onClick={() => {
+            window.location.hash = '#/admin';
+            window.location.reload();
+          }}
+          className="text-xs text-neutral-500 hover:text-amber-400 font-mono transition-colors inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl hover:bg-neutral-900 border border-transparent hover:border-neutral-800"
+        >
+          <ShieldCheck size={13} />
+          <span>Admin Portal Console</span>
         </button>
       </div>
 

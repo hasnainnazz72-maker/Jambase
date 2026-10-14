@@ -240,6 +240,10 @@ async function safeJson<T = any>(res: Response, defaultErrMsg = 'Request failed'
 }
 
 export const api = {
+  // Admin Token helpers
+  getAdminToken: () => getAdminToken(),
+  setAdminToken: (token: string) => setAdminToken(token),
+
   // Admin Auth APIs
   async adminLogin(credentials: { username: string; password: string }): Promise<{ success: boolean; token: string; message: string; admin: any }> {
     const res = await fetch('/api/admin/login', {
